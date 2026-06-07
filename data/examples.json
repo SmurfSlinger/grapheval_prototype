@@ -4,5 +4,35 @@
     "question": "What engine does the 2018 Hyundai Sonata SE have and where was it assembled?",
     "context": "The 2018 Hyundai Sonata SE has a 2.4L engine and was assembled in Alabama.",
     "initial_answer": "The 2018 Hyundai Sonata SE has a 2.4L turbo engine and was assembled in Korea."
+  },
+  {
+    "id": "drone_alpha_7_001",
+    "question": "What are the flight time, reconnaissance approval, and weapons status of Drone Alpha-7?",
+    "context": "Drone Alpha-7 has a maximum flight time of 42 minutes. It is approved for daylight reconnaissance only. It does not carry weapons.",
+    "initial_answer": "Drone Alpha-7 can fly for 60 minutes, is approved for night reconnaissance, and does not carry weapons."
+  },
+  {
+    "id": "patient_h_102_001",
+    "question": "What allergies and medication tolerances are documented for Patient Case H-102?",
+    "context": "Patient Case H-102 is allergic to penicillin. The chart lists ibuprofen as tolerated. No allergy to acetaminophen is recorded.",
+    "initial_answer": "Patient Case H-102 can safely receive penicillin and has a recorded allergy to acetaminophen."
+  },
+  {
+    "id": "aircraft_mx_41_001",
+    "question": "What hydraulic maintenance was done on Aircraft MX-41 and when is the next inspection due?",
+    "context": "Aircraft MX-41 had its left hydraulic pump replaced on March 3. The right hydraulic pump passed inspection. The next inspection is due on April 3.",
+    "initial_answer": "Aircraft MX-41 had its right hydraulic pump replaced on March 3, and the next inspection is due on March 20."
+  },
+  {
+    "id": "server_app_prod_2_001",
+    "question": "What operating system and SSH settings does server app-prod-2 use, and which ports are open?",
+    "context": "Server app-prod-2 is running Ubuntu 22.04. SSH password login is disabled. Port 443 is open. Port 22 is restricted to the internal VPN.",
+    "initial_answer": "Server app-prod-2 is running Ubuntu 20.04, allows SSH password login, and has port 443 open."
+  },
+  {
+    "id": "tank_t_17_001",
+    "question": "What does Tank T-17 contain and is its current level considered critical?",
+    "context": "Tank T-17 contains non-flammable coolant. Its current level is 87%. A level above 95% is considered critical.",
+    "initial_answer": "Tank T-17 contains flammable solvent and is currently at a critical level."
   }
 ]
