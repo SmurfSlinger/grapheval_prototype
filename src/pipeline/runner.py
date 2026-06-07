@@ -48,9 +48,14 @@ class PipelineRunner:
             revised_answer=revised_answer,
         )
 
-    def run_and_save(self, example: Example) -> PipelineResult:
+    def run_and_save(
+        self,
+        example: Example,
+        *,
+        filename: str | None = None,
+    ) -> PipelineResult:
         result = self.run_example(example)
-        save_result(result)
+        save_result(result, filename=filename)
         return result
 
     @staticmethod

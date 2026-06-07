@@ -1,2 +1,2 @@
-# Core dependencies (stdlib-only for v1; add provider SDKs later)
+# Core pipeline uses only the Python standard library (urllib for Ollama HTTP).
 # pydantic>=2.0  # optional, uncomment if switching to Pydantic models

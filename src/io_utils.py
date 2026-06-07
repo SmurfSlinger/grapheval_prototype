@@ -27,9 +27,26 @@ def load_examples(path: Path = EXAMPLES_PATH) -> list[Example]:
     ]
 
 
-def save_result(result: PipelineResult, output_dir: Path = RESULTS_DIR) -> Path:
+def model_slug(model: str) -> str:
+    """Turn an Ollama model tag into a filesystem-safe suffix."""
+    return model.replace(":", "_").replace("/", "_")
+
+
+def result_filename(example_id: str, model: str | None = None) -> str:
+    if model:
+        return f"{example_id}_{model_slug(model)}.json"
+    return f"{example_id}.json"
+
+
+def save_result(
+    result: PipelineResult,
+    output_dir: Path = RESULTS_DIR,
+    *,
+    filename: str | None = None,
+) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
-    out_path = output_dir / f"{result.example_id}.json"
+    out_name = filename or f"{result.example_id}.json"
+    out_path = output_dir / out_name
     payload: dict[str, Any] = result.to_dict()
     out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return out_path
@@ -45,5 +62,14 @@ def parse_json_response(text: str) -> dict[str, Any]:
     start = text.find("{")
     end = text.rfind("}")
     if start == -1 or end == -1:
-        raise ValueError(f"No JSON object found in response: {text[:200]}")
-    return json.loads(text[start : end + 1])
+        raise ValueError(
+            "Model returned no JSON object. Response snippet: "
+            f"{text[:300]}"
+        )
+    try:
+        return json.loads(text[start : end + 1])
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            "Model returned invalid JSON. "
+            f"Parse error: {exc}. Response snippet: {text[start : start + 300]}"
+        ) from exc

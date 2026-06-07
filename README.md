@@ -26,11 +26,12 @@ grapheval_prototype/
 └── src/
     ├── main.py                 # CLI entry point
     ├── models.py               # Dataclasses (Example, Triple, VerificationResult, …)
-    ├── config.py               # Paths and defaults
+    ├── config.py               # Paths, Ollama settings, defaults
     ├── io_utils.py             # Load/save JSON and prompts
     ├── llm/
     │   ├── base.py             # LLMProvider interface
-    │   └── mock_provider.py    # Deterministic mock (no API keys)
+    │   ├── mock_provider.py    # Deterministic mock (no API keys)
+    │   └── ollama_provider.py  # Local Ollama / Gemma4 (text-only)
     ├── pipeline/
     │   ├── answer_generator.py
     │   ├── triple_extractor.py
@@ -42,25 +43,77 @@ grapheval_prototype/
         └── metrics.py          # Simple verification counts
 ```
 
+## Requirements
+
+Python 3.10+. Uses only the standard library (no pip install required for the core pipeline).
+
+## Install and run Ollama
+
+1. Install Ollama from [https://ollama.com](https://ollama.com).
+2. Start the server (usually runs automatically after install):
+
+```bash
+ollama serve
+```
+
+3. Pull the Gemma4 models used by this prototype:
+
+```bash
+ollama pull gemma4:e2b
+ollama pull gemma4:e4b
+ollama pull gemma4:12b
+```
+
+The prototype is **text-only**. Even if a Gemma4 variant supports images, this project sends plain-text prompts only.
+
 ## How to run
 
 From the project root:
 
+### Mock provider (default, no Ollama needed)
+
 ```bash
 python -m src.main
+python -m src.main --provider mock
 ```
 
-No API keys are required. The default **mock provider** returns deterministic outputs for the sample Hyundai Sonata example.
+Returns deterministic outputs for the sample Hyundai Sonata example. Useful for testing the pipeline without a local LLM.
 
-Results are written to `results/<example_id>.json`.
+### Ollama / Gemma4
+
+```bash
+python -m src.main --provider ollama
+python -m src.main --provider ollama --model gemma4:e2b
+python -m src.main --provider ollama --model gemma4:e4b
+python -m src.main --provider ollama --model gemma4:12b
+```
+
+Results are written to `results/<example_id>.json`, or `results/<example_id>_<model>.json` when a specific Ollama model is selected (e.g. `results/hyundai_sonata_001_gemma4_e2b.json`).
+
+If Ollama is not running or the model is missing, the CLI **falls back to the mock provider** by default and prints a warning. Use `--no-fallback` to fail instead.
+
+### Compare models
+
+Run the same examples across all configured test models:
+
+```bash
+python -m src.main --provider ollama --compare-models
+```
+
+Saves separate files per model, e.g.:
+
+- `results/hyundai_sonata_001_gemma4_e2b.json`
+- `results/hyundai_sonata_001_gemma4_e4b.json`
+- `results/hyundai_sonata_001_gemma4_12b.json`
 
 ## Module overview
 
 | Module | Role |
 |--------|------|
 | `models.py` | Data types: `Example`, `Triple`, `VerificationResult`, `FeedbackItem`, `PipelineResult` |
-| `llm/base.py` | Abstract `LLMProvider` — swap in OpenAI, Ollama, etc. later |
+| `llm/base.py` | Abstract `LLMProvider` — swap backends via CLI |
 | `llm/mock_provider.py` | Fake LLM that drives the demo pipeline end-to-end |
+| `llm/ollama_provider.py` | Calls `http://localhost:11434/api/generate` (streaming off) |
 | `pipeline/answer_generator.py` | Answer from question + context (skipped if `initial_answer` is set) |
 | `pipeline/triple_extractor.py` | Parse `(subject, relation, object)` triples from the answer |
 | `pipeline/triple_verifier.py` | Verify triples with LLM-as-judge; `NLIVerifier` stub for later |
@@ -68,6 +121,16 @@ Results are written to `results/<example_id>.json`.
 | `pipeline/answer_reviser.py` | Produce a corrected answer using feedback |
 | `pipeline/runner.py` | Wire all stages and print a concise summary |
 | `evaluation/metrics.py` | Count supported / contradicted / not-enough-info triples |
+
+## Ollama error handling
+
+`OllamaProvider` reports clear errors for:
+
+- **Server not running** — connection refused; suggests `ollama serve`
+- **Model not installed** — suggests `ollama pull <model>`
+- **Timeout** — request exceeded `OLLAMA_REQUEST_TIMEOUT` (default 120s)
+- **Invalid API response** — malformed JSON from the Ollama HTTP API
+- **Invalid model JSON output** — raised when extraction/verification prompts return unparseable JSON
 
 ## Sample example
 
@@ -87,11 +150,7 @@ Results are written to `results/<example_id>.json`.
 
 ## Next planned steps
 
-1. **Replace mock provider** with a real local or API LLM (Ollama, OpenAI, etc.).
+1. **Benchmark Gemma4 sizes** — use `--compare-models` to study speed/quality trade-offs.
 2. **Compare LLM-as-judge vs NLI verification** — implement `NLIVerifier` and benchmark agreement.
 3. **Add graph storage with Neo4j** — persist triples and verification edges for analysis.
 4. **Run comparison study** — normal self-correction vs triple-level structured feedback.
-
-## Requirements
-
-Python 3.10+. The first version uses only the standard library. See `requirements.txt` for optional future dependencies.
