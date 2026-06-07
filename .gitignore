@@ -13,3 +13,7 @@ env/
 .DS_Store
 results/*.json
 !results/.gitkeep
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env*.local

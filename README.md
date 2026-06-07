@@ -20,6 +20,8 @@ Question + trusted context
 
 ```
 grapheval_prototype/
+├── api/server.py               # FastAPI wrapper around the Python pipeline
+├── frontend/                   # Next.js demo UI
 ├── data/examples.json          # Input examples (question, context, optional initial answer)
 ├── prompts/                    # Prompt templates for each LLM step
 ├── results/                    # Per-example JSON outputs (gitignored)
@@ -45,7 +47,13 @@ grapheval_prototype/
 
 ## Requirements
 
-Python 3.10+. Uses only the standard library (no pip install required for the core pipeline).
+Python 3.10+. Node.js 18+ for the web UI.
+
+Install Python dependencies (CLI + API):
+
+```bash
+pip install -r requirements.txt
+```
 
 ## Install and run Ollama
 
@@ -68,9 +76,41 @@ The prototype is **text-only**. Even if a Gemma4 variant supports images, this p
 
 ## How to run
 
+### Web UI (recommended for demos)
+
+**Terminal 1 — backend** (from project root):
+
+```bash
+pip install -r requirements.txt
+uvicorn api.server:app --reload --port 8000
+```
+
+**Terminal 2 — frontend**:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+The UI lets you pick an example or run a custom question/context/answer, choose `mock` or `ollama`, and inspect triples, verification labels, feedback, and the revised answer.
+
+For `provider=ollama`, Ollama must be running and the model pulled:
+
+```bash
+ollama serve
+ollama pull gemma4:e2b
+```
+
+API docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+### CLI
+
 From the project root:
 
-### Mock provider (default, no Ollama needed)
+#### Mock provider (default, no Ollama needed)
 
 ```bash
 python -m src.main
@@ -79,7 +119,7 @@ python -m src.main --provider mock
 
 Returns deterministic outputs for the sample Hyundai Sonata example. Useful for testing the pipeline without a local LLM.
 
-### Ollama / Gemma4
+#### Ollama / Gemma4
 
 ```bash
 python -m src.main --provider ollama
@@ -92,7 +132,7 @@ Results are written to `results/<example_id>.json`, or `results/<example_id>_<mo
 
 If Ollama is not running or the model is missing, the CLI **falls back to the mock provider** by default and prints a warning. Use `--no-fallback` to fail instead.
 
-### Compare models
+#### Compare models
 
 Run the same examples across all configured test models:
 
@@ -121,6 +161,8 @@ Saves separate files per model, e.g.:
 | `pipeline/answer_reviser.py` | Produce a corrected answer using feedback |
 | `pipeline/runner.py` | Wire all stages and print a concise summary |
 | `evaluation/metrics.py` | Count supported / contradicted / not-enough-info triples |
+| `api/server.py` | FastAPI endpoints: `/health`, `/examples`, `/run`, `/run-custom` |
+| `frontend/` | Next.js UI for running examples and viewing results |
 
 ## Ollama error handling
 
