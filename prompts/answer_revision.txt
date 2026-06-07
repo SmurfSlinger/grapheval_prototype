@@ -1,0 +1,15 @@
+Revise the answer to fix unsupported or contradicted claims using the feedback below.
+Keep correct parts of the answer. Use the context as the source of truth.
+
+Context:
+{context}
+
+Original answer:
+{answer}
+
+Feedback (JSON):
+{feedback}
+
+Return only the revised answer text, with no extra commentary.
+
+Revised answer:

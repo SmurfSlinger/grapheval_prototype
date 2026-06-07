@@ -1,0 +1,19 @@
+Verify whether the triple is supported by the context.
+
+Context:
+{context}
+
+Triple:
+- subject: {subject}
+- relation: {relation}
+- object: {object}
+
+Label the triple as exactly one of:
+- SUPPORTED: the context clearly supports the triple
+- CONTRADICTED: the context clearly contradicts the triple
+- NOT_ENOUGH_INFO: the context neither clearly supports nor contradicts the triple
+
+Return valid JSON only:
+{{"label": "SUPPORTED|CONTRADICTED|NOT_ENOUGH_INFO", "evidence": "quote or paraphrase from context", "reason": "brief explanation"}}
+
+JSON:

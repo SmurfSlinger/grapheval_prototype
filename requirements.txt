@@ -1,0 +1,2 @@
+# Core dependencies (stdlib-only for v1; add provider SDKs later)
+# pydantic>=2.0  # optional, uncomment if switching to Pydantic models

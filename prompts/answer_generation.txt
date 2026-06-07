@@ -1,0 +1,10 @@
+You are a helpful assistant. Answer the question using ONLY the provided context.
+If the context does not contain enough information, say so clearly.
+
+Context:
+{context}
+
+Question:
+{question}
+
+Answer:

@@ -1,0 +1,13 @@
+Extract factual triples from the answer below. Each triple has:
+- subject: the entity the fact is about
+- relation: a short snake_case relation name (e.g. has_engine, assembled_in)
+- object: the value or related entity
+- source_sentence: the sentence from the answer that supports this triple (optional)
+
+Return valid JSON only, with this shape:
+{{"triples": [{{"subject": "...", "relation": "...", "object": "...", "source_sentence": "..."}}]}}
+
+Answer:
+{answer}
+
+JSON:
