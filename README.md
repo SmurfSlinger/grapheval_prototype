@@ -13,20 +13,24 @@ The prototype also runs a **self-correction baseline** so you can compare:
 
 ## Architecture diagram
 
-```
-User selects example / custom input
-        ↓
-Next.js frontend
-        ↓
-FastAPI backend
-        ↓
-Python GraphEval pipeline
-        ↓
-Ollama / Gemma4 provider (or mock)
-        ↓
-Answer → triples → verification → feedback → revision
-        ↓
-Results returned to frontend
+```mermaid
+flowchart TD
+    A[User question + trusted context] --> B[Initial answer]
+    B --> C[Triple extraction]
+    C --> D[Extracted triples<br/>subject - relation - object]
+    D --> E[Triple verification]
+    A --> E
+    E --> F{Triple status}
+    F -->|Supported| G[Keep claim]
+    F -->|Contradicted| H[Flag bad triple]
+    F -->|Not enough info| H
+    H --> I[Build graph feedback<br/>bad triple + evidence + instruction]
+    G --> J[Revision prompt]
+    I --> J
+    B --> J
+    J --> K[Revised answer]
+    K --> L[Re-check revised answer]
+    L --> M[Final answer + metrics]
 ```
 
 ## Implementation status
