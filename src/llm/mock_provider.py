@@ -14,7 +14,11 @@ def _extract_answer_from_prompt(prompt: str) -> str:
     if "Answer:" in prompt:
         return prompt.split("Answer:", 1)[1].split("JSON:", 1)[0].strip()
     if "Original answer:" in prompt:
-        return prompt.split("Original answer:", 1)[1].split("Feedback", 1)[0].strip()
+        text = prompt.split("Original answer:", 1)[1]
+        for stop in ("Feedback", "Revise the answer", "Return only"):
+            if stop in text:
+                text = text.split(stop, 1)[0]
+        return text.strip()
     return ""
 
 
@@ -39,6 +43,18 @@ class MockProvider(LLMProvider):
                 "The 2018 Hyundai Sonata SE has a 2.4L engine "
                 "and was assembled in Alabama."
             ),
+            "revised_triples": [
+                {
+                    "subject": "2018 Hyundai Sonata SE",
+                    "relation": "has_engine",
+                    "object": "2.4L engine",
+                },
+                {
+                    "subject": "2018 Hyundai Sonata SE",
+                    "relation": "assembled_in",
+                    "object": "Alabama",
+                },
+            ],
         },
         "drone alpha-7": {
             "triples": [
@@ -62,6 +78,23 @@ class MockProvider(LLMProvider):
                 "Drone Alpha-7 can fly for 42 minutes, is approved for daylight "
                 "reconnaissance only, and does not carry weapons."
             ),
+            "revised_triples": [
+                {
+                    "subject": "Drone Alpha-7",
+                    "relation": "max_flight_time",
+                    "object": "42 minutes",
+                },
+                {
+                    "subject": "Drone Alpha-7",
+                    "relation": "approved_for",
+                    "object": "daylight reconnaissance",
+                },
+                {
+                    "subject": "Drone Alpha-7",
+                    "relation": "carries_weapons",
+                    "object": "false",
+                },
+            ],
         },
         "patient case h-102": {
             "triples": [
@@ -80,6 +113,18 @@ class MockProvider(LLMProvider):
                 "Patient Case H-102 is allergic to penicillin and has no recorded "
                 "allergy to acetaminophen. Ibuprofen is listed as tolerated."
             ),
+            "revised_triples": [
+                {
+                    "subject": "Patient Case H-102",
+                    "relation": "allergic_to",
+                    "object": "penicillin",
+                },
+                {
+                    "subject": "Patient Case H-102",
+                    "relation": "tolerates",
+                    "object": "ibuprofen",
+                },
+            ],
         },
         "aircraft mx-41": {
             "triples": [
@@ -104,6 +149,18 @@ class MockProvider(LLMProvider):
                 "The right hydraulic pump passed inspection. "
                 "The next inspection is due on April 3."
             ),
+            "revised_triples": [
+                {
+                    "subject": "Aircraft MX-41",
+                    "relation": "had_replaced",
+                    "object": "left hydraulic pump",
+                },
+                {
+                    "subject": "Aircraft MX-41",
+                    "relation": "next_inspection_due",
+                    "object": "April 3",
+                },
+            ],
         },
         "server app-prod-2": {
             "triples": [
@@ -127,6 +184,23 @@ class MockProvider(LLMProvider):
                 "Server app-prod-2 is running Ubuntu 22.04, SSH password login is "
                 "disabled, and port 443 is open."
             ),
+            "revised_triples": [
+                {
+                    "subject": "Server app-prod-2",
+                    "relation": "runs_os",
+                    "object": "Ubuntu 22.04",
+                },
+                {
+                    "subject": "Server app-prod-2",
+                    "relation": "ssh_password_login",
+                    "object": "disabled",
+                },
+                {
+                    "subject": "Server app-prod-2",
+                    "relation": "port_open",
+                    "object": "443",
+                },
+            ],
         },
         "tank t-17": {
             "triples": [
@@ -145,6 +219,18 @@ class MockProvider(LLMProvider):
                 "Tank T-17 contains non-flammable coolant. Its current level is 87%, "
                 "which is not critical."
             ),
+            "revised_triples": [
+                {
+                    "subject": "Tank T-17",
+                    "relation": "contains",
+                    "object": "non-flammable coolant",
+                },
+                {
+                    "subject": "Tank T-17",
+                    "relation": "level",
+                    "object": "87%",
+                },
+            ],
         },
     }
 
@@ -157,6 +243,8 @@ class MockProvider(LLMProvider):
             return self._triple_verification_response(prompt)
         if "revise the answer" in lowered or "feedback (json)" in lowered:
             return self._answer_revision_response(prompt)
+        if "checking whether an answer is faithful" in lowered:
+            return self._self_correction_response(prompt)
         if "context:" in lowered and "question:" in lowered:
             return self._answer_generation_response(prompt)
 
@@ -182,9 +270,12 @@ class MockProvider(LLMProvider):
         answer = _extract_answer_from_prompt(prompt)
         profile = self._match_profile(answer)
         if profile:
-            triples = [
-                {**triple, "source_sentence": answer} for triple in profile["triples"]
-            ]
+            source = (
+                profile.get("revised_triples", profile["triples"])
+                if self._is_revised_answer(answer, profile)
+                else profile["triples"]
+            )
+            triples = [{**triple, "source_sentence": answer} for triple in source]
             return json.dumps({"triples": triples}, indent=2)
 
         return json.dumps(
@@ -336,11 +427,22 @@ class MockProvider(LLMProvider):
         )
 
     def _answer_revision_response(self, prompt: str) -> str:
+        return self._corrected_answer_from_prompt(prompt)
+
+    def _self_correction_response(self, prompt: str) -> str:
+        return self._corrected_answer_from_prompt(prompt)
+
+    def _corrected_answer_from_prompt(self, prompt: str) -> str:
         answer = _extract_answer_from_prompt(prompt)
         profile = self._match_profile(answer)
         if profile:
-            return profile["revised"]
+            return profile.get("self_corrected", profile["revised"])
         return answer or "Revised answer unavailable in mock mode."
+
+    @staticmethod
+    def _is_revised_answer(answer: str, profile: dict[str, Any]) -> bool:
+        revised = profile.get("revised", "")
+        return bool(revised and answer.strip() == revised.strip())
 
     @staticmethod
     def _extract_field(prompt: str, field_name: str) -> str:

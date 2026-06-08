@@ -44,6 +44,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Do not fall back to mock when Ollama is unavailable",
     )
+    parser.add_argument(
+        "--run-all",
+        action="store_true",
+        help="Run all examples from data/examples.json (default behavior)",
+    )
     return parser
 
 

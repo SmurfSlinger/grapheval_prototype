@@ -32,6 +32,18 @@ export interface FeedbackItem {
   evidence: string;
 }
 
+export interface PipelineMetrics {
+  initial_total_triples: number;
+  initial_supported_count: number;
+  initial_contradicted_count: number;
+  initial_not_enough_info_count: number;
+  graph_revision_needed: boolean;
+  graph_revised_total_triples?: number | null;
+  graph_revised_supported_count?: number | null;
+  graph_revised_contradicted_count?: number | null;
+  graph_revised_not_enough_info_count?: number | null;
+}
+
 export interface PipelineResult {
   example_id: string;
   question: string;
@@ -41,6 +53,11 @@ export interface PipelineResult {
   verification_results: VerificationResult[];
   feedback: FeedbackItem[];
   revised_answer: string | null;
+  self_corrected_answer: string | null;
+  graph_feedback_revised_answer: string | null;
+  graph_revised_triples: Triple[];
+  graph_revised_verification_results: VerificationResult[];
+  metrics: PipelineMetrics;
 }
 
 export interface RunOptions {
@@ -87,6 +104,18 @@ export async function runExample(
     method: "POST",
     body: JSON.stringify({
       example_id: exampleId,
+      provider: options.provider,
+      model: options.model,
+    }),
+  });
+}
+
+export async function runAllExamples(
+  options: RunOptions,
+): Promise<PipelineResult[]> {
+  return apiFetch("/run-all", {
+    method: "POST",
+    body: JSON.stringify({
       provider: options.provider,
       model: options.model,
     }),

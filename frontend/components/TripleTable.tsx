@@ -1,4 +1,4 @@
-import type { PipelineResult, VerificationLabel } from "@/lib/api";
+import type { Triple, VerificationLabel, VerificationResult } from "@/lib/api";
 
 function badgeClass(label: VerificationLabel | null): string {
   if (label === "SUPPORTED") return "badge supported";
@@ -16,15 +16,19 @@ function tripleKey(triple: {
 }
 
 interface TripleTableProps {
-  result: PipelineResult;
+  triples: Triple[];
+  verificationResults: VerificationResult[];
 }
 
-export default function TripleTable({ result }: TripleTableProps) {
+export default function TripleTable({
+  triples,
+  verificationResults,
+}: TripleTableProps) {
   const verificationByTriple = new Map(
-    result.verification_results.map((vr) => [tripleKey(vr.triple), vr]),
+    verificationResults.map((vr) => [tripleKey(vr.triple), vr]),
   );
 
-  if (result.extracted_triples.length === 0) {
+  if (triples.length === 0) {
     return <p className="loading">No triples extracted.</p>;
   }
 
@@ -42,7 +46,7 @@ export default function TripleTable({ result }: TripleTableProps) {
           </tr>
         </thead>
         <tbody>
-          {result.extracted_triples.map((triple, index) => {
+          {triples.map((triple, index) => {
             const vr = verificationByTriple.get(tripleKey(triple));
             const label = vr?.label ?? null;
             return (
@@ -52,9 +56,7 @@ export default function TripleTable({ result }: TripleTableProps) {
                 <td>{triple.object}</td>
                 <td>{triple.source_sentence ?? "—"}</td>
                 <td>
-                  <span className={badgeClass(label)}>
-                    {label ?? "—"}
-                  </span>
+                  <span className={badgeClass(label)}>{label ?? "—"}</span>
                 </td>
                 <td>
                   {vr ? (

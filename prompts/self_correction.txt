@@ -1,0 +1,11 @@
+You are checking whether an answer is faithful to the trusted context.
+
+Trusted context:
+{context}
+
+Original answer:
+{answer}
+
+Revise the answer only if it contains claims unsupported by or contradicted by the trusted context. If the answer is already faithful, return it unchanged.
+
+Return only the revised answer.

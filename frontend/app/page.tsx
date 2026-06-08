@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import ExampleSelector from "@/components/ExampleSelector";
+import ControlsPanel from "@/components/ControlsPanel";
 import PipelineResultView from "@/components/PipelineResultView";
+import ResultsList from "@/components/ResultsList";
 import {
   fetchExamples,
   fetchHealth,
+  runAllExamples,
   runCustomExample,
   runExample,
   type ExampleSummary,
@@ -19,6 +21,7 @@ export default function HomePage() {
   const [examples, setExamples] = useState<ExampleSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [result, setResult] = useState<PipelineResult | null>(null);
+  const [allResults, setAllResults] = useState<PipelineResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [apiStatus, setApiStatus] = useState<"ok" | "down" | "checking">(
@@ -49,10 +52,31 @@ export default function HomePage() {
     [provider, model],
   );
 
+  const selectResult = (id: string) => {
+    setSelectedId(id);
+    const fromAll = allResults.find((r) => r.example_id === id);
+    if (fromAll) {
+      setResult(fromAll);
+      return;
+    }
+    if (result?.example_id === id) return;
+  };
+
+  const handleSelectExample = (id: string) => {
+    setSelectedId(id);
+    const fromAll = allResults.find((r) => r.example_id === id);
+    if (fromAll) {
+      setResult(fromAll);
+    } else if (result?.example_id !== id) {
+      setResult(null);
+    }
+  };
+
   const handleRunSelected = async () => {
     if (!selectedId) return;
     setRunning(true);
     setError(null);
+    setAllResults([]);
     try {
       const output = await runExample(selectedId, runOptions());
       setResult(output);
@@ -63,9 +87,27 @@ export default function HomePage() {
     }
   };
 
+  const handleRunAll = async () => {
+    setRunning(true);
+    setError(null);
+    try {
+      const outputs = await runAllExamples(runOptions());
+      setAllResults(outputs);
+      if (outputs.length > 0) {
+        setResult(outputs[0]);
+        setSelectedId(outputs[0].example_id);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Run all failed");
+    } finally {
+      setRunning(false);
+    }
+  };
+
   const handleRunCustom = async () => {
     setRunning(true);
     setError(null);
+    setAllResults([]);
     try {
       const output = await runCustomExample({
         question: customQuestion,
@@ -74,6 +116,7 @@ export default function HomePage() {
         ...runOptions(),
       });
       setResult(output);
+      setSelectedId(output.example_id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Run failed");
     } finally {
@@ -91,68 +134,46 @@ export default function HomePage() {
 
   return (
     <main>
-      <h1>GraphEval Prototype</h1>
-      <p className="subtitle">
-        Triple-level hallucination detection and revision demo
-      </p>
-
-      <p>
-        API:{" "}
-        {apiStatus === "checking" && <span className="loading">checking…</span>}
-        {apiStatus === "ok" && <span className="status-ok">connected</span>}
-        {apiStatus === "down" && (
-          <span className="status-down">
-            unreachable — start backend with uvicorn api.server:app --reload
-            --port 8000
-          </span>
-        )}
-      </p>
+      <header className="page-header">
+        <div>
+          <h1>GraphEval Prototype</h1>
+          <p className="subtitle">
+            Compare self-correction vs triple-level graph feedback
+          </p>
+        </div>
+        <span
+          className={`api-badge ${apiStatus === "ok" ? "ok" : apiStatus === "down" ? "down" : ""}`}
+        >
+          {apiStatus === "checking" && "API checking…"}
+          {apiStatus === "ok" && "API connected"}
+          {apiStatus === "down" && "API unreachable"}
+        </span>
+      </header>
 
       {error && <div className="error">{error}</div>}
 
-      <section className="card">
-        <h2>Provider / model</h2>
-        <div className="row">
-          <label>
-            Provider
-            <select
-              value={provider}
-              onChange={(e) => setProvider(e.target.value as Provider)}
-            >
-              <option value="mock">mock</option>
-              <option value="ollama">ollama</option>
-            </select>
-          </label>
-          <label>
-            Model
-            <input
-              type="text"
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              disabled={provider === "mock"}
-              placeholder="gemma4:e2b"
-            />
-          </label>
-        </div>
-        {provider === "ollama" && (
-          <p style={{ fontSize: "0.85rem", color: "var(--muted)", marginTop: "0.5rem" }}>
-            Requires Ollama running locally (<code>ollama serve</code>) and the
-            model pulled (<code>ollama pull {model}</code>).
-          </p>
-        )}
-      </section>
-
-      <ExampleSelector
+      <ControlsPanel
+        provider={provider}
+        model={model}
         examples={examples}
         selectedId={selectedId}
-        onSelect={setSelectedId}
-        onRun={handleRunSelected}
         running={running}
+        onProviderChange={setProvider}
+        onModelChange={setModel}
+        onSelectExample={handleSelectExample}
+        onRun={handleRunSelected}
+        onRunAll={handleRunAll}
       />
 
-      <section className="card">
-        <h2>Custom input</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <ResultsList
+        results={allResults}
+        selectedId={selectedId}
+        onSelect={selectResult}
+      />
+
+      <details className="card details-card">
+        <summary>Custom input</summary>
+        <div className="details-body">
           <label>
             Question
             <textarea
@@ -184,7 +205,7 @@ export default function HomePage() {
               onClick={fillCustomFromSelected}
               disabled={!selectedId}
             >
-              Fill from selected example
+              Fill from selected
             </button>
             <button
               type="button"
@@ -196,11 +217,11 @@ export default function HomePage() {
                 !customAnswer.trim()
               }
             >
-              {running ? "Running…" : "Run custom example"}
+              {running ? "Running…" : "Run custom"}
             </button>
           </div>
         </div>
-      </section>
+      </details>
 
       <PipelineResultView result={result} loading={running} />
     </main>

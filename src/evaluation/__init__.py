@@ -1,5 +1,5 @@
 """Evaluation helpers for pipeline outputs."""
 
-from src.evaluation.metrics import compute_verification_counts
+from src.evaluation.metrics import build_metrics, compute_verification_counts, count_labels
 
-__all__ = ["compute_verification_counts"]
+__all__ = ["build_metrics", "compute_verification_counts", "count_labels"]

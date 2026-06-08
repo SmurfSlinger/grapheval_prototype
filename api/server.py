@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from src.config import DEFAULT_MODEL
-from src.io_utils import load_examples, save_result
+from src.io_utils import load_examples, result_filename, save_result
 from src.llm.ollama_provider import (
     OllamaConnectionError,
     OllamaError,
@@ -28,6 +28,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -49,6 +51,11 @@ class RunCustomRequest(BaseModel):
     model: str = DEFAULT_MODEL
 
 
+class RunAllRequest(BaseModel):
+    provider: Literal["mock", "ollama"] = "mock"
+    model: str = DEFAULT_MODEL
+
+
 class ExampleSummary(BaseModel):
     id: str
     question: str
@@ -56,13 +63,16 @@ class ExampleSummary(BaseModel):
     initial_answer: str | None = None
 
 
-def _run_example(example: Example, provider_name: str, model: str) -> dict[str, Any]:
+def _make_runner(provider_name: str, model: str) -> PipelineRunner:
     try:
         provider = get_provider(provider_name, model=model, fallback_to_mock=False)
     except OllamaError as exc:
         raise _ollama_http_error(exc) from exc
+    return PipelineRunner(provider)
 
-    runner = PipelineRunner(provider)
+
+def _run_example(example: Example, provider_name: str, model: str) -> dict[str, Any]:
+    runner = _make_runner(provider_name, model)
     try:
         result = runner.run_example(example)
     except (OllamaError, ValueError) as exc:
@@ -70,7 +80,8 @@ def _run_example(example: Example, provider_name: str, model: str) -> dict[str, 
             raise _ollama_http_error(exc) from exc
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
-    save_result(result)
+    fname = result_filename(example.id, model) if provider_name == "ollama" else None
+    save_result(result, filename=fname)
     return result.to_dict()
 
 
@@ -124,3 +135,27 @@ def run_custom(request: RunCustomRequest) -> dict[str, Any]:
             detail="question, context, and initial_answer are required",
         )
     return _run_example(example, request.provider, request.model)
+
+
+@app.post("/run-all")
+def run_all_examples(request: RunAllRequest) -> list[dict[str, Any]]:
+    runner = _make_runner(request.provider, request.model)
+    results: list[dict[str, Any]] = []
+
+    for example in load_examples():
+        try:
+            result = runner.run_example(example)
+        except (OllamaError, ValueError) as exc:
+            if isinstance(exc, OllamaError):
+                raise _ollama_http_error(exc) from exc
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+        fname = (
+            result_filename(example.id, request.model)
+            if request.provider == "ollama"
+            else None
+        )
+        save_result(result, filename=fname)
+        results.append(result.to_dict())
+
+    return results
