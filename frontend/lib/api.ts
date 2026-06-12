@@ -122,6 +122,35 @@ export async function runAllExamples(
   });
 }
 
+export interface StoredClaim {
+  subject: string;
+  relation: string;
+  object: string;
+  label: VerificationLabel;
+  reason: string;
+  evidence: string;
+  example_id: string;
+  answer_stage: string;
+}
+
+export interface GraphClaimsResponse {
+  enabled: boolean;
+  claims: StoredClaim[];
+  error: string | null;
+}
+
+export async function fetchGraphClaims(options?: {
+  limit?: number;
+  exampleId?: string;
+}): Promise<GraphClaimsResponse> {
+  const params = new URLSearchParams();
+  params.set("limit", String(options?.limit ?? 50));
+  if (options?.exampleId) {
+    params.set("example_id", options.exampleId);
+  }
+  return apiFetch(`/graph/claims?${params.toString()}`);
+}
+
 export async function runCustomExample(
   payload: {
     question: string;

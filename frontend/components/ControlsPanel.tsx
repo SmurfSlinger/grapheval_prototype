@@ -1,5 +1,4 @@
-import type { ExampleSummary } from "@/lib/api";
-import type { Provider } from "@/lib/api";
+import type { ExampleSummary, Provider } from "@/lib/api";
 
 interface ControlsPanelProps {
   provider: Provider;
@@ -28,7 +27,6 @@ export default function ControlsPanel({
 }: ControlsPanelProps) {
   return (
     <section className="card controls-card">
-      <h2>Run pipeline</h2>
       <div className="controls-grid">
         <label>
           Provider
@@ -68,7 +66,7 @@ export default function ControlsPanel({
       </div>
       <div className="row controls-actions">
         <button type="button" onClick={onRun} disabled={!selectedId || running}>
-          {running ? "Running…" : "Run selected"}
+          {running ? "Running…" : "Run"}
         </button>
         <button
           type="button"

@@ -1,12 +1,15 @@
-import type { PipelineMetrics, PipelineResult } from "@/lib/api";
-import FeedbackPanel from "./FeedbackPanel";
+import type { PipelineMetrics, PipelineResult, StoredClaim } from "@/lib/api";
+import AdvancedDetails from "./AdvancedDetails";
 import FlaggedTriples from "./FlaggedTriples";
-import SummaryCards from "./SummaryCards";
-import TripleTable from "./TripleTable";
+import StoredClaimsPanel from "./StoredClaimsPanel";
 
 interface PipelineResultViewProps {
   result: PipelineResult | null;
   loading: boolean;
+  allResults: PipelineResult[];
+  selectedId: string | null;
+  onSelectResult: (id: string) => void;
+  onRefreshNeo4j?: () => void;
 }
 
 function defaultMetrics(result: PipelineResult): PipelineMetrics {
@@ -22,6 +25,10 @@ function defaultMetrics(result: PipelineResult): PipelineMetrics {
 export default function PipelineResultView({
   result,
   loading,
+  allResults,
+  selectedId,
+  onSelectResult,
+  onRefreshNeo4j,
 }: PipelineResultViewProps) {
   if (loading) {
     return (
@@ -36,7 +43,7 @@ export default function PipelineResultView({
   if (!result) {
     return (
       <section className="card muted-card">
-        <p className="loading">Run an example to see results.</p>
+        <p className="loading">Select an example and click Run to see results.</p>
       </section>
     );
   }
@@ -44,29 +51,93 @@ export default function PipelineResultView({
   const graphAnswer =
     result.graph_feedback_revised_answer ?? result.revised_answer;
   const metrics = result.metrics ?? defaultMetrics(result);
-  const graphRevisedTriples = result.graph_revised_triples ?? [];
-  const graphRevisedVerification =
-    result.graph_revised_verification_results ?? [];
+  const revisedContradicted = metrics.graph_revised_contradicted_count ?? 0;
+  const revisedNei = metrics.graph_revised_not_enough_info_count ?? 0;
+  const revisionChecked =
+    metrics.graph_revised_contradicted_count != null &&
+    metrics.graph_revised_not_enough_info_count != null;
 
   return (
     <div className="results-stack">
-      <SummaryCards metrics={metrics} exampleId={result.example_id} />
+      <section className="card story-section">
+        <h2>Original answer</h2>
+        <p className="section-lead">
+          The model starts with an answer that may contain unsupported or incorrect
+          claims.
+        </p>
+        <div className="answer-block">{result.initial_answer}</div>
+        <div className="context-card">
+          <p className="context-label">Trusted context</p>
+          <div className="answer-block context-block">{result.context}</div>
+        </div>
+      </section>
 
-      <section className="card">
-        <h3 className="section-title">Correction comparison</h3>
+      <section className="card story-section">
+        <h2>What the system found</h2>
+        <p className="section-lead">
+          The pipeline extracts claims as triples, then checks each one against the
+          trusted context.
+        </p>
+        <div className="claim-summary">
+          <span className="mini-stat">
+            <strong>{metrics.initial_total_triples}</strong> total claims
+          </span>
+          <span className="badge supported">
+            {metrics.initial_supported_count} supported
+          </span>
+          <span className="badge contradicted">
+            {metrics.initial_contradicted_count} contradicted
+          </span>
+          <span className="badge nei">
+            {metrics.initial_not_enough_info_count} not enough info
+          </span>
+        </div>
+        <h3 className="subsection-title">Flagged claims</h3>
+        <FlaggedTriples result={result} />
+      </section>
+
+      <section className="card story-section">
+        <h2>Revised answer</h2>
+        <p className="section-lead">
+          The answer is revised using feedback tied to the specific bad claims and
+          their evidence.
+        </p>
+        <div className="answer-block revised-answer">
+          {graphAnswer ?? result.initial_answer}
+        </div>
+        {revisionChecked ? (
+          revisedContradicted === 0 && revisedNei === 0 ? (
+            <p className="success-text">
+              No remaining unsupported or contradicted claims found after revision.
+            </p>
+          ) : (
+            <p className="revision-stats">
+              After revision: {revisedContradicted} contradicted, {revisedNei} not
+              enough info
+            </p>
+          )
+        ) : (
+          <p className="revision-stats muted-text">
+            No revision was needed — all claims were supported.
+          </p>
+        )}
+      </section>
+
+      <section className="card story-section">
+        <h2>Baseline comparison</h2>
+        <p className="section-lead">
+          Self-correction gets a generic prompt; graph feedback gets the specific
+          bad claims and evidence.
+        </p>
         <div className="comparison-grid">
           <div className="comparison-panel self-correction">
-            <h4>Self-correction baseline</h4>
-            <p className="comparison-hint">Generic check against context</p>
+            <h3>Self-correction baseline</h3>
             <div className="answer-block compact">
               {result.self_corrected_answer ?? "(not run)"}
             </div>
           </div>
           <div className="comparison-panel graph-feedback">
-            <h4>Triple-level graph feedback</h4>
-            <p className="comparison-hint">
-              Revision using specific bad triples
-            </p>
+            <h3>Triple-level graph feedback</h3>
             <div className="answer-block compact">
               {graphAnswer ?? "(no revision needed)"}
             </div>
@@ -74,45 +145,17 @@ export default function PipelineResultView({
         </div>
       </section>
 
-      <section className="card">
-        <h3 className="section-title">Flagged triples</h3>
-        <FlaggedTriples result={result} />
-      </section>
+      <StoredClaimsPanel
+        selectedExampleId={result.example_id}
+        onRefresh={onRefreshNeo4j}
+      />
 
-      <details className="card details-card">
-        <summary>Show full details</summary>
-        <div className="details-body">
-          <h4>Question</h4>
-          <div className="answer-block compact">{result.question}</div>
-
-          <h4>Trusted context</h4>
-          <div className="answer-block compact context-block">
-            {result.context}
-          </div>
-
-          <h4>Initial answer</h4>
-          <div className="answer-block compact">{result.initial_answer}</div>
-
-          <h4>All extracted triples</h4>
-          <TripleTable
-            triples={result.extracted_triples}
-            verificationResults={result.verification_results}
-          />
-
-          <h4>Graph-feedback items</h4>
-          <FeedbackPanel feedback={result.feedback} />
-
-          {graphRevisedTriples.length > 0 && (
-            <>
-              <h4>Triples after graph-feedback revision</h4>
-              <TripleTable
-                triples={graphRevisedTriples}
-                verificationResults={graphRevisedVerification}
-              />
-            </>
-          )}
-        </div>
-      </details>
+      <AdvancedDetails
+        result={result}
+        allResults={allResults}
+        selectedId={selectedId}
+        onSelectResult={onSelectResult}
+      />
     </div>
   );
 }

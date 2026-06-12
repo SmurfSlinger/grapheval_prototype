@@ -1,6 +1,7 @@
 """Project paths and runtime configuration."""
 
 from pathlib import Path
+import os
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -22,3 +23,8 @@ OLLAMA_BASE_URL = "http://localhost:11434"
 DEFAULT_MODEL = "gemma4:e2b"
 TEST_MODELS = ["gemma4:e2b", "gemma4:e4b", "gemma4:12b"]
 OLLAMA_REQUEST_TIMEOUT = 120  # seconds per completion
+
+NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password123")
+NEO4J_ENABLED = os.getenv("NEO4J_ENABLED", "false").lower() == "true"

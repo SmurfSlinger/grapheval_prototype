@@ -17,3 +17,6 @@ frontend/node_modules/
 frontend/.next/
 frontend/out/
 frontend/.env*.local
+build-prompts.local.md
+scripts/.pids/
+HOW_IT_WORKS.md

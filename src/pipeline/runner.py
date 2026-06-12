@@ -12,6 +12,7 @@ from src.pipeline.feedback_builder import FeedbackBuilder
 from src.pipeline.self_corrector import SelfCorrector
 from src.pipeline.triple_extractor import TripleExtractor
 from src.pipeline.triple_verifier import LLMJudgeVerifier, TripleVerifier
+from src.storage.neo4j_store import store_verified_triples_if_enabled
 
 
 class PipelineRunner:
@@ -36,6 +37,9 @@ class PipelineRunner:
         verification_results = self.triple_verifier.verify_all(
             extracted_triples, example.context
         )
+        store_verified_triples_if_enabled(
+            example.id, "initial", verification_results
+        )
         feedback = self.feedback_builder.build(verification_results)
 
         graph_feedback_revised_answer = None
@@ -51,6 +55,9 @@ class PipelineRunner:
             )
             graph_revised_verification_results = self.triple_verifier.verify_all(
                 graph_revised_triples, example.context
+            )
+            store_verified_triples_if_enabled(
+                example.id, "graph_revised", graph_revised_verification_results
             )
 
         metrics = build_metrics(

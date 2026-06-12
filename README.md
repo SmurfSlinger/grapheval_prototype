@@ -40,12 +40,16 @@ flowchart TD
 - Next.js frontend working with single-run, run-all, and custom input.
 - Pipeline supports triple extraction, verification, graph feedback, revision, and self-correction baseline.
 - Post-revision re-verification counts remaining bad triples after graph-feedback revision.
+- Optional Neo4j storage for verified triples (`NEO4J_ENABLED=true`).
 - **Next step:** formal comparison study — self-correction vs triple-level graph feedback.
 
 ## Project layout
 
 ```
 grapheval_prototype/
+├── scripts/
+│   ├── start-dev.sh            # One-command local demo (Neo4j + API + UI)
+│   └── stop-dev.sh             # Stop tracked processes + Neo4j container
 ├── api/server.py               # FastAPI wrapper
 ├── frontend/                   # Next.js demo UI
 ├── data/examples.json          # Test examples (6 domains)
@@ -73,9 +77,129 @@ ollama pull gemma4:12b
 
 Text-only prompts — image input is not used even if the model supports it.
 
+## Neo4j storage
+
+Verified triples can be persisted to Neo4j **after** the existing LLM verification step. Neo4j is **not** used as the verifier — it only stores results.
+
+Start a local Neo4j instance:
+
+```bash
+docker run \
+  --name grapheval-neo4j \
+  -p 7474:7474 -p 7687:7687 \
+  -e NEO4J_AUTH=neo4j/password123 \
+  neo4j:latest
+```
+
+Enable storage when running the pipeline:
+
+```bash
+export NEO4J_ENABLED=true
+export NEO4J_URI=bolt://localhost:7687
+export NEO4J_USER=neo4j
+export NEO4J_PASSWORD=password123
+
+python -m src.main --provider mock
+```
+
+Graph model:
+
+- `(:Entity {name})` nodes for subject and object (merged by name)
+- `[:CLAIM {relation, label, reason, evidence, example_id, answer_stage}]` relationships
+
+Each pipeline run stores:
+
+- `answer_stage="initial"` — triples from the initial answer
+- `answer_stage="graph_revised"` — triples after graph-feedback revision (if revision occurred)
+
+If Neo4j is enabled but unavailable, the pipeline prints a warning and continues normally.
+
+Browse the graph at [http://localhost:7474](http://localhost:7474) (default auth: `neo4j` / `password123`).
+
+Example Cypher query:
+
+```cypher
+MATCH (s:Entity)-[c:CLAIM]->(o:Entity)
+WHERE c.example_id = "hyundai_sonata_001"
+RETURN s.name, c.relation, o.name, c.label, c.answer_stage
+```
+
+### Viewing stored Neo4j claims
+
+After running examples with `NEO4J_ENABLED=true`, you can inspect stored `CLAIM` relationships via the API or Neo4j Browser.
+
+**API** (with the FastAPI server running):
+
+- All claims: [http://localhost:8000/graph/claims](http://localhost:8000/graph/claims)
+- Filter by example: `http://localhost:8000/graph/claims?example_id=hyundai_sonata_001`
+- Bad claims only: [http://localhost:8000/graph/bad-claims](http://localhost:8000/graph/bad-claims)
+
+The Next.js UI walks through the pipeline in order: original answer → flagged claims → revised answer → baseline comparison → stored Neo4j claims. Full triple tables and JSON are under **Advanced details**.
+
+If Neo4j is disabled or unavailable, these endpoints return JSON with an empty `claims` list and an `error` message instead of failing the request.
+
+**Neo4j Browser** Cypher:
+
+```cypher
+MATCH (s:Entity)-[c:CLAIM]->(o:Entity)
+RETURN
+  s.name AS subject,
+  c.relation AS relation,
+  o.name AS object,
+  c.label AS label,
+  c.reason AS reason,
+  c.evidence AS evidence,
+  c.example_id AS example_id,
+  c.answer_stage AS answer_stage
+LIMIT 50;
+```
+
 ## How to run
 
-### Web UI (recommended for demos)
+### Quick start (recommended)
+
+One command starts Neo4j (Docker), the FastAPI backend, and the Next.js frontend with **Neo4j storage enabled**. The LLM verifier is unchanged — Neo4j is storage only.
+
+**Requirements:** Docker, Python 3.10+, Node.js 18+
+
+Do **not** run with `sudo` — that breaks pip (root uses `/usr/sbin/python` without pip). If Docker permission is denied, add your user to the `docker` group instead:
+
+```bash
+sudo usermod -aG docker "$USER"
+newgrp docker   # or log out and back in
+```
+
+```bash
+chmod +x scripts/start-dev.sh scripts/stop-dev.sh   # first time only
+./scripts/start-dev.sh
+```
+
+Open [http://localhost:3000](http://localhost:3000) (or the port Next.js prints if 3000 is busy).
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Backend health | http://localhost:8000/health |
+| API docs | http://localhost:8000/docs |
+| Neo4j Browser | http://localhost:7474 (`neo4j` / `password123`) |
+
+Press **Ctrl+C** in the start script terminal to stop the backend and frontend. The Neo4j container keeps running.
+
+Stop everything including Neo4j:
+
+```bash
+./scripts/stop-dev.sh
+```
+
+Copy `.env.example` to `.env` if you want the same Neo4j/Ollama defaults outside the script:
+
+```bash
+cp .env.example .env
+```
+
+### Manual startup
+
+Use these if you prefer separate terminals or don't want Docker/Neo4j.
 
 **Backend** (project root):
 
@@ -94,11 +218,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-The UI supports:
-- Run one example or **Run all examples**
-- Custom question / context / initial answer
-- Side-by-side self-correction vs graph-feedback outputs
-- Summary cards and triple tables with verification badges
+The UI is organized for demo clarity:
+
+1. **Original answer** — flawed answer plus trusted context
+2. **What the system found** — claim counts and flagged claims only
+3. **Revised answer** — graph-feedback revision with post-revision stats
+4. **Baseline comparison** — self-correction vs triple-level graph feedback
+5. **Stored in Neo4j** — compact claim table for the selected example
+6. **Advanced details** (collapsed) — full triple tables, graph-feedback items, raw Neo4j rows, JSON
+
+Controls support run one example, **Run all**, and custom input (under **Advanced: custom input**).
 
 API docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 
@@ -157,6 +286,7 @@ curl -X POST http://localhost:8000/run-all \
 | `pipeline/feedback_builder.py` | Build triple-level revision instructions |
 | `pipeline/answer_reviser.py` | Graph-feedback answer revision |
 | `evaluation/metrics.py` | Scoring / count fields |
+| `storage/neo4j_store.py` | Optional verified-triple persistence |
 | `api/server.py` | HTTP API wrapping the pipeline |
 | `frontend/` | Demo UI |
 
@@ -170,4 +300,4 @@ curl -X POST http://localhost:8000/run-all \
 
 1. **Formal comparison study** — self-correction vs graph-feedback across all examples and models.
 2. **LLM-as-judge vs NLI verification** — implement `NLIVerifier`.
-3. **Neo4j graph storage** — persist triples and verification edges.
+3. **Neo4j analytics** — query stored CLAIM relationships across runs and examples.

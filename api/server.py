@@ -20,6 +20,7 @@ from src.llm.ollama_provider import (
 from src.main import get_provider
 from src.models import Example
 from src.pipeline.runner import PipelineRunner
+from src.storage.neo4j_store import query_claims_if_enabled
 
 app = FastAPI(title="GraphEval Prototype API", version="0.1.0")
 
@@ -63,6 +64,23 @@ class ExampleSummary(BaseModel):
     initial_answer: str | None = None
 
 
+class StoredClaim(BaseModel):
+    subject: str
+    relation: str
+    object: str
+    label: str
+    reason: str
+    evidence: str
+    example_id: str
+    answer_stage: str
+
+
+class GraphClaimsResponse(BaseModel):
+    enabled: bool
+    claims: list[StoredClaim]
+    error: str | None = None
+
+
 def _make_runner(provider_name: str, model: str) -> PipelineRunner:
     try:
         provider = get_provider(provider_name, model=model, fallback_to_mock=False)
@@ -98,6 +116,37 @@ def _ollama_http_error(exc: OllamaError) -> HTTPException:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+def _graph_claims_response(
+    *,
+    example_id: str | None = None,
+    limit: int = 50,
+    bad_only: bool = False,
+) -> GraphClaimsResponse:
+    enabled, claims, error = query_claims_if_enabled(
+        example_id=example_id,
+        limit=limit,
+        bad_only=bad_only,
+    )
+    return GraphClaimsResponse(
+        enabled=enabled,
+        claims=[StoredClaim(**claim) for claim in claims],
+        error=error,
+    )
+
+
+@app.get("/graph/claims", response_model=GraphClaimsResponse)
+def get_graph_claims(
+    limit: int = 50,
+    example_id: str | None = None,
+) -> GraphClaimsResponse:
+    return _graph_claims_response(example_id=example_id, limit=limit)
+
+
+@app.get("/graph/bad-claims", response_model=GraphClaimsResponse)
+def get_graph_bad_claims(limit: int = 50) -> GraphClaimsResponse:
+    return _graph_claims_response(limit=limit, bad_only=True)
 
 
 @app.get("/examples", response_model=list[ExampleSummary])

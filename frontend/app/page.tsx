@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import ControlsPanel from "@/components/ControlsPanel";
 import PipelineResultView from "@/components/PipelineResultView";
-import ResultsList from "@/components/ResultsList";
 import {
   fetchExamples,
+  fetchGraphClaims,
   fetchHealth,
   runAllExamples,
   runCustomExample,
@@ -27,15 +27,29 @@ export default function HomePage() {
   const [apiStatus, setApiStatus] = useState<"ok" | "down" | "checking">(
     "checking",
   );
+  const [neo4jStatus, setNeo4jStatus] = useState<
+    "enabled" | "disabled" | "checking"
+  >("checking");
 
   const [customQuestion, setCustomQuestion] = useState("");
   const [customContext, setCustomContext] = useState("");
   const [customAnswer, setCustomAnswer] = useState("");
 
+  const refreshNeo4jStatus = useCallback(async () => {
+    try {
+      const response = await fetchGraphClaims({ limit: 1 });
+      setNeo4jStatus(response.enabled ? "enabled" : "disabled");
+    } catch {
+      setNeo4jStatus("disabled");
+    }
+  }, []);
+
   useEffect(() => {
     fetchHealth()
       .then(() => setApiStatus("ok"))
       .catch(() => setApiStatus("down"));
+
+    refreshNeo4jStatus();
 
     fetchExamples()
       .then((data) => {
@@ -45,7 +59,7 @@ export default function HomePage() {
         }
       })
       .catch((err: Error) => setError(err.message));
-  }, []);
+  }, [refreshNeo4jStatus]);
 
   const runOptions = useCallback(
     () => ({ provider, model }),
@@ -57,9 +71,7 @@ export default function HomePage() {
     const fromAll = allResults.find((r) => r.example_id === id);
     if (fromAll) {
       setResult(fromAll);
-      return;
     }
-    if (result?.example_id === id) return;
   };
 
   const handleSelectExample = (id: string) => {
@@ -80,6 +92,7 @@ export default function HomePage() {
     try {
       const output = await runExample(selectedId, runOptions());
       setResult(output);
+      await refreshNeo4jStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Run failed");
     } finally {
@@ -97,6 +110,7 @@ export default function HomePage() {
         setResult(outputs[0]);
         setSelectedId(outputs[0].example_id);
       }
+      await refreshNeo4jStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Run all failed");
     } finally {
@@ -117,6 +131,7 @@ export default function HomePage() {
       });
       setResult(output);
       setSelectedId(output.example_id);
+      await refreshNeo4jStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Run failed");
     } finally {
@@ -138,16 +153,25 @@ export default function HomePage() {
         <div>
           <h1>GraphEval Prototype</h1>
           <p className="subtitle">
-            Compare self-correction vs triple-level graph feedback
+            Triple-level feedback for hallucination correction
           </p>
         </div>
-        <span
-          className={`api-badge ${apiStatus === "ok" ? "ok" : apiStatus === "down" ? "down" : ""}`}
-        >
-          {apiStatus === "checking" && "API checking…"}
-          {apiStatus === "ok" && "API connected"}
-          {apiStatus === "down" && "API unreachable"}
-        </span>
+        <div className="status-row">
+          <span
+            className={`api-badge ${apiStatus === "ok" ? "ok" : apiStatus === "down" ? "down" : ""}`}
+          >
+            {apiStatus === "checking" && "API checking…"}
+            {apiStatus === "ok" && "API connected"}
+            {apiStatus === "down" && "API disconnected"}
+          </span>
+          <span
+            className={`api-badge ${neo4jStatus === "enabled" ? "ok" : neo4jStatus === "disabled" ? "down" : ""}`}
+          >
+            {neo4jStatus === "checking" && "Neo4j checking…"}
+            {neo4jStatus === "enabled" && "Neo4j storage enabled"}
+            {neo4jStatus === "disabled" && "Neo4j storage disabled"}
+          </span>
+        </div>
       </header>
 
       {error && <div className="error">{error}</div>}
@@ -165,14 +189,8 @@ export default function HomePage() {
         onRunAll={handleRunAll}
       />
 
-      <ResultsList
-        results={allResults}
-        selectedId={selectedId}
-        onSelect={selectResult}
-      />
-
       <details className="card details-card">
-        <summary>Custom input</summary>
+        <summary>Advanced: custom input</summary>
         <div className="details-body">
           <label>
             Question
@@ -223,7 +241,14 @@ export default function HomePage() {
         </div>
       </details>
 
-      <PipelineResultView result={result} loading={running} />
+      <PipelineResultView
+        result={result}
+        loading={running}
+        allResults={allResults}
+        selectedId={selectedId}
+        onSelectResult={selectResult}
+        onRefreshNeo4j={refreshNeo4jStatus}
+      />
     </main>
   );
 }

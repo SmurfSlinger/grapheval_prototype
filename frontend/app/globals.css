@@ -81,9 +81,134 @@ h1 {
   margin-bottom: 0.85rem;
 }
 
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.section-lead {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.story-section h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.subsection-title {
+  margin: 0.85rem 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.claim-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.context-card {
+  margin-top: 0.75rem;
+}
+
+.context-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.revised-answer {
+  border-left: 4px solid var(--supported);
+}
+
+.success-text {
+  margin: 0.65rem 0 0;
+  color: var(--supported);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.revision-stats {
+  margin: 0.65rem 0 0;
+  font-size: 0.88rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.claim-details-row td {
+  background: #f8fafc;
+  font-size: 0.85rem;
+}
+
+.claim-details-row p {
+  margin: 0.25rem 0;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  padding: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-link:hover {
+  background: none;
+  text-decoration: underline;
+}
+
+.json-block {
+  margin-top: 0.65rem;
+  padding: 0.75rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.75rem;
+  max-height: 420px;
+}
+
+.flagged-claim {
+  font-size: 0.88rem;
+}
+
+.comparison-panel h3 {
+  margin: 0 0 0.45rem;
+  font-size: 0.9rem;
+}
+
 .card h2 {
   margin: 0 0 0.65rem;
   font-size: 1rem;
+}
+
+.section-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.section-header h2 {
+  margin: 0;
+}
+
+.error.inline {
+  margin-bottom: 0.65rem;
 }
 
 .muted-card {
