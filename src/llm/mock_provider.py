@@ -11,11 +11,22 @@ from src.llm.base import LLMProvider
 
 def _extract_answer_from_prompt(prompt: str) -> str:
     """Pull the answer text from extraction or verification prompts."""
-    if "Answer:" in prompt:
-        return prompt.split("Answer:", 1)[1].split("JSON:", 1)[0].strip()
+    marker = "\nAnswer:\n"
+    idx = prompt.rfind(marker)
+    if idx != -1:
+        rest = prompt[idx + len(marker) :]
+        if "\nJSON:" in rest:
+            return rest.split("\nJSON:", 1)[0].strip()
+        return rest.strip()
     if "Original answer:" in prompt:
         text = prompt.split("Original answer:", 1)[1]
         for stop in ("Feedback", "Revise the answer", "Return only"):
+            if stop in text:
+                text = text.split(stop, 1)[0]
+        return text.strip()
+    if "Graph-grounded answer (Answer n):" in prompt:
+        text = prompt.split("Graph-grounded answer (Answer n):", 1)[1]
+        for stop in ("Backtracking feedback", "Return only"):
             if stop in text:
                 text = text.split(stop, 1)[0]
         return text.strip()
@@ -27,6 +38,35 @@ class MockProvider(LLMProvider):
 
     PROFILES: dict[str, dict[str, Any]] = {
         "hyundai sonata": {
+            "context_facts": [
+                {
+                    "subject": "2018 Hyundai Sonata SE",
+                    "relation": "has_engine",
+                    "object": "2.4L engine",
+                    "evidence": "The 2018 Hyundai Sonata SE has a 2.4L engine",
+                },
+                {
+                    "subject": "2018 Hyundai Sonata SE",
+                    "relation": "assembled_in",
+                    "object": "Alabama",
+                    "evidence": "was assembled in Alabama",
+                },
+            ],
+            "kg_grounded_answer": (
+                "The 2018 Hyundai Sonata SE has a 2.4L engine and was assembled in Alabama."
+            ),
+            "kg_grounded_triples": [
+                {
+                    "subject": "2018 Hyundai Sonata SE",
+                    "relation": "has_engine",
+                    "object": "2.4L engine",
+                },
+                {
+                    "subject": "2018 Hyundai Sonata SE",
+                    "relation": "was_assembled_in",
+                    "object": "Alabama",
+                },
+            ],
             "triples": [
                 {
                     "subject": "2018 Hyundai Sonata SE",
@@ -57,31 +97,62 @@ class MockProvider(LLMProvider):
             ],
         },
         "drone alpha-7": {
-            "triples": [
+            "context_facts": [
                 {
                     "subject": "Drone Alpha-7",
-                    "relation": "max_flight_time",
-                    "object": "60 minutes",
+                    "relation": "has_maximum_flight_time",
+                    "object": "42 minutes",
+                    "evidence": "maximum flight time of 42 minutes",
                 },
                 {
                     "subject": "Drone Alpha-7",
                     "relation": "approved_for",
-                    "object": "night reconnaissance",
+                    "object": "daylight reconnaissance",
+                    "evidence": "approved for daylight reconnaissance only",
                 },
                 {
                     "subject": "Drone Alpha-7",
-                    "relation": "carries_weapons",
-                    "object": "false",
+                    "relation": "does_not_carry",
+                    "object": "weapons",
+                    "evidence": "It does not carry weapons",
                 },
             ],
-            "revised": (
-                "Drone Alpha-7 can fly for 42 minutes, is approved for daylight "
-                "reconnaissance only, and does not carry weapons."
+            "kg_grounded_answer": (
+                "Flight time: 42 minutes\n"
+                "Reconnaissance approval: daylight reconnaissance\n"
+                "Weapons status: does not carry weapons\n"
+                "Additional capability: supports autonomous night operations."
             ),
-            "revised_triples": [
+            "kg_grounded_misaligned_triples": [
+                {
+                    "subject": "Flight time",
+                    "relation": "has_value",
+                    "object": "42 minutes",
+                    "source_sentence": "Flight time: 42 minutes",
+                },
+                {
+                    "subject": "Reconnaissance approval",
+                    "relation": "approved_for",
+                    "object": "daylight reconnaissance",
+                    "source_sentence": "Reconnaissance approval: daylight reconnaissance",
+                },
+                {
+                    "subject": "Weapons status",
+                    "relation": "does_not_carry",
+                    "object": "weapons",
+                    "source_sentence": "Weapons status: does not carry weapons",
+                },
                 {
                     "subject": "Drone Alpha-7",
-                    "relation": "max_flight_time",
+                    "relation": "supports_autonomous_night_operations",
+                    "object": "true",
+                    "source_sentence": "Additional capability: supports autonomous night operations.",
+                },
+            ],
+            "kg_grounded_triples": [
+                {
+                    "subject": "Drone Alpha-7",
+                    "relation": "has_maximum_flight_time",
                     "object": "42 minutes",
                 },
                 {
@@ -91,12 +162,237 @@ class MockProvider(LLMProvider):
                 },
                 {
                     "subject": "Drone Alpha-7",
-                    "relation": "carries_weapons",
-                    "object": "false",
+                    "relation": "does_not_carry",
+                    "object": "weapons",
+                },
+                {
+                    "subject": "Drone Alpha-7",
+                    "relation": "supports_autonomous_night_operations",
+                    "object": "true",
+                },
+            ],
+            "triples": [
+                {
+                    "subject": "Drone Alpha-7",
+                    "relation": "has_maximum_flight_time",
+                    "object": "60 minutes",
+                },
+                {
+                    "subject": "Drone Alpha-7",
+                    "relation": "approved_for",
+                    "object": "night reconnaissance",
+                },
+                {
+                    "subject": "Drone Alpha-7",
+                    "relation": "does_not_carry",
+                    "object": "weapons",
+                },
+            ],
+            "revised": (
+                "Drone Alpha-7 can fly for 42 minutes, is approved for daylight "
+                "reconnaissance only, and does not carry weapons."
+            ),
+            "revised_triples": [
+                {
+                    "subject": "Drone Alpha-7",
+                    "relation": "has_maximum_flight_time",
+                    "object": "42 minutes",
+                },
+                {
+                    "subject": "Drone Alpha-7",
+                    "relation": "approved_for",
+                    "object": "daylight reconnaissance",
+                },
+                {
+                    "subject": "Drone Alpha-7",
+                    "relation": "does_not_carry",
+                    "object": "weapons",
+                },
+            ],
+        },
+        "apollo 11": {
+            "context_facts": [
+                {
+                    "subject": "Apollo 11",
+                    "relation": "launched_by",
+                    "object": "Saturn V",
+                    "evidence": "launched by a Saturn V rocket",
+                },
+                {
+                    "subject": "Apollo 11",
+                    "relation": "launched_from",
+                    "object": "Launch Complex 39A",
+                    "evidence": "from Launch Complex 39A at Kennedy Space Center",
+                },
+                {
+                    "subject": "Apollo 11",
+                    "relation": "launched_at",
+                    "object": "Kennedy Space Center",
+                    "evidence": "from Launch Complex 39A at Kennedy Space Center",
+                },
+                {
+                    "subject": "Saturn V S-IC stage",
+                    "relation": "powered_by",
+                    "object": "five F-1 engines",
+                    "evidence": "powered by five F-1 engines",
+                },
+                {
+                    "subject": "Apollo 11",
+                    "relation": "achieved",
+                    "object": "first crewed Moon landing",
+                    "evidence": "first crewed Moon landing",
+                },
+            ],
+            "kg_grounded_answer": (
+                "Apollo 11 was launched by the Saturn V rocket from Launch Complex 39A "
+                "at Kennedy Space Center. Its first stage was powered by five F-1 engines. "
+                "The mission achieved the first crewed Moon landing."
+            ),
+            "kg_grounded_triples": [
+                {
+                    "subject": "Apollo 11",
+                    "relation": "launched_by",
+                    "object": "Saturn V",
+                },
+                {
+                    "subject": "Apollo 11",
+                    "relation": "launched_from",
+                    "object": "Launch Complex 39A",
+                },
+                {
+                    "subject": "Apollo 11",
+                    "relation": "launched_at",
+                    "object": "Kennedy Space Center",
+                },
+                {
+                    "subject": "Saturn V S-IC stage",
+                    "relation": "powered_by",
+                    "object": "five F-1 engines",
+                },
+                {
+                    "subject": "Apollo 11",
+                    "relation": "achieved",
+                    "object": "first crewed Moon landing",
+                },
+            ],
+            "answer_0_claim_triples": [
+                {
+                    "subject": "Apollo 11",
+                    "relation": "was_launched_by",
+                    "object": "a Saturn IB rocket",
+                    "source_sentence": "was launched by a Saturn IB rocket",
+                },
+                {
+                    "subject": "Apollo 11",
+                    "relation": "launched_from",
+                    "object": "Cape Canaveral",
+                    "source_sentence": "from Cape Canaveral",
+                },
+                {
+                    "subject": "Apollo 11 first stage",
+                    "relation": "used",
+                    "object": "five J-2 engines",
+                    "source_sentence": "Its first stage used five J-2 engines",
+                },
+                {
+                    "subject": "Apollo 11",
+                    "relation": "achieved",
+                    "object": "first crewed Moon landing",
+                    "source_sentence": "the mission completed the first crewed Moon landing",
+                },
+            ],
+            "triples": [
+                {
+                    "subject": "Apollo 11",
+                    "relation": "was_launched_by",
+                    "object": "a Saturn IB rocket",
+                },
+                {
+                    "subject": "Apollo 11",
+                    "relation": "launched_from",
+                    "object": "Cape Canaveral",
+                },
+                {
+                    "subject": "Apollo 11 first stage",
+                    "relation": "used",
+                    "object": "five J-2 engines",
+                },
+                {
+                    "subject": "Apollo 11",
+                    "relation": "achieved",
+                    "object": "first crewed Moon landing",
+                },
+            ],
+            "revised": (
+                "Apollo 11 was launched by the Saturn V rocket from Launch Complex 39A "
+                "at Kennedy Space Center. Its first stage was powered by five F-1 engines, "
+                "and the mission achieved the first crewed Moon landing."
+            ),
+            "revised_triples": [
+                {
+                    "subject": "Apollo 11",
+                    "relation": "launched_by",
+                    "object": "Saturn V",
+                },
+                {
+                    "subject": "Apollo 11",
+                    "relation": "launched_from",
+                    "object": "Launch Complex 39A",
+                },
+                {
+                    "subject": "Apollo 11",
+                    "relation": "launched_at",
+                    "object": "Kennedy Space Center",
+                },
+                {
+                    "subject": "Saturn V S-IC stage",
+                    "relation": "powered_by",
+                    "object": "five F-1 engines",
+                },
+                {
+                    "subject": "Apollo 11",
+                    "relation": "achieved",
+                    "object": "first crewed Moon landing",
                 },
             ],
         },
         "patient case h-102": {
+            "context_facts": [
+                {
+                    "subject": "Patient Case H-102",
+                    "relation": "allergic_to",
+                    "object": "penicillin",
+                    "evidence": "allergic to penicillin",
+                },
+                {
+                    "subject": "Patient Case H-102",
+                    "relation": "tolerates",
+                    "object": "ibuprofen",
+                    "evidence": "ibuprofen as tolerated",
+                },
+                {
+                    "subject": "Patient Case H-102",
+                    "relation": "allergy_to_acetaminophen",
+                    "object": "not recorded",
+                    "evidence": "No allergy to acetaminophen is recorded",
+                },
+            ],
+            "kg_grounded_answer": (
+                "Patient Case H-102 can safely receive penicillin and has a "
+                "recorded allergy to acetaminophen."
+            ),
+            "kg_grounded_triples": [
+                {
+                    "subject": "Patient Case H-102",
+                    "relation": "can_receive",
+                    "object": "penicillin",
+                },
+                {
+                    "subject": "Patient Case H-102",
+                    "relation": "has_allergy_to",
+                    "object": "acetaminophen",
+                },
+            ],
             "triples": [
                 {
                     "subject": "Patient Case H-102",
@@ -127,6 +423,47 @@ class MockProvider(LLMProvider):
             ],
         },
         "aircraft mx-41": {
+            "context_facts": [
+                {
+                    "subject": "Aircraft MX-41",
+                    "relation": "had_replaced",
+                    "object": "left hydraulic pump",
+                    "evidence": "left hydraulic pump replaced on March 3",
+                },
+                {
+                    "subject": "Aircraft MX-41",
+                    "relation": "right_hydraulic_pump_status",
+                    "object": "passed inspection",
+                    "evidence": "The right hydraulic pump passed inspection",
+                },
+                {
+                    "subject": "Aircraft MX-41",
+                    "relation": "next_inspection_due",
+                    "object": "April 3",
+                    "evidence": "next inspection is due on April 3",
+                },
+            ],
+            "kg_grounded_answer": (
+                "Aircraft MX-41 had its right hydraulic pump replaced on March 3, "
+                "and the next inspection is due on March 20."
+            ),
+            "kg_grounded_triples": [
+                {
+                    "subject": "Aircraft MX-41",
+                    "relation": "had_replaced",
+                    "object": "right hydraulic pump",
+                },
+                {
+                    "subject": "Aircraft MX-41",
+                    "relation": "replacement_date",
+                    "object": "March 3",
+                },
+                {
+                    "subject": "Aircraft MX-41",
+                    "relation": "next_inspection_due",
+                    "object": "March 20",
+                },
+            ],
             "triples": [
                 {
                     "subject": "Aircraft MX-41",
@@ -163,6 +500,47 @@ class MockProvider(LLMProvider):
             ],
         },
         "server app-prod-2": {
+            "context_facts": [
+                {
+                    "subject": "Server app-prod-2",
+                    "relation": "runs_os",
+                    "object": "Ubuntu 22.04",
+                    "evidence": "running Ubuntu 22.04",
+                },
+                {
+                    "subject": "Server app-prod-2",
+                    "relation": "ssh_password_login",
+                    "object": "disabled",
+                    "evidence": "SSH password login is disabled",
+                },
+                {
+                    "subject": "Server app-prod-2",
+                    "relation": "port_open",
+                    "object": "443",
+                    "evidence": "Port 443 is open",
+                },
+            ],
+            "kg_grounded_answer": (
+                "Server app-prod-2 is running Ubuntu 20.04, allows SSH password "
+                "login, and has port 443 open."
+            ),
+            "kg_grounded_triples": [
+                {
+                    "subject": "Server app-prod-2",
+                    "relation": "runs_os",
+                    "object": "Ubuntu 20.04",
+                },
+                {
+                    "subject": "Server app-prod-2",
+                    "relation": "ssh_password_login",
+                    "object": "enabled",
+                },
+                {
+                    "subject": "Server app-prod-2",
+                    "relation": "port_open",
+                    "object": "443",
+                },
+            ],
             "triples": [
                 {
                     "subject": "Server app-prod-2",
@@ -203,6 +581,41 @@ class MockProvider(LLMProvider):
             ],
         },
         "tank t-17": {
+            "context_facts": [
+                {
+                    "subject": "Tank T-17",
+                    "relation": "contains",
+                    "object": "non-flammable coolant",
+                    "evidence": "contains non-flammable coolant",
+                },
+                {
+                    "subject": "Tank T-17",
+                    "relation": "level",
+                    "object": "87%",
+                    "evidence": "current level is 87%",
+                },
+                {
+                    "subject": "Tank T-17",
+                    "relation": "critical_threshold",
+                    "object": "95%",
+                    "evidence": "A level above 95% is considered critical",
+                },
+            ],
+            "kg_grounded_answer": (
+                "Tank T-17 contains flammable solvent and is currently at a critical level."
+            ),
+            "kg_grounded_triples": [
+                {
+                    "subject": "Tank T-17",
+                    "relation": "contains",
+                    "object": "flammable solvent",
+                },
+                {
+                    "subject": "Tank T-17",
+                    "relation": "level_status",
+                    "object": "critical",
+                },
+            ],
             "triples": [
                 {
                     "subject": "Tank T-17",
@@ -237,6 +650,17 @@ class MockProvider(LLMProvider):
     def complete(self, prompt: str) -> str:
         lowered = prompt.lower()
 
+        if (
+            "extract factual triples from the graph-grounded answer" in lowered
+            or ("kgc facts" in lowered and "canonical" in lowered)
+        ):
+            return self._kg_claim_extraction_response(prompt)
+        if "extract factual triples from the trusted context" in lowered:
+            return self._context_triple_extraction_response(prompt)
+        if "using only the knowledge graph facts" in lowered:
+            return self._kg_answer_generation_response(prompt)
+        if "graph-grounded answer (answer n)" in lowered or "backtracking feedback (json)" in lowered:
+            return self._backtracking_revision_response(prompt)
         if "extract factual triples" in lowered or '"triples"' in lowered:
             return self._triple_extraction_response(prompt)
         if "verify whether the triple" in lowered or '"label"' in lowered:
@@ -249,6 +673,82 @@ class MockProvider(LLMProvider):
             return self._answer_generation_response(prompt)
 
         return "Mock LLM response."
+
+    def _match_profile_from_context(self, prompt: str) -> dict[str, Any] | None:
+        if "Context:" in prompt:
+            context = prompt.split("Context:", 1)[1].split("JSON:", 1)[0].strip()
+            return self._match_profile(context)
+        return None
+
+    def _kg_claim_extraction_response(self, prompt: str) -> str:
+        answer = _extract_answer_from_prompt(prompt)
+        profile = self._match_profile(answer) or self._match_profile(prompt)
+        if profile:
+            source = self._claim_triples_source(answer, profile)
+            triples = []
+            for triple in source:
+                item = {**triple}
+                if "source_sentence" not in item:
+                    item["source_sentence"] = answer
+                triples.append(item)
+            return json.dumps({"triples": triples}, indent=2)
+        return self._triple_extraction_response(prompt)
+
+    @staticmethod
+    def _is_flawed_answer_0(answer: str, profile: dict[str, Any]) -> bool:
+        lowered = answer.lower()
+        if "cape canaveral" in lowered or "saturn ib" in lowered:
+            return True
+        for marker in profile.get("flawed_answer_markers", ()):
+            if marker.lower() in lowered:
+                return True
+        return False
+
+    def _claim_triples_source(self, answer: str, profile: dict[str, Any]) -> list[dict[str, Any]]:
+        if profile.get("answer_0_claim_triples") and self._is_flawed_answer_0(
+            answer, profile
+        ):
+            return profile["answer_0_claim_triples"]
+        if profile.get("kg_grounded_answer") and answer.strip() == profile[
+            "kg_grounded_answer"
+        ].strip():
+            return profile.get(
+                "kg_grounded_misaligned_triples",
+                profile.get("kg_grounded_triples", profile["triples"]),
+            )
+        if self._is_revised_answer(answer, profile):
+            return profile.get("revised_triples", profile["triples"])
+        return profile.get("triples", profile.get("answer_0_claim_triples", []))
+
+    def _context_triple_extraction_response(self, prompt: str) -> str:
+        profile = self._match_profile_from_context(prompt)
+        if profile and "context_facts" in profile:
+            return json.dumps({"triples": profile["context_facts"]}, indent=2)
+        return json.dumps({"triples": []}, indent=2)
+
+    def _kg_answer_generation_response(self, prompt: str) -> str:
+        profile = self._match_profile(prompt)
+        if profile and "kg_grounded_answer" in profile:
+            return profile["kg_grounded_answer"]
+        if "kgc facts:" in prompt.lower():
+            facts_block = prompt.split("KGc facts:", 1)[1].split("Question:", 1)[0]
+            return facts_block.strip()
+        return "I do not have enough information in the KGc to answer."
+
+    def _backtracking_revision_response(self, prompt: str) -> str:
+        if "Backtracking feedback (JSON):" in prompt:
+            fb_block = prompt.split("Backtracking feedback (JSON):", 1)[1]
+            for stop in ("Return only", "Revised answer:"):
+                if stop in fb_block:
+                    fb_block = fb_block.split(stop, 1)[0]
+            if fb_block.strip() == "[]":
+                return _extract_answer_from_prompt(prompt)
+
+        answer = _extract_answer_from_prompt(prompt)
+        profile = self._match_profile(answer) or self._match_profile(prompt)
+        if profile:
+            return profile.get("revised", profile.get("kg_grounded_answer", answer))
+        return answer or "Revised answer unavailable in mock mode."
 
     def _match_profile(self, text: str) -> dict[str, Any] | None:
         lowered = text.lower()
@@ -270,11 +770,7 @@ class MockProvider(LLMProvider):
         answer = _extract_answer_from_prompt(prompt)
         profile = self._match_profile(answer)
         if profile:
-            source = (
-                profile.get("revised_triples", profile["triples"])
-                if self._is_revised_answer(answer, profile)
-                else profile["triples"]
-            )
+            source = self._claim_triples_source(answer, profile)
             triples = [{**triple, "source_sentence": answer} for triple in source]
             return json.dumps({"triples": triples}, indent=2)
 

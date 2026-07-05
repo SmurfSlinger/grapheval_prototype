@@ -1,0 +1,31 @@
+Extract factual triples from the trusted context below. Each triple represents a fact in the context knowledge graph (KGc).
+
+Preserve negation. Do not remove words like "not", "no", "never", "without", or "does not".
+
+If a statement is negative, encode the meaning in the relation name or object so it stays negative.
+
+Example:
+"Drone Alpha-7 does not carry weapons" should become:
+- subject: Drone Alpha-7
+- relation: does_not_carry
+- object: weapons
+
+NOT:
+- relation: carries
+- object: weapons
+
+Do not convert negated statements into positive relations.
+
+Each triple has:
+- subject: the entity the fact is about
+- relation: a short snake_case relation name (e.g. has_engine, assembled_in, does_not_carry)
+- object: the value or related entity
+- evidence: the sentence or phrase from the context that supports this triple (optional)
+
+Return valid JSON only, with this shape:
+{{"triples": [{{"subject": "...", "relation": "...", "object": "...", "evidence": "..."}}]}}
+
+Context:
+{context}
+
+JSON:

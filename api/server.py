@@ -19,6 +19,7 @@ from src.llm.ollama_provider import (
 )
 from src.main import get_provider
 from src.models import Example
+from src.pipeline.backtracking_runner import BacktrackingRunner
 from src.pipeline.runner import PipelineRunner
 from src.storage.neo4j_store import query_claims_if_enabled
 
@@ -31,6 +32,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
+        "http://fedora-desktop:3000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -57,6 +59,14 @@ class RunAllRequest(BaseModel):
     model: str = DEFAULT_MODEL
 
 
+class RunKgcBacktrackingRequest(BaseModel):
+    example_id: str
+    provider: Literal["mock", "ollama"] = "mock"
+    model: str = DEFAULT_MODEL
+    max_iterations: int = 1
+    answer_0_mode: Literal["preset", "generated"] = "preset"
+
+
 class ExampleSummary(BaseModel):
     id: str
     question: str
@@ -79,6 +89,18 @@ class GraphClaimsResponse(BaseModel):
     enabled: bool
     claims: list[StoredClaim]
     error: str | None = None
+
+
+def _make_backtracking_runner(
+    provider_name: str,
+    model: str,
+    max_iterations: int = 1,
+) -> BacktrackingRunner:
+    try:
+        provider = get_provider(provider_name, model=model, fallback_to_mock=False)
+    except OllamaError as exc:
+        raise _ollama_http_error(exc) from exc
+    return BacktrackingRunner(provider, max_iterations=max_iterations)
 
 
 def _make_runner(provider_name: str, model: str) -> PipelineRunner:
@@ -168,6 +190,30 @@ def run_example(request: RunRequest) -> dict[str, Any]:
     if request.example_id not in examples:
         raise HTTPException(status_code=404, detail=f"Example not found: {request.example_id}")
     return _run_example(examples[request.example_id], request.provider, request.model)
+
+
+@app.post("/run-kgc-backtracking")
+def run_kgc_backtracking(request: RunKgcBacktrackingRequest) -> dict[str, Any]:
+    examples = {ex.id: ex for ex in load_examples()}
+    if request.example_id not in examples:
+        raise HTTPException(status_code=404, detail=f"Example not found: {request.example_id}")
+
+    runner = _make_backtracking_runner(
+        request.provider,
+        request.model,
+        max_iterations=request.max_iterations,
+    )
+    try:
+        result = runner.run_example(
+            examples[request.example_id],
+            answer_0_mode=request.answer_0_mode,
+        )
+    except (OllamaError, ValueError) as exc:
+        if isinstance(exc, OllamaError):
+            raise _ollama_http_error(exc) from exc
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    return result.to_dict()
 
 
 @app.post("/run-custom")

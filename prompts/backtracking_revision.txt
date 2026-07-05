@@ -1,0 +1,23 @@
+Revise the graph-grounded answer using the backtracking feedback below and the KGc facts as the source of truth.
+
+Rules:
+- Preserve supported claims.
+- Correct contradicted claims using the conflicting KGc fact.
+- Do not present no-evidence claims as true; omit them or mark them as unsupported.
+- Do not add new facts not supported by the KGc.
+
+Question:
+{question}
+
+KGc facts:
+{kgc_facts}
+
+Graph-grounded answer (Answer n):
+{answer}
+
+Backtracking feedback (JSON):
+{feedback}
+
+Return only the revised answer text (Answer n+1), with no extra commentary.
+
+Revised answer:

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import ControlsPanel from "@/components/ControlsPanel";
+import KgcBacktrackingResultView from "@/components/KgcBacktrackingResultView";
 import PipelineResultView from "@/components/PipelineResultView";
 import {
   fetchExamples,
@@ -10,17 +11,36 @@ import {
   runAllExamples,
   runCustomExample,
   runExample,
+  runKgcBacktracking,
+  type Answer0Mode,
+  type BacktrackingResult,
   type ExampleSummary,
   type PipelineResult,
   type Provider,
+  type ToolMode,
 } from "@/lib/api";
 
+function defaultAnswer0Mode(example: ExampleSummary | undefined): Answer0Mode {
+  return example?.initial_answer?.trim() ? "preset" : "generated";
+}
+
+const DEMO_EXAMPLE_ID = "saturn_v_apollo_11_001";
+
+function defaultSelectedExampleId(examples: ExampleSummary[]): string | null {
+  if (examples.length === 0) return null;
+  const demo = examples.find((ex) => ex.id === DEMO_EXAMPLE_ID);
+  return demo?.id ?? examples[0].id;
+}
+
 export default function HomePage() {
+  const [toolMode, setToolMode] = useState<ToolMode>("kgc");
   const [provider, setProvider] = useState<Provider>("mock");
   const [model, setModel] = useState("gemma4:e2b");
   const [examples, setExamples] = useState<ExampleSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [answer0Mode, setAnswer0Mode] = useState<Answer0Mode>("preset");
   const [result, setResult] = useState<PipelineResult | null>(null);
+  const [kgcResult, setKgcResult] = useState<BacktrackingResult | null>(null);
   const [allResults, setAllResults] = useState<PipelineResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
@@ -55,15 +75,18 @@ export default function HomePage() {
       .then((data) => {
         setExamples(data);
         if (data.length > 0) {
-          setSelectedId(data[0].id);
+          const initialId = defaultSelectedExampleId(data);
+          setSelectedId(initialId);
+          const initialExample = data.find((ex) => ex.id === initialId);
+          setAnswer0Mode(defaultAnswer0Mode(initialExample));
         }
       })
       .catch((err: Error) => setError(err.message));
   }, [refreshNeo4jStatus]);
 
   const runOptions = useCallback(
-    () => ({ provider, model }),
-    [provider, model],
+    () => ({ provider, model, answer_0_mode: answer0Mode }),
+    [provider, model, answer0Mode],
   );
 
   const selectResult = (id: string) => {
@@ -76,6 +99,8 @@ export default function HomePage() {
 
   const handleSelectExample = (id: string) => {
     setSelectedId(id);
+    const example = examples.find((ex) => ex.id === id);
+    setAnswer0Mode(defaultAnswer0Mode(example));
     const fromAll = allResults.find((r) => r.example_id === id);
     if (fromAll) {
       setResult(fromAll);
@@ -84,13 +109,13 @@ export default function HomePage() {
     }
   };
 
-  const handleRunSelected = async () => {
+  const handleRunBaseline = async () => {
     if (!selectedId) return;
     setRunning(true);
     setError(null);
     setAllResults([]);
     try {
-      const output = await runExample(selectedId, runOptions());
+      const output = await runExample(selectedId, { provider, model });
       setResult(output);
       await refreshNeo4jStatus();
     } catch (err) {
@@ -100,11 +125,11 @@ export default function HomePage() {
     }
   };
 
-  const handleRunAll = async () => {
+  const handleRunAllBaseline = async () => {
     setRunning(true);
     setError(null);
     try {
-      const outputs = await runAllExamples(runOptions());
+      const outputs = await runAllExamples({ provider, model });
       setAllResults(outputs);
       if (outputs.length > 0) {
         setResult(outputs[0]);
@@ -118,7 +143,22 @@ export default function HomePage() {
     }
   };
 
-  const handleRunCustom = async () => {
+  const handleRunKgc = async () => {
+    if (!selectedId) return;
+    setRunning(true);
+    setError(null);
+    try {
+      const output = await runKgcBacktracking(selectedId, runOptions());
+      setKgcResult(output);
+      await refreshNeo4jStatus();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "KGc backtracking failed");
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const handleRunCustomBaseline = async () => {
     setRunning(true);
     setError(null);
     setAllResults([]);
@@ -127,7 +167,8 @@ export default function HomePage() {
         question: customQuestion,
         context: customContext,
         initial_answer: customAnswer,
-        ...runOptions(),
+        provider,
+        model,
       });
       setResult(output);
       setSelectedId(output.example_id);
@@ -148,12 +189,16 @@ export default function HomePage() {
   };
 
   return (
-    <main>
+    <main className={toolMode === "kgc" ? "main-wide" : undefined}>
       <header className="page-header">
         <div>
           <h1>GraphEval Prototype</h1>
           <p className="subtitle">
-            Triple-level feedback for hallucination correction
+            {toolMode === "kgc"
+              ? "KGc backtracking demo"
+              : toolMode === "baseline"
+                ? "Baseline comparison"
+                : "Legacy tools"}
           </p>
         </div>
         <div className="status-row">
@@ -177,78 +222,65 @@ export default function HomePage() {
       {error && <div className="error">{error}</div>}
 
       <ControlsPanel
+        toolMode={toolMode}
         provider={provider}
         model={model}
         examples={examples}
         selectedId={selectedId}
+        answer0Mode={answer0Mode}
         running={running}
+        customQuestion={customQuestion}
+        customContext={customContext}
+        customAnswer={customAnswer}
+        onToolModeChange={setToolMode}
         onProviderChange={setProvider}
         onModelChange={setModel}
         onSelectExample={handleSelectExample}
-        onRun={handleRunSelected}
-        onRunAll={handleRunAll}
+        onAnswer0ModeChange={setAnswer0Mode}
+        onCustomQuestionChange={setCustomQuestion}
+        onCustomContextChange={setCustomContext}
+        onCustomAnswerChange={setCustomAnswer}
+        onRunKgc={handleRunKgc}
+        onRunBaseline={handleRunBaseline}
+        onRunAllBaseline={handleRunAllBaseline}
+        onRunCustomBaseline={handleRunCustomBaseline}
+        onFillCustomFromSelected={fillCustomFromSelected}
       />
 
-      <details className="card details-card">
-        <summary>Advanced: custom input</summary>
-        <div className="details-body">
-          <label>
-            Question
-            <textarea
-              value={customQuestion}
-              onChange={(e) => setCustomQuestion(e.target.value)}
-              placeholder="What should the model answer?"
-            />
-          </label>
-          <label>
-            Context (trusted source)
-            <textarea
-              value={customContext}
-              onChange={(e) => setCustomContext(e.target.value)}
-              placeholder="Ground-truth context for verification"
-            />
-          </label>
-          <label>
-            Initial answer (may contain errors)
-            <textarea
-              value={customAnswer}
-              onChange={(e) => setCustomAnswer(e.target.value)}
-              placeholder="LLM answer to verify and revise"
-            />
-          </label>
-          <div className="row">
-            <button
-              type="button"
-              className="secondary"
-              onClick={fillCustomFromSelected}
-              disabled={!selectedId}
-            >
-              Fill from selected
-            </button>
-            <button
-              type="button"
-              onClick={handleRunCustom}
-              disabled={
-                running ||
-                !customQuestion.trim() ||
-                !customContext.trim() ||
-                !customAnswer.trim()
-              }
-            >
-              {running ? "Running…" : "Run custom"}
-            </button>
-          </div>
-        </div>
-      </details>
+      {toolMode === "kgc" ? (
+        <KgcBacktrackingResultView result={kgcResult} loading={running} />
+      ) : null}
 
-      <PipelineResultView
-        result={result}
-        loading={running}
-        allResults={allResults}
-        selectedId={selectedId}
-        onSelectResult={selectResult}
-        onRefreshNeo4j={refreshNeo4jStatus}
-      />
+      {toolMode === "baseline" ? (
+        <section className="results-stack">
+          <h2 className="results-section-title">Baseline comparison</h2>
+          <PipelineResultView
+            result={result}
+            loading={running}
+            allResults={[]}
+            selectedId={selectedId}
+            onSelectResult={selectResult}
+            onRefreshNeo4j={refreshNeo4jStatus}
+          />
+        </section>
+      ) : null}
+
+      {toolMode === "legacy" ? (
+        <section className="results-stack">
+          <h2 className="results-section-title">Legacy tools</h2>
+          <p className="controls-hint controls-mode-note">
+            These are older prototype tools, kept for comparison/debugging.
+          </p>
+          <PipelineResultView
+            result={result}
+            loading={running}
+            allResults={allResults}
+            selectedId={selectedId}
+            onSelectResult={selectResult}
+            onRefreshNeo4j={refreshNeo4jStatus}
+          />
+        </section>
+      ) : null}
     </main>
   );
 }

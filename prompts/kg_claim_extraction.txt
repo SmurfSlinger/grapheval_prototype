@@ -1,0 +1,40 @@
+Extract factual triples from the graph-grounded answer below.
+
+KGc facts define the canonical entity and relation names. When a statement in the answer matches a KGc fact, reuse the KGc subject and relation exactly.
+
+Preserve negation. Do not remove words like "not", "no", "never", "without", or "does not".
+
+If the answer says "does not carry weapons", extract:
+- subject: Drone Alpha-7 (or the KGc entity)
+- relation: does_not_carry
+- object: weapons
+
+If the answer says "carries weapons", extract:
+- relation: carries
+- object: weapons
+
+These are different claims and must not be merged.
+
+Do not use section labels like "Flight time", "Weapons status", or "Reconnaissance approval" as subjects if the KGc entity is available.
+
+Prefer the canonical KGc subject/relation. Only create a new subject or relation when the answer contains a claim that cannot be mapped to any KGc fact.
+
+Each triple has:
+- subject: canonical entity from KGc when possible
+- relation: canonical relation from KGc when possible
+- object: the value or related entity
+- source_sentence: the phrase from the answer that supports this triple (optional)
+
+Question:
+{question}
+
+KGc facts (canonical schema):
+{kgc_facts}
+
+Return valid JSON only, with this shape:
+{{"triples": [{{"subject": "...", "relation": "...", "object": "...", "source_sentence": "..."}}]}}
+
+Answer:
+{answer}
+
+JSON:

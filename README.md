@@ -154,6 +154,36 @@ RETURN
 LIMIT 50;
 ```
 
+## KGc backtracking flow
+
+Professor-confirmed scaffold for graph-grounded evaluation and backtracking (separate from the original GraphEval pipeline):
+
+```
+Context + Question → Answer(0)
+Context → KGc
+Question + KGc → Answer(n)
+Eval(Answer(n), KGc) → labels + backtracking feedback
+Backtracking feedback → Answer(n+1)
+```
+
+**Run via API:**
+
+```bash
+curl -X POST http://localhost:8000/run-kgc-backtracking \
+  -H "Content-Type: application/json" \
+  -d '{"example_id": "hyundai_sonata_001", "provider": "mock", "max_iterations": 1}'
+```
+
+**Run via UI:** click **Run KGc backtracking** in the controls panel.
+
+Neo4j stores:
+- `[:FACT]` edges for KGc context facts (`source: "context"`)
+- `[:CLAIM]` edges for evaluated answer claims (`answer_stage: "answer_n"`, `source: "answer"`)
+
+The original `/run` pipeline is unchanged.
+
+**Milestone evidence:** [docs/kgc_backtracking_milestone_report.md](docs/kgc_backtracking_milestone_report.md)
+
 ## How to run
 
 ### Quick start (recommended)
@@ -295,6 +325,40 @@ curl -X POST http://localhost:8000/run-all \
 - Server not running → suggests `ollama serve`
 - Model missing → suggests `ollama pull <model>`
 - Timeout, invalid API JSON, unparseable model JSON output
+
+## Testing
+
+Install dependencies (includes pytest):
+
+```bash
+pip install -r requirements.txt
+```
+
+**Presentation / milestone demo** (recommended — clean grouped output, no pytest paths):
+
+```bash
+chmod +x scripts/run-kgc-tests.sh   # first time only
+./scripts/run-kgc-tests.sh
+```
+
+**Developer pytest run** (normal CI / local debugging):
+
+```bash
+pytest tests/ -v --tb=short
+```
+
+Both use `MockProvider` and do **not** require Ollama, Neo4j, or the frontend.
+
+**Milestone evidence:** [docs/kgc_backtracking_milestone_report.md](docs/kgc_backtracking_milestone_report.md)
+
+**What the KGc tests cover:**
+
+- Exact KGc support (SUPPORTED when claim matches a KGc fact)
+- Relation normalization (`was_assembled_in` → `assembled_in`)
+- Contradiction detection (same relation, conflicting object)
+- No-evidence detection (claim not supported by KGc)
+- Backtracking feedback generation (preserve / correct / omit)
+- End-to-end mock KGc backtracking flow (Hyundai and drone examples)
 
 ## Next planned steps
 

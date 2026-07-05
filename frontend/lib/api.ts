@@ -2,6 +2,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export type Provider = "mock" | "ollama";
 
+export type ToolMode = "kgc" | "baseline" | "legacy";
+
 export type VerificationLabel = "SUPPORTED" | "CONTRADICTED" | "NOT_ENOUGH_INFO";
 
 export interface ExampleSummary {
@@ -58,6 +60,105 @@ export interface PipelineResult {
   graph_revised_triples: Triple[];
   graph_revised_verification_results: VerificationResult[];
   metrics: PipelineMetrics;
+}
+
+export type KgcClaimLabel = "SUPPORTED" | "CONTRADICTED" | "NO_EVIDENCE";
+
+export interface KgcFact {
+  subject: string;
+  relation: string;
+  object: string;
+  evidence?: string | null;
+}
+
+export interface BacktrackingTrace {
+  answer_0_source: string;
+  answer_0_mode: "preset" | "generated";
+  kgc_source: string;
+  answer_n_source: string;
+  claim_extraction_source: string;
+  revision_source: string;
+  answer_0_warning?: string | null;
+  kgc_reference_answer_source?: string | null;
+}
+
+export type Answer0Mode = "preset" | "generated";
+
+export interface RevisionEffect {
+  preserved_supported_count: number;
+  corrected_contradicted_count: number;
+  removed_or_deferred_no_evidence_count: number;
+}
+
+export interface KgcEvaluatedClaim {
+  triple: Triple;
+  aligned_claim?: Triple;
+  original_claim?: Triple | null;
+  schema_aligned?: boolean;
+  source_sentence?: string | null;
+  label: KgcClaimLabel;
+  reason: string;
+  evidence: string;
+  matched_kgc_fact?: KgcFact | null;
+  conflicting_object?: string | null;
+  conflicting_fact?: KgcFact | null;
+  backtracking_action?: string | null;
+}
+
+export interface BacktrackingFeedbackItem {
+  triple: Triple;
+  label: KgcClaimLabel;
+  instruction: string;
+  reason: string;
+  evidence: string;
+  conflicting_object?: string | null;
+  matched_kgc_fact?: KgcFact | null;
+  conflicting_fact?: KgcFact | null;
+  backtracking_action?: string | null;
+}
+
+export interface BacktrackingResult {
+  example_id: string;
+  question: string;
+  context: string;
+  answer_0: string;
+  kgc_facts: KgcFact[];
+  serialized_kgc: string;
+  kgc_reference_answer?: string;
+  graph_grounded_answer: string;
+  answer_n: string;
+  evaluated_answer?: string;
+  evaluated_answer_iteration?: number;
+  iteration: number;
+  extracted_claims: Triple[];
+  aligned_claims: Triple[];
+  evaluated_claims: KgcEvaluatedClaim[];
+  backtracking_feedback: BacktrackingFeedbackItem[];
+  answer_1?: string;
+  answer_n_plus_1: string;
+  final_answer?: string;
+  supported_count: number;
+  contradicted_count: number;
+  no_evidence_count: number;
+  max_iterations: number;
+  trace?: BacktrackingTrace | null;
+  revision_effect?: RevisionEffect | null;
+  answer_0_mode?: Answer0Mode;
+  answer_0_warning?: string | null;
+  kgc_extraction_notice?: string | null;
+  stop_reason?: string | null;
+  iteration_history?: Array<{
+    iteration: number;
+    evaluated_answer: string;
+    answer_stage: string;
+    supported_count: number;
+    contradicted_count: number;
+    no_evidence_count: number;
+  }>;
+}
+
+export interface KgcRunOptions extends RunOptions {
+  answer_0_mode?: Answer0Mode;
 }
 
 export interface RunOptions {
@@ -149,6 +250,22 @@ export async function fetchGraphClaims(options?: {
     params.set("example_id", options.exampleId);
   }
   return apiFetch(`/graph/claims?${params.toString()}`);
+}
+
+export async function runKgcBacktracking(
+  exampleId: string,
+  options: KgcRunOptions,
+): Promise<BacktrackingResult> {
+  return apiFetch("/run-kgc-backtracking", {
+    method: "POST",
+    body: JSON.stringify({
+      example_id: exampleId,
+      provider: options.provider,
+      model: options.model,
+      max_iterations: 1,
+      answer_0_mode: options.answer_0_mode ?? "preset",
+    }),
+  });
 }
 
 export async function runCustomExample(

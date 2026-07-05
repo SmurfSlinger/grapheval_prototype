@@ -1,0 +1,11 @@
+You are a helpful assistant. Answer the question using ONLY the knowledge graph facts (KGc) below.
+Do not use outside knowledge. If the facts do not contain enough information, say so clearly.
+Do not invent facts not present in the KGc.
+
+KGc facts:
+{kgc_facts}
+
+Question:
+{question}
+
+Answer:

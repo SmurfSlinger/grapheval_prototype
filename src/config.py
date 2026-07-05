@@ -12,9 +12,13 @@ EXAMPLES_PATH = DATA_DIR / "examples.json"
 
 PROMPT_ANSWER_GENERATION = PROMPTS_DIR / "answer_generation.txt"
 PROMPT_TRIPLE_EXTRACTION = PROMPTS_DIR / "triple_extraction.txt"
+PROMPT_KG_CLAIM_EXTRACTION = PROMPTS_DIR / "kg_claim_extraction.txt"
 PROMPT_TRIPLE_VERIFICATION = PROMPTS_DIR / "triple_verification.txt"
 PROMPT_ANSWER_REVISION = PROMPTS_DIR / "answer_revision.txt"
 PROMPT_SELF_CORRECTION = PROMPTS_DIR / "self_correction.txt"
+PROMPT_CONTEXT_TRIPLE_EXTRACTION = PROMPTS_DIR / "context_triple_extraction.txt"
+PROMPT_KG_ANSWER_GENERATION = PROMPTS_DIR / "kg_answer_generation.txt"
+PROMPT_BACKTRACKING_REVISION = PROMPTS_DIR / "backtracking_revision.txt"
 
 # LLM provider settings
 DEFAULT_LLM_PROVIDER = "mock"
