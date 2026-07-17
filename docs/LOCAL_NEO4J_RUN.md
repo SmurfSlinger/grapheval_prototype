@@ -321,7 +321,9 @@ Mock reports test runner plumbing only and are not model-accuracy evidence.
 ## NHS WannaCry benchmark
 
 A second source-grounded 50-question set covers the May 2017 WannaCry impact
-on the NHS in England. Details: `docs/NHS_WANNACRY_BENCHMARK.md`.
+on the NHS in England. Present it as a root-to-answer graph-depth and
+path-following benchmark: hop counts are designed expected path lengths, not
+claims of cognitive reasoning depth. Details: `docs/NHS_WANNACRY_BENCHMARK.md`.
 
 ```bash
 python scripts/run_multihop_benchmark.py \
@@ -337,13 +339,17 @@ Canonical NHS real-baseline paths:
 - `results/nhs_wannacry_multihop_real_baseline.md`
 
 The NHS wrapper uses the same model-resolution precedence and protected
-argument policy as the Apollo wrapper.
+argument policy as the Apollo wrapper. A full real 50-question NHS baseline
+is optional follow-up work; Task 1 custom Neo4j workflow readiness does not
+depend on it.
 
 ## What is safe for professor to try
 
 This branch lets you paste a trusted context and compound question, clear
 Neo4j, generate a KGc from the context, persist it to Neo4j, run decomposed
-backtracking, and inspect both the trace and graph.
+backtracking, and inspect both the trace and graph. Trusted FACTS and answer
+CLAIMS remain separate; base FACTS for custom runs are read back from Neo4j;
+focused and derived working facts may use the documented in-memory mirror.
 
 ## Known limitations
 

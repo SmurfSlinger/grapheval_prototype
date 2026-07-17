@@ -92,7 +92,14 @@ def test_nhs_question_anchors_paths_and_shortest_distances() -> None:
         assert question["anchor_detection"]["anchor_detection_method"] == "alias_match"
         assert question["anchor_detection"]["matched_aliases"]
         assert question["anchor_detection"]["detected_entities"] == anchors
-        assert question["hop_semantics"] == "minimum_required_path"
+        assert question["hop_semantics"] == "designed_root_to_answer_graph_depth"
+        assert question["shortcut_audit"]["generator_checked"] is True
+        assert question["shortcut_audit"]["human_review_status"] == "pending"
+        assert question["shortcut_audit"]["expected_path_length"] == question["hop_count"]
+        assert (
+            question["shortcut_audit"]["shortest_distance_from_graph_root"]
+            == question["hop_count"]
+        )
         assert len(path) == question["hop_count"]
         assert path[0][0] in anchors
         assert all(edge in facts for edge in path)
@@ -149,10 +156,16 @@ def test_graph_root_may_differ_from_question_anchor_in_validation() -> None:
                 "matched_aliases": [ransomware],
                 "detected_entities": [ransomware],
             },
-            "hop_semantics": "minimum_required_path",
+            "hop_semantics": "designed_root_to_answer_graph_depth",
         }
     )
     question["shortcut_audit"] = {
+        "expected_path_length": 2,
+        "shortest_distance_from_graph_root": compute_shortest_directed_distance(
+            _triples(payload),
+            [payload["root_entity"]],
+            answer,
+        ),
         "shortest_distance_from_question_anchor": 2,
         "shortest_anchor_distance": 2,
         "direct_final_subject_mentioned": False,
@@ -163,7 +176,8 @@ def test_graph_root_may_differ_from_question_anchor_in_validation() -> None:
         "mentioned_entities": [ransomware],
         "shortcut_entities": [],
         "ambiguous_discourse_markers": [],
-        "human_review_status": "not_reviewed",
+        "generator_checked": True,
+        "human_review_status": "pending",
         "locality": locality_audit(
             question["question"],
             answer,
@@ -217,7 +231,12 @@ def test_nhs_audit_has_zero_unresolved_shortcuts() -> None:
     assert len(audit["questions"]) == 50
     assert all(not row["unresolved_shortcut"] for row in audit["questions"])
     assert all("manual_reviewed" not in row for row in audit["questions"])
-    assert all(row["human_review_status"] == "not_reviewed" for row in audit["questions"])
+    assert all(row["human_review_status"] == "pending" for row in audit["questions"])
+    assert all(row.get("generator_checked") is True for row in audit["questions"])
+    assert all(
+        row["hop_semantics"] == "designed_root_to_answer_graph_depth"
+        for row in audit["questions"]
+    )
     assert all(not row["ambiguous_discourse_markers"] for row in audit["questions"])
     hop8_10 = [row for row in audit["questions"] if row["hop_count"] >= 8]
     assert len(hop8_10) == 15
@@ -225,6 +244,10 @@ def test_nhs_audit_has_zero_unresolved_shortcuts() -> None:
         row["shortest_distance_from_question_anchor"] == row["hop_count"]
         for row in hop8_10
     )
+    assert all(
+        row["shortest_distance_from_graph_root"] == row["hop_count"] for row in hop8_10
+    )
+    assert all(row["expected_path_length"] == row["hop_count"] for row in hop8_10)
 
 
 def test_nhs_human_review_manifest_is_pending() -> None:
@@ -422,7 +445,7 @@ def test_validation_fixtures_do_not_mutate_original_payload() -> None:
     payload = _payload()
     clone = copy.deepcopy(payload)
     clone["questions"][0]["shortcut_audit"]["human_review_status"] = "reviewed"
-    assert payload["questions"][0]["shortcut_audit"]["human_review_status"] == "not_reviewed"
+    assert payload["questions"][0]["shortcut_audit"]["human_review_status"] == "pending"
 
 
 def _run_wrapper_dry(cli_args: list[str], *, expect_ok: bool = True):

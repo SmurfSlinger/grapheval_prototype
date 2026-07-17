@@ -265,42 +265,53 @@ reliable measurement is.
 
 **Repository implementation status: READY**
 
-**Real local baseline status: NOT RUN IN THIS ENVIRONMENT**
-(Ollama is not reachable here; Neo4j/Ollama real execution must be done on a
-machine with those services. Leave PR draft until that run completes.)
+**Real local baseline status: SMOKE ONLY**
+(One-question real smoke completed with `gemma4:e2b` on
+`nhs_wannacry_h01_q01`: contains-expected + pipeline-resolved in ~71s.
+Full 50-question real Ollama baseline remains optional follow-up.)
 
 Evidence (verified on this commit):
 - Dataset: `data/test_sets/nhs_wannacry_multihop_50.json`
 - Source manifest: `data/sources/nhs_wannacry/source_manifest.json`
 - Authoritative sources: NAO HC 414; DHSC/NHS CIO lessons learned; CISA
   TA17-132A; Microsoft MS17-010
-- Hop semantics: declared hop count equals **question-required directed path
-  length** from anchors detected in `question_anchor_entities` to the answer;
-  `reasoning_anchor_entities` is retained only as a backwards-compatible alias.
-  Audit artifacts at
+- Hop semantics: declared hop count is **designed root-to-answer graph depth /
+  expected graph path length** (`hop_semantics:
+  "designed_root_to_answer_graph_depth"`). Audit artifacts at
   `data/test_sets/nhs_wannacry_multihop_50.audit.json` and
-  `docs/NHS_WANNACRY_HOP_AUDIT.md` report **0 unresolved shortcuts**, **0
-  ambiguous discourse markers**, **3 locality warnings**, and **50 pending
-  human reviews**. The dataset no longer claims `manual_reviewed`.
-- `--validate-only` exits 0 for NHS WannaCry (structural + question-anchor /
-  shortcut / locality checks)
+  `docs/NHS_WANNACRY_HOP_AUDIT.md` report expected path length, shortest
+  directed root distance, late-path exposure flags, and locality warnings.
+  Graph depth is **not** claimed as cognitive reasoning depth. Audit reports
+  **0 unresolved shortcuts**, **0 ambiguous discourse markers**, **3 locality
+  warnings**, and **50 pending** human reviews with `generator_checked: true`.
+  The dataset does not claim `manual_reviewed`.
+- `--validate-only` exits 0 for NHS WannaCry (structural + path / shortcut /
+  locality checks)
 - Apollo `--validate-only` still exits 0 (no regression)
-- Mock plumbing: 50 terminal `error` records, 0 completions (plumbing only; not
-  accuracy evidence)
+- Mock plumbing: 50 terminal records, five per hop; plumbing only, not
+  accuracy evidence
 - Wrapper: `./scripts/run_nhs_wannacry_real_baseline.sh`
 - Canonical outputs:
   - `results/nhs_wannacry_multihop_real_baseline.json`
   - `results/nhs_wannacry_multihop_real_baseline.md`
-- Targeted benchmark tests: **31 passed** via `.venv/bin/python -m pytest
-  tests/test_nhs_wannacry_benchmark.py tests/test_apollo_multihop_test_set.py`
+- Backend: `python -m pytest tests/` → **260 passed**
 - Frontend `npm run build` passes
-- Real Ollama baseline: **not run** in this environment (Ollama unavailable).
-  Do not start the expensive real run unless shortcut audit remains green.
+- Bounded real smoke (`nhs_wannacry_h01_q01`, `gemma4:e2b`): completed;
+  contains-expected and pipeline-resolved. Full 50-question real baseline:
+  **optional**; not a Ready-for-Review gate
 
 Exact Fedora/local command when Ollama + Neo4j are available:
 
 ```bash
 ./scripts/run_nhs_wannacry_real_baseline.sh
+```
+
+Bounded smoke:
+
+```bash
+./scripts/run_nhs_wannacry_real_baseline.sh \
+  --ids nhs_wannacry_h01_q01 \
+  --timeout-per-question 600
 ```
 
 ---
@@ -319,10 +330,12 @@ Exact Fedora/local command when Ollama + Neo4j are available:
 - A full 50-question real-model benchmark on CPU is lengthy (~4 minutes per
   early hop observed). Partial checkpoints must not be described as full
   benchmark performance until `run_type=full_real`.
-- NHS WannaCry human review is pending in
-  `data/test_sets/nhs_wannacry_human_review.json`; structural validation allows
-  `human_review_status: "not_reviewed"` but rejects fake `manual_reviewed`
-  claims.
+- NHS WannaCry is a source-grounded path-following / graph-depth set; hop
+  counts are designed path lengths, not proven human reasoning depth.
+- NHS human review is pending in
+  `data/test_sets/nhs_wannacry_human_review.json`; structural validation uses
+  `generator_checked: true` and `human_review_status: "pending"` and rejects
+  fake `manual_reviewed` claims.
 - NHS locality warnings are surfaced in
   `docs/NHS_WANNACRY_HOP_AUDIT.md`; they do not fail validate-only by default.
 - Per-question timeouts use in-process `SIGALRM` / `ITIMER_REAL`. The runner
@@ -333,23 +346,37 @@ Exact Fedora/local command when Ollama + Neo4j are available:
   (`run_subprocess_with_timeout`) terminates and reaps owned child process
   groups when a subprocess architecture is used.
 
+## Professor verification commands
+
+```bash
+python -m pytest tests/
+cd frontend && npm run build
+python scripts/run_multihop_benchmark.py \
+  --test-set data/test_sets/nhs_wannacry_multihop_50.json \
+  --validate-only
+./scripts/run_nhs_wannacry_real_baseline.sh
+```
+
+Also useful:
+
+```bash
+python scripts/run_multihop_benchmark.py \
+  --test-set data/test_sets/apollo_multihop_50.json \
+  --validate-only
+```
+
 ## Next recommended work
 
-On a machine with Ollama and Neo4j, run
-`./scripts/run_nhs_wannacry_real_baseline.sh` against the hop-valid NHS
-dataset (shortcut audit must remain green). Then inspect hop groups where
-pipeline resolution or textual matching degrades. Do not tune against
-expected answers or alter deterministic labels merely to raise benchmark
-scores.
+On a machine with Ollama and Neo4j, optionally run a bounded NHS smoke or the
+full `./scripts/run_nhs_wannacry_real_baseline.sh`. Do not tune questions,
+prompts, labels, or thresholds against model output merely to raise scores.
 
 ## Spoken update
 
-The NHS WannaCry benchmark now separates graph root from question anchors.
-Each question stores detected `question_anchor_entities`, keeps
-`reasoning_anchor_entities` only as a compatibility alias, and validates
-question-required hop distance from the detected anchor without root fallback.
-Current audit: 0 unresolved shortcuts, 0 ambiguous discourse markers, 3
-locality warnings, and 50 pending human reviews. Targeted benchmark tests
-passed (31 tests). Apollo and NHS validate-only both pass. Real Ollama
-baselines were not run here; keep the PR draft until a local real run completes
-against the hop-valid dataset.
+Task 1 custom Neo4j workflow is ready: trusted FACTS and answer CLAIMS stay
+separate, base FACTS are read back from Neo4j, and focused/derived working
+facts may use the documented in-memory mirror. Apollo and NHS benchmarks are
+available. NHS hop counts are designed root-to-answer graph depth / expected
+path length; graph depth is not automatically human reasoning depth. Mock
+results test plumbing only. Full real Ollama baselines remain optional
+follow-up.

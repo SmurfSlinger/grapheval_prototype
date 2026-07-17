@@ -11,25 +11,34 @@ This benchmark is **not** a worldwide WannaCry encyclopedia. Unless a fact is
 explicitly scoped otherwise in the trusted context, the factual scope is the
 documented NHS England impact.
 
+Present this set as:
+
+> a source-grounded root-to-answer graph-depth and path-following benchmark
+
+Do not claim stronger semantics than the implementation supports.
+
 ## Hop-count semantics
 
-### Graph depth vs question-required reasoning depth
-
-These are related but not identical:
+### Honest framing
 
 | Concept | Meaning |
 |---|---|
-| **Graph depth** | Shortest directed distance in the trusted NHS graph from the benchmark `graph_root_entity` to an answer node. |
-| **Question-required reasoning depth** | Shortest directed distance from `question_anchor_entities` that are **explicitly expressed in the question text** to the expected answer. |
+| **Expected path length** | Length of the designed contiguous trusted directed path stored as `expected_path`. |
+| **Root-to-answer graph depth** | Shortest directed distance from the benchmark `graph_root_entity` to the answer. |
+| **Anchor distance** | Shortest directed distance from `question_anchor_entities` detected in the question text to the answer. |
+| **Late-path exposure** | Whether the question names a late-chain entity, final-edge subject, or expected answer. |
+| **Locality risk** | Whether a trusted-context sentence may allow local retrieval without full path following. |
 
-Declared `hop_count` encodes **question-required reasoning depth**, not merely
-root-to-answer topology.
+In this dataset, questions start from the incident root, so declared `hop_count`
+equals expected path length, root distance, and anchor distance under current
+validation. That is **designed graph depth / path length**, not proof of
+minimum cognitive reasoning depth.
 
-Exact definition encoded in the dataset:
+Exact label encoded per question:
 
-> `hop_count` = the minimum number of trusted directed graph edges needed to
-> derive the expected answer from the question's `question_anchor_entities`,
-> under allowed alias normalization, without outside knowledge.
+```json
+"hop_semantics": "designed_root_to_answer_graph_depth"
+```
 
 The benchmark validates:
 
@@ -37,7 +46,7 @@ The benchmark validates:
 - question-anchor expression and detection (no silent root fallback)
 - shortcut exposure (aliases, abbreviations, late-chain entities, answer locality cues)
 - locality warnings (sentence-retrieval risk vs graph traversal)
-- required reasoning depth (`shortest_distance_from_question_anchor == hop_count`)
+- designed depth consistency (`expected_path_length`, root distance, and anchor distance match `hop_count`)
 
 Additional rules:
 
@@ -67,9 +76,10 @@ Each question stores:
 - `reasoning_anchor_entities` as a backwards-compatible alias
 - `anchor_detection` evidence showing which aliases were detected in the
   question text
-- `hop_semantics: "minimum_required_path"`
-- `shortcut_audit` with computed shortest distance, final-subject mention flag,
-  late-chain shortcut flags, locality audit, and `human_review_status`
+- `hop_semantics: "designed_root_to_answer_graph_depth"`
+- `shortcut_audit` with expected path length, root distance, anchor distance,
+  final-subject / late-chain flags, locality audit, `generator_checked: true`,
+  and `human_review_status: "pending"`
 
 Committed audit artifacts:
 
@@ -82,9 +92,10 @@ Automated graph-distance / string checks cannot fully prove semantic necessity
 or rule out world-knowledge answering. They are paired with generator
 constraints and a pending external human-review manifest. The honest claim is:
 
-> Every declared N-hop question requires following the intended reasoning chain
-> from information explicitly present in the question itself, under the trusted
-> graph and shortcut rules above.
+> Every declared N-hop question has a designed contiguous root-to-answer path of
+> length N in the trusted graph, with self-contained wording and automated
+> shortcut / discourse checks. Graph depth is not automatically equivalent to
+> human reasoning depth.
 
 Locality warnings and pending human review remain documented limitations.
 
@@ -98,6 +109,9 @@ WannaCry connects:
 - national vs local NHS cyber responsibilities
 - clinical service disruption and recovery
 - incident response and kill-switch containment
+
+Those themes exercise GraphEval’s FACT/CLAIM separation on a second domain
+without requiring Apollo-specific knowledge.
 
 ## Authoritative sources
 
@@ -129,16 +143,19 @@ Do **not** collapse these NAO distinctions:
 | Majority infected devices | unpatched supported Windows 7 |
 | XP share of estate on 12 May 2017 | about 5% (minority of infection issues) |
 
-## Dataset
+## Dataset location
 
-- Path: `data/test_sets/nhs_wannacry_multihop_50.json`
+```text
+data/test_sets/nhs_wannacry_multihop_50.json
+```
+
 - Builder: `scripts/build_nhs_wannacry_dataset.py`
 - Root: `WannaCry attack on the NHS`
 - 50 questions, 5 per hop count 1–10
 - Object-shaped facts with provenance
 - Expected answers/paths are scoring metadata only and are not passed to inference
 
-## Graph metrics (validated after hop-semantics redesign)
+## Graph metrics
 
 - Nodes: 88
 - Directed facts: 87
@@ -149,25 +166,45 @@ Do **not** collapse these NAO distinctions:
 - Shortcut audit: 0 unresolved shortcuts
 - Ambiguous discourse markers remaining: 0
 - Locality warnings: 3 (warnings are reported, not validation failures)
-- Human review: 50 pending / not reviewed
+- Human review: 50 pending with `generator_checked: true`
 
-## Validation / mock / real commands
+Regenerate from the committed builder:
 
 ```bash
-python3 scripts/build_nhs_wannacry_dataset.py
+python scripts/build_nhs_wannacry_dataset.py
+```
 
-python3 scripts/run_multihop_benchmark.py \
+Validate without an LLM:
+
+```bash
+python scripts/run_multihop_benchmark.py \
   --test-set data/test_sets/nhs_wannacry_multihop_50.json \
   --validate-only
+```
 
-python3 scripts/run_multihop_benchmark.py \
+Mock plumbing (not accuracy):
+
+```bash
+python scripts/run_multihop_benchmark.py \
   --test-set data/test_sets/nhs_wannacry_multihop_50.json \
   --provider mock \
   --continue-on-error \
   --output /tmp/nhs-wannacry-mock.json \
   --summary /tmp/nhs-wannacry-mock.md
+```
 
+Real baseline wrapper (optional; requires Ollama + Neo4j):
+
+```bash
 ./scripts/run_nhs_wannacry_real_baseline.sh
+```
+
+Bounded smoke:
+
+```bash
+./scripts/run_nhs_wannacry_real_baseline.sh \
+  --ids nhs_wannacry_h01_q01 \
+  --timeout-per-question 600
 ```
 
 Canonical real-baseline outputs:
@@ -175,19 +212,22 @@ Canonical real-baseline outputs:
 - `results/nhs_wannacry_multihop_real_baseline.json`
 - `results/nhs_wannacry_multihop_real_baseline.md`
 
-## Verified repository results (this pass)
+## Integrity notes
 
-- Targeted backend: `.venv/bin/python -m pytest tests/test_nhs_wannacry_benchmark.py tests/test_apollo_multihop_test_set.py` → **31 passed**
-- Apollo `--validate-only` → exit 0
-- NHS WannaCry structural + question-anchor / shortcut / locality validation → exit 0
-- NHS mock plumbing → rerun in verification pass
-- Real Ollama NHS baseline → **not run** (Ollama unavailable; and hop-validity
-  gate must remain green before any expensive real run)
+- Trusted FACTS and answer CLAIMS remain separate.
+- Scoring metadata (`expected_path`, `expected_answer`, fact IDs) must not appear
+  in trusted context prose.
+- No expected answers or paths are passed into inference.
+- Mock failures validate runner plumbing only.
+- The generator sets `generator_checked: true` and `human_review_status: "pending"`;
+  no dataset row claims `manual_reviewed`.
 
 ## Known limitations
 
 - Mock runs validate plumbing only; they are not accuracy evidence.
 - Automated shortcut checks are necessary but not a full semantic proof.
+- Graph depth / expected path length is not automatically equivalent to human
+  reasoning depth.
 - Human review is pending in `data/test_sets/nhs_wannacry_human_review.json`;
   no dataset row claims `manual_reviewed`.
 - Locality warnings identify questions whose answer also appears in one
@@ -197,5 +237,6 @@ Canonical real-baseline outputs:
 - Branch-theme cues (“along the … chain”) disambiguate sibling root out-edges
   without naming late-chain entities; they are not raw relation labels, but they
   are still somewhat artificial natural-language scaffolding.
-- Real Ollama baselines require local Ollama + Neo4j.
+- Real Ollama baselines require local Ollama + Neo4j and remain optional
+  follow-up work for professor-testable readiness.
 - Per-question timeouts remain in-process `SIGALRM`.

@@ -1,9 +1,10 @@
 """Shared NHS WannaCry hop-semantics helpers.
 
-The NHS benchmark distinguishes graph depth from question-required reasoning
-depth. These helpers keep anchor detection, shortcut detection, graph distance,
-discourse-marker checks, and locality audits consistent between the dataset
-builder and the general benchmark validator.
+The NHS benchmark is a source-grounded root-to-answer graph-depth and
+path-following set. These helpers keep anchor detection, shortcut detection,
+graph distance, discourse-marker checks, and locality audits consistent between
+the dataset builder and the general benchmark validator. Graph distance is a
+structural metric; it does not by itself prove cognitive reasoning depth.
 """
 
 from __future__ import annotations

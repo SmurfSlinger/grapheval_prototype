@@ -358,7 +358,7 @@ def shortcut_audit_metrics(
         locality = shortcut_audit.get("locality") or {}
         if locality.get("locality_warning"):
             metrics["locality_warning_count"] += 1
-        if shortcut_audit.get("human_review_status") == "not_reviewed":
+        if shortcut_audit.get("human_review_status") in {"pending", "not_reviewed"}:
             metrics["unreviewed_count"] += 1
         if not item.get("anchor_detection"):
             metrics["missing_anchor_detection_count"] += 1
@@ -663,9 +663,9 @@ def validate_test_set(payload: dict[str, Any]) -> dict[str, Any]:
                     errors.append(
                         f"{question_id}: anchor_detection.matched_aliases mismatches question text"
                     )
-            if item.get("hop_semantics") != "minimum_required_path":
+            if item.get("hop_semantics") != "designed_root_to_answer_graph_depth":
                 errors.append(
-                    f"{question_id}: hop_semantics must be minimum_required_path"
+                    f"{question_id}: hop_semantics must be designed_root_to_answer_graph_depth"
                 )
             if expected_path_repeated_nodes(path):
                 errors.append(f"{question_id}: expected_path has repeated nodes")
@@ -734,9 +734,36 @@ def validate_test_set(payload: dict[str, Any]) -> dict[str, Any]:
                 errors.append(
                     f"{question_id}: shortcut_audit.manual_reviewed must not be present"
                 )
-            if shortcut_audit.get("human_review_status") not in {"not_reviewed", "reviewed"}:
+            if shortcut_audit.get("generator_checked") is not True:
+                errors.append(
+                    f"{question_id}: shortcut_audit.generator_checked must be true"
+                )
+            if shortcut_audit.get("human_review_status") not in {
+                "pending",
+                "reviewed",
+                "not_reviewed",
+            }:
                 errors.append(
                     f"{question_id}: shortcut_audit.human_review_status is invalid"
+                )
+            if (
+                "expected_path_length" in shortcut_audit
+                and shortcut_audit.get("expected_path_length") != hop_count
+            ):
+                errors.append(
+                    f"{question_id}: shortcut_audit.expected_path_length mismatches hop_count"
+                )
+            root_distance = compute_shortest_directed_distance(
+                triples,
+                [root] if root else [],
+                item["expected_answer"],
+            )
+            if (
+                "shortest_distance_from_graph_root" in shortcut_audit
+                and shortcut_audit.get("shortest_distance_from_graph_root") != root_distance
+            ):
+                errors.append(
+                    f"{question_id}: shortcut_audit.shortest_distance_from_graph_root mismatches computed root distance"
                 )
             if shortcut_audit.get("shortest_distance_from_question_anchor") != computed_distance:
                 errors.append(

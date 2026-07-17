@@ -52,11 +52,15 @@ DHSC = "dhsc_lessons_2018"
 CISA = "cisa_ta17_132a_2017"
 MS = "microsoft_ms17_010_2017"
 
+HOP_SEMANTICS_LABEL = "designed_root_to_answer_graph_depth"
 HOP_DEFINITION = (
-    "hop_count = minimum number of trusted directed graph edges needed to derive "
-    "the expected answer from the question's question_anchor_entities, under "
-    "allowed alias normalization, without outside knowledge."
+    "hop_count = designed root-to-answer graph depth: the length of the intended "
+    "contiguous trusted directed path from the graph root (also expressed as the "
+    "question anchor in this dataset) to the expected answer. This equals the "
+    "expected graph path length and the shortest directed root-to-answer distance "
+    "under current validation, but does not by itself prove cognitive reasoning depth."
 )
+HUMAN_REVIEW_PENDING = "pending"
 
 
 @dataclass(frozen=True)
@@ -1061,6 +1065,7 @@ def build_questions(
                     f"(detected={anchor_info['detected_entities']})"
                 )
             distance = shortest_directed_distance(triples, anchors, answer)
+            root_distance = shortest_directed_distance(triples, [ROOT_ENTITY], answer)
             final_subject = path[-1][0]
             flags = shortcut_flags(
                 question,
@@ -1132,8 +1137,10 @@ def build_questions(
                         "matched_aliases": anchor_info["matched_aliases"],
                         "detected_entities": anchors,
                     },
-                    "hop_semantics": "minimum_required_path",
+                    "hop_semantics": HOP_SEMANTICS_LABEL,
                     "shortcut_audit": {
+                        "expected_path_length": hop,
+                        "shortest_distance_from_graph_root": root_distance,
                         "shortest_distance_from_question_anchor": distance,
                         "shortest_anchor_distance": distance,
                         "direct_final_subject_mentioned": flags["direct_final_subject_mentioned"],
@@ -1144,22 +1151,24 @@ def build_questions(
                         "mentioned_entities": flags["mentioned_entities"],
                         "shortcut_entities": flags["shortcut_entities"],
                         "ambiguous_discourse_markers": ambiguous_discourse_markers,
-                        "human_review_status": "not_reviewed",
+                        "generator_checked": True,
+                        "human_review_status": HUMAN_REVIEW_PENDING,
                         "locality": local_audit,
                         "unresolved_shortcut": False,
                         "review_notes": (
-                            "Generator notes only; not a human review. Question anchor was "
-                            "detected from question text; shortest directed distance from the "
-                            "detected anchor equals declared hop count; automated checks found "
-                            "no late-chain entity, final-edge subject, expected-answer, or "
-                            "ambiguous discourse shortcut."
+                            "Generator notes only; human_review_status remains pending. "
+                            "Question is self-contained; designed path length equals shortest "
+                            "directed distance from the graph root / detected question anchor; "
+                            "automated checks found no late-chain entity, final-edge subject, "
+                            "expected-answer, or ambiguous discourse shortcut. Graph depth is "
+                            "not claimed as cognitive reasoning depth."
                         ),
                     },
                     "required_entities": entities,
                     "required_relations": relations,
                     "difficulty_notes": (
-                        f"{hop}-hop minimum required path through the {chain_name} branch; "
-                        "answer is the path terminus."
+                        f"{hop}-hop designed root-to-answer path through the {chain_name} "
+                        "branch; answer is the path terminus."
                     ),
                     "requires_alias_resolution": hop >= 4,
                     "requires_avoiding_sibling_branches": hop >= 3,
@@ -1291,7 +1300,7 @@ def graph_metrics(facts: list[Fact], questions: list[dict[str, Any]], trusted_co
         "ambiguous_discourse_count": sum(1 for row in audit_rows if row["ambiguous_discourse_markers"]),
         "locality_warning_count": sum(1 for row in audit_rows if row["locality"]["locality_warning"]),
         "unreviewed_count": sum(
-            1 for row in audit_rows if row["human_review_status"] == "not_reviewed"
+            1 for row in audit_rows if row["human_review_status"] == HUMAN_REVIEW_PENDING
         ),
         "trusted_context_contains_nw_f": "nw_f" in trusted_context,
         "trusted_context_contains_expected_path": "expected_path" in trusted_context.lower(),
@@ -1349,8 +1358,12 @@ def validate_artifacts(
             errors.append(f"{question['id']}: anchor alias fields diverge")
         if not question.get("question_anchor_entities"):
             errors.append(f"{question['id']}: missing question anchor")
-        if question.get("shortcut_audit", {}).get("human_review_status") != "not_reviewed":
+        if question.get("shortcut_audit", {}).get("human_review_status") != HUMAN_REVIEW_PENDING:
             errors.append(f"{question['id']}: human review status should be pending")
+        if question.get("shortcut_audit", {}).get("generator_checked") is not True:
+            errors.append(f"{question['id']}: generator_checked must be true")
+        if question.get("hop_semantics") != HOP_SEMANTICS_LABEL:
+            errors.append(f"{question['id']}: hop_semantics label mismatch")
         if len(path_nodes(path)) != len(set(path_nodes(path))):
             errors.append(f"{question['id']}: repeated path node")
         if len({tuple(edge) for edge in path}) != len(path):
@@ -1383,6 +1396,11 @@ def audit_questions(
             anchors,
             question["expected_answer"],
         )
+        root_distance = shortest_directed_distance(
+            triples,
+            [question["graph_root_entity"]],
+            question["expected_answer"],
+        )
         shortcut_audit = question["shortcut_audit"]
         direct_final_subject_mentioned = shortcut_audit["direct_final_subject_mentioned"]
         expected_answer_mentioned = shortcut_audit["expected_answer_mentioned"]
@@ -1411,6 +1429,7 @@ def audit_questions(
             {
                 "id": question["id"],
                 "hop_count": question["hop_count"],
+                "hop_semantics": question.get("hop_semantics"),
                 "question": question["question"],
                 "graph_root_entity": question["graph_root_entity"],
                 "question_anchor_entities": anchors,
@@ -1419,6 +1438,7 @@ def audit_questions(
                 "expected_answer": question["expected_answer"],
                 "final_edge_subject": final_subject,
                 "expected_path_length": len(path),
+                "shortest_distance_from_graph_root": root_distance,
                 "shortest_distance_from_question_anchor": distance,
                 "shortest_anchor_distance": distance,
                 "direct_final_subject_mentioned": direct_final_subject_mentioned,
@@ -1428,6 +1448,7 @@ def audit_questions(
                 "mentioned_entities": shortcut_audit["mentioned_entities"],
                 "shortcut_entities": shortcut_audit["shortcut_entities"],
                 "ambiguous_discourse_markers": ambiguous_discourse_markers,
+                "generator_checked": shortcut_audit.get("generator_checked", False),
                 "human_review_status": shortcut_audit["human_review_status"],
                 "locality": shortcut_audit["locality"],
                 "repeated_nodes": repeated_nodes,
@@ -1446,13 +1467,15 @@ def build_dataset(facts: list[Fact], questions: list[dict[str, Any]], metrics: d
         "domain": DOMAIN,
         "root_entity": ROOT_ENTITY,
         "description": (
-            "Source-grounded 50-question multihop set on the documented May 2017 WannaCry "
-            "impact on the NHS in England, regenerated so declared hops equal the minimum "
-            "trusted directed path from anchors explicitly detected in question text to answers."
+            "Source-grounded 50-question root-to-answer graph-depth and path-following set on "
+            "the documented May 2017 WannaCry impact on the NHS in England. Declared hops are "
+            "designed expected graph path lengths from the incident root, not claims of "
+            "minimum cognitive reasoning depth."
         ),
         "source_manifest_path": "data/sources/nhs_wannacry/source_manifest.json",
         "requires_fact_provenance": True,
         "hop_semantics": {
+            "label": HOP_SEMANTICS_LABEL,
             "definition": HOP_DEFINITION,
             "traversal": "directed",
             "alias_normalization": (
@@ -1465,7 +1488,11 @@ def build_dataset(facts: list[Fact], questions: list[dict[str, Any]], metrics: d
                 "naming any non-anchor graph entity with a shorter answer distance, naming the "
                 "final-edge subject, or naming the expected answer in questions with hop_count>1"
             ),
-            "human_review": "pending; shortcut audits are generator notes only",
+            "human_review": "pending; generator_checked audits are notes only",
+            "cognitive_claim": (
+                "graph depth / expected path length is not automatically equivalent to human "
+                "reasoning depth"
+            ),
             "inflation": "paths that insert semantically empty intermediate noun phrases are invalid",
         },
         "trusted_context": trusted_context,
@@ -1513,7 +1540,7 @@ def build_audit(dataset: dict[str, Any]) -> dict[str, Any]:
         "ambiguous_discourse_count": sum(1 for row in rows if row["ambiguous_discourse_markers"]),
         "locality_warning_count": sum(1 for row in rows if row["locality"]["locality_warning"]),
         "unreviewed_count": sum(
-            1 for row in rows if row["human_review_status"] == "not_reviewed"
+            1 for row in rows if row["human_review_status"] == HUMAN_REVIEW_PENDING
         ),
         "hop_distribution": {str(hop): hop_distribution[hop] for hop in sorted(hop_distribution)},
         "questions": rows,
@@ -1527,14 +1554,16 @@ def build_audit_markdown(audit: dict[str, Any], dataset: dict[str, Any]) -> str:
         "",
         f"Definition: {audit['definition']}",
         "",
-        "## Graph depth vs question-required reasoning depth",
+        "## Honest hop-semantics framing",
         "",
-        "- **Graph depth** is shortest directed distance from the benchmark graph root.",
-        "- **Question-required reasoning depth** is shortest directed distance from",
-        "  anchors detected in the question wording itself.",
-        "- This audit measures the second quantity. Validation fails if a question does",
-        "  not express its anchors, if discourse anaphora remains, if a shorter-path",
-        "  entity/alias is exposed, or if `manual_reviewed` is auto-claimed.",
+        f"- Per-question label: `{HOP_SEMANTICS_LABEL}`.",
+        "- **Expected path length** is the designed contiguous trusted path length.",
+        "- **Shortest directed distance from the graph root** is reported separately.",
+        "- **Late-path entity exposure** and **locality / sentence-retrieval risk** are",
+        "  audited; graph distance alone does not prove cognitive reasoning depth.",
+        "- Validation fails if a question does not express its anchors, if discourse",
+        "  anaphora remains, if a shorter-path entity/alias is exposed, or if",
+        "  `manual_reviewed` is auto-claimed.",
         "",
         "## Summary",
         "",
@@ -1549,18 +1578,19 @@ def build_audit_markdown(audit: dict[str, Any], dataset: dict[str, Any]) -> str:
         f"- Relation types: {metrics['relation_count']}",
         f"- Root out-degree: {metrics['root_out_degree']}",
         "",
-        "Human review status: all rows are `not_reviewed`; automated checks are generator-side audits only.",
+        "Human review status: all rows are `pending` with `generator_checked: true`; automated checks are generator-side audits only.",
         "",
         "## Hop 8-10 audit table",
         "",
-        "| id | hop | anchor distance | final subject mentioned | answer mentioned | late-chain mention | locality | review | answer |",
-        "| --- | ---: | ---: | --- | --- | --- | --- | --- | --- |",
+        "| id | hop | path length | root distance | anchor distance | final subject mentioned | answer mentioned | late-chain mention | locality | review | answer |",
+        "| --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- |",
     ]
     for row in audit["questions"]:
         if row["hop_count"] < 8:
             continue
         lines.append(
-            "| {id} | {hop_count} | {shortest_distance_from_question_anchor} | "
+            "| {id} | {hop_count} | {expected_path_length} | {shortest_distance_from_graph_root} | "
+            "{shortest_distance_from_question_anchor} | "
             "{direct_final_subject_mentioned} | {expected_answer_mentioned} | "
             "{late_chain_entity_mentioned} | {locality_status} | {human_review_status} | "
             "{expected_answer} |".format(
@@ -1573,13 +1603,13 @@ def build_audit_markdown(audit: dict[str, Any], dataset: dict[str, Any]) -> str:
             "",
             "## Full per-question audit",
             "",
-            "| id | hop | path length | anchor distance | anchor | ambiguous refs | locality | unresolved |",
-            "| --- | ---: | ---: | ---: | --- | --- | --- | --- |",
+            "| id | hop | path length | root distance | anchor distance | anchor | ambiguous refs | locality | unresolved |",
+            "| --- | ---: | ---: | ---: | ---: | --- | --- | --- | --- |",
         ]
     )
     for row in audit["questions"]:
         lines.append(
-            "| {id} | {hop_count} | {expected_path_length} | "
+            "| {id} | {hop_count} | {expected_path_length} | {shortest_distance_from_graph_root} | "
             "{shortest_distance_from_question_anchor} | {anchor} | {ambiguous} | "
             "{locality_status} | {unresolved_shortcut} |".format(
                 **row,
