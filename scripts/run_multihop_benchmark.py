@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the fixed Apollo multi-hop measurement set without tuning the pipeline."""
+"""Run a fixed multi-hop measurement set without tuning the pipeline."""
 
 from __future__ import annotations
 
@@ -219,13 +219,43 @@ def should_skip_prior_row(
     return True
 
 
+def fact_as_triple(fact: Any) -> tuple[str, str, str] | None:
+    """Normalize a graph fact to ``(subject, relation, object)``.
+
+    Supports Apollo-style 3-element arrays and object facts used by
+    provenance-bearing datasets (for example NHS WannaCry).
+    """
+    if isinstance(fact, (list, tuple)) and len(fact) == 3:
+        subject, relation, obj = fact
+        return str(subject), str(relation), str(obj)
+    if isinstance(fact, dict):
+        try:
+            return str(fact["subject"]), str(fact["relation"]), str(fact["object"])
+        except KeyError:
+            return None
+    return None
+
+
+def iter_fact_triples(
+    facts_list: list[Any],
+) -> list[tuple[str, str, str]]:
+    triples: list[tuple[str, str, str]] = []
+    for fact in facts_list:
+        triple = fact_as_triple(fact)
+        if triple is not None:
+            triples.append(triple)
+    return triples
+
+
 def graph_metrics(payload: dict[str, Any]) -> dict[str, Any]:
-    facts = payload["expected_graph_facts"]
+    facts_list = payload["expected_graph_facts"]
+    triples = iter_fact_triples(facts_list)
     questions = payload["questions"]
     root = payload["root_entity"]
-    nodes = {node for subject, _, obj in facts for node in (subject, obj)}
+    nodes = {node for subject, _, obj in triples for node in (subject, obj)}
     adjacency: dict[str, set[str]] = defaultdict(set)
-    for subject, _, obj in facts:
+    relations = {relation for _, relation, _ in triples}
+    for subject, _, obj in triples:
         adjacency[subject].add(obj)
         adjacency[obj].add(subject)
     components = 0
@@ -238,35 +268,132 @@ def graph_metrics(payload: dict[str, Any]) -> dict[str, Any]:
             neighbors = adjacency[current] & unseen
             unseen -= neighbors
             stack.extend(neighbors)
+    isolated = sorted(node for node in nodes if not adjacency[node])
     return {
         "node_count": len(nodes),
-        "edge_count": len(facts),
+        "edge_count": len(triples),
+        "relation_count": len(relations),
         "connected_components": components,
+        "isolated_entity_count": len(isolated),
         "root_node": root,
         "max_designed_hop_depth": max(item["hop_count"] for item in questions),
         "average_expected_hop_count": (
             sum(item["hop_count"] for item in questions) / len(questions)
         ),
         "branching_factor_from_root": len(
-            {obj for subject, _, obj in facts if subject == root}
+            {obj for subject, _, obj in triples if subject == root}
         ),
         "branches_reaching_10_hops": len(
             {
                 tuple(item["expected_path"][0])
                 for item in questions
-                if item["hop_count"] == 10
+                if item["hop_count"] == 10 and item.get("expected_path")
             }
         ),
     }
+
+
+def _validate_provenance(
+    payload: dict[str, Any],
+    facts_list: list[Any],
+    *,
+    require_provenance: bool,
+) -> list[str]:
+    """Validate optional/required source provenance on object-shaped facts."""
+    errors: list[str] = []
+    if not require_provenance and not any(isinstance(f, dict) for f in facts_list):
+        return errors
+
+    manifest_ids: set[str] = set()
+    manifest_path = payload.get("source_manifest_path")
+    if manifest_path:
+        path = Path(manifest_path)
+        if not path.is_absolute():
+            path = Path(__file__).resolve().parents[1] / path
+        if not path.exists():
+            errors.append(f"source_manifest_path not found: {manifest_path}")
+        else:
+            try:
+                manifest = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                errors.append(f"source manifest is not valid JSON: {exc}")
+                manifest = None
+            if isinstance(manifest, dict):
+                sources = manifest.get("sources", [])
+            else:
+                sources = manifest if isinstance(manifest, list) else []
+            if isinstance(sources, list):
+                for source in sources:
+                    if isinstance(source, dict) and source.get("source_id"):
+                        manifest_ids.add(str(source["source_id"]))
+
+    fact_ids: set[str] = set()
+    for index, fact in enumerate(facts_list, start=1):
+        if not isinstance(fact, dict):
+            if require_provenance:
+                errors.append(
+                    f"fact {index}: provenance-required datasets must use object facts"
+                )
+            continue
+        fact_id = str(fact.get("fact_id") or f"index-{index}")
+        if fact.get("fact_id"):
+            if fact_id in fact_ids:
+                errors.append(f"duplicate fact_id: {fact_id}")
+            fact_ids.add(fact_id)
+        kind = str(fact.get("fact_kind") or "direct")
+        if kind not in {"direct", "derived"}:
+            errors.append(f"{fact_id}: fact_kind must be direct or derived")
+        if kind == "direct":
+            source_id = fact.get("source_id")
+            if not source_id:
+                errors.append(f"{fact_id}: direct fact missing source_id")
+            elif manifest_ids and str(source_id) not in manifest_ids:
+                errors.append(f"{fact_id}: unknown source_id {source_id!r}")
+            locator = fact.get("page", fact.get("section", fact.get("locator")))
+            if locator in (None, ""):
+                errors.append(
+                    f"{fact_id}: direct fact missing page/section/locator reference"
+                )
+            if not str(fact.get("evidence") or "").strip():
+                errors.append(f"{fact_id}: direct fact missing evidence paraphrase")
+        else:
+            parents = fact.get("parent_fact_ids") or []
+            if not isinstance(parents, list) or not parents:
+                errors.append(f"{fact_id}: derived fact missing parent_fact_ids")
+            if not str(fact.get("derivation_rule") or "").strip():
+                errors.append(f"{fact_id}: derived fact missing derivation_rule")
+
+    # Parent existence check after collecting IDs.
+    known_ids = {
+        str(fact.get("fact_id"))
+        for fact in facts_list
+        if isinstance(fact, dict) and fact.get("fact_id")
+    }
+    for fact in facts_list:
+        if not isinstance(fact, dict):
+            continue
+        if str(fact.get("fact_kind") or "direct") != "derived":
+            continue
+        fact_id = str(fact.get("fact_id") or "?")
+        for parent in fact.get("parent_fact_ids") or []:
+            if str(parent) not in known_ids:
+                errors.append(f"{fact_id}: parent fact {parent!r} does not exist")
+    return errors
 
 
 def validate_test_set(payload: dict[str, Any]) -> dict[str, Any]:
     errors: list[str] = []
     questions = payload.get("questions", [])
     facts_list = payload.get("expected_graph_facts", [])
-    facts = {tuple(fact) for fact in facts_list if len(fact) == 3}
+    triples = iter_fact_triples(facts_list)
+    facts = set(triples)
     root = payload.get("root_entity")
     trusted_context = str(payload.get("trusted_context", ""))
+    require_provenance = bool(
+        payload.get("requires_fact_provenance")
+        or payload.get("source_manifest_path")
+        or any(isinstance(fact, dict) for fact in facts_list)
+    )
     required_question_fields = {
         "id",
         "hop_count",
@@ -283,13 +410,30 @@ def validate_test_set(payload: dict[str, Any]) -> dict[str, Any]:
     expected_counts = {hop: 5 for hop in range(1, 11)}
     if dict(counts) != expected_counts:
         errors.append(f"hop distribution is {dict(counts)}, expected {expected_counts}")
-    if len(facts) != len(facts_list):
+    if len(triples) != len(facts_list):
         errors.append("expected_graph_facts contains duplicate or malformed edges")
+    if len(facts) != len(triples):
+        errors.append("expected_graph_facts contains duplicate triples")
     if not trusted_context.strip():
         errors.append("trusted_context is empty")
+    # Scoring metadata must not be embedded as structured dumps in context.
+    lowered = trusted_context.lower()
+    if "expected_path" in lowered or "expected_answer" in lowered:
+        errors.append(
+            "trusted_context appears to embed expected_path/expected_answer scoring metadata"
+        )
+
+    errors.extend(
+        _validate_provenance(
+            payload,
+            facts_list,
+            require_provenance=require_provenance,
+        )
+    )
 
     seen_ids: set[str] = set()
     ten_hop_branches: set[tuple[str, str, str]] = set()
+    graph_nodes = {node for subject, _, obj in facts for node in (subject, obj)}
     for index, item in enumerate(questions, start=1):
         missing = required_question_fields - set(item)
         if missing:
@@ -324,9 +468,7 @@ def validate_test_set(payload: dict[str, Any]) -> dict[str, Any]:
             errors.append(f"{question_id}: required_entities does not match path")
         if set(item["required_relations"]) != path_relations:
             errors.append(f"{question_id}: required_relations does not match path")
-        if item["expected_answer"] not in {
-            node for subject, _, obj in facts for node in (subject, obj)
-        }:
+        if item["expected_answer"] not in graph_nodes:
             errors.append(f"{question_id}: expected answer is absent from graph")
         if hop_count == 10:
             ten_hop_branches.add(tuple(path[0]))
@@ -334,17 +476,33 @@ def validate_test_set(payload: dict[str, Any]) -> dict[str, Any]:
     if len(ten_hop_branches) < 2:
         errors.append("fewer than two distinct branches reach 10 hops")
     metrics = graph_metrics(payload) if questions and facts_list else {}
+    if metrics.get("isolated_entity_count"):
+        errors.append(
+            f"graph has {metrics['isolated_entity_count']} isolated entities"
+        )
     defined = payload.get("graph_properties", {})
     if defined.get("edge_count_designed") != metrics.get("edge_count"):
         errors.append("declared edge_count_designed does not match graph")
     if defined.get("node_count") != metrics.get("node_count"):
         errors.append("declared node_count does not match graph")
+    if (
+        defined.get("root_node") is not None
+        and defined.get("root_node") != root
+    ):
+        errors.append("graph_properties.root_node does not match root_entity")
+    if (
+        defined.get("connected_components_designed") is not None
+        and defined.get("connected_components_designed")
+        != metrics.get("connected_components")
+    ):
+        errors.append("declared connected_components_designed does not match graph")
     return {
         "valid": not errors,
         "errors": errors,
         "question_count": len(questions),
         "hop_distribution": dict(sorted(counts.items())),
         "graph_metrics": metrics,
+        "provenance_required": require_provenance,
     }
 
 
@@ -858,8 +1016,9 @@ def markdown_report(report: dict[str, Any]) -> str:
     summary = report["summary"]
     graph = report["graph_metrics_computed"]
     prompt = report["prompt_context_summary"]
+    title = str(report.get("test_set_id") or "multi-hop").replace("_", " ")
     lines = [
-        "# Apollo multi-hop benchmark summary",
+        f"# {title} benchmark summary",
         "",
         "This is a measurement report, not a tuned success criterion.",
         "",
@@ -952,7 +1111,7 @@ def markdown_report(report: dict[str, Any]) -> str:
                 f"{summary['errored']} projection/pipeline failures. "
                 "Those terminal records validate runner checkpointing and "
                 "reporting only; they are not model-performance results. "
-                "The deterministic mock has no profile for this Apollo context.",
+                "The deterministic mock has no profile for this benchmark context.",
             ]
         )
     return "\n".join(lines) + "\n"
