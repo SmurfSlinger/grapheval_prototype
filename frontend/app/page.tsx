@@ -1,15 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ControlsPanel from "@/components/ControlsPanel";
 import DecomposedKgcBacktrackingResultView from "@/components/DecomposedKgcBacktrackingResultView";
 import KgcBacktrackingResultView from "@/components/KgcBacktrackingResultView";
 import PipelineResultView from "@/components/PipelineResultView";
 import {
+  fetchBenchmarks,
+  fetchBenchmarkQuestions,
   fetchExamples,
   fetchGraphClaims,
   fetchHealth,
   runAllExamples,
+  runBenchmarkQuestion,
   runCustomExample,
   runCustomDecomposedKgcBacktracking,
   runDecomposedKgcBacktracking,
@@ -18,7 +21,11 @@ import {
   ApiError,
   type Answer0Mode,
   type BacktrackingResult,
+  type BenchmarkQuestionSummary,
+  type BenchmarkRunScore,
+  type BenchmarkSummary,
   type DecomposedBacktrackingResult,
+  type DecomposedInputSource,
   type ExampleSummary,
   type PipelineResult,
   type Provider,
@@ -30,6 +37,7 @@ function defaultAnswer0Mode(example: ExampleSummary | undefined): Answer0Mode {
 }
 
 const DEMO_EXAMPLE_ID = "saturn_v_apollo_11_001";
+const DEFAULT_BENCHMARK_ID = "apollo_multihop_50";
 
 function defaultSelectedExampleId(examples: ExampleSummary[]): string | null {
   if (examples.length === 0) return null;
@@ -48,6 +56,9 @@ export default function HomePage() {
   const [kgcResult, setKgcResult] = useState<BacktrackingResult | null>(null);
   const [decomposedResult, setDecomposedResult] =
     useState<DecomposedBacktrackingResult | null>(null);
+  const [benchmarkScore, setBenchmarkScore] = useState<BenchmarkRunScore | null>(
+    null,
+  );
   const [allResults, setAllResults] = useState<PipelineResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<unknown>(null);
@@ -62,9 +73,23 @@ export default function HomePage() {
   const [customQuestion, setCustomQuestion] = useState("");
   const [customContext, setCustomContext] = useState("");
   const [customAnswer, setCustomAnswer] = useState("");
-  const [customRunEnabled, setCustomRunEnabled] = useState(false);
+  const [inputSource, setInputSource] =
+    useState<DecomposedInputSource>("built_in");
   const [customRunId, setCustomRunId] = useState("");
   const [clearNeo4jBeforeRun, setClearNeo4jBeforeRun] = useState(true);
+
+  const [benchmarks, setBenchmarks] = useState<BenchmarkSummary[]>([]);
+  const [benchmarksLoading, setBenchmarksLoading] = useState(false);
+  const [benchmarksError, setBenchmarksError] = useState<string | null>(null);
+  const [selectedBenchmarkId, setSelectedBenchmarkId] = useState<string | null>(
+    DEFAULT_BENCHMARK_ID,
+  );
+  const [hopFilter, setHopFilter] = useState<number | "all">("all");
+  const [benchmarkQuestions, setBenchmarkQuestions] = useState<
+    BenchmarkQuestionSummary[]
+  >([]);
+  const [selectedBenchmarkQuestionId, setSelectedBenchmarkQuestionId] =
+    useState<string | null>(null);
 
   const refreshNeo4jStatus = useCallback(async () => {
     try {
@@ -94,6 +119,72 @@ export default function HomePage() {
       })
       .catch((err: Error) => setError(err.message));
   }, [refreshNeo4jStatus]);
+
+  useEffect(() => {
+    if (toolMode !== "decomposed_kgc" || inputSource !== "benchmark") {
+      return;
+    }
+    let cancelled = false;
+    setBenchmarksLoading(true);
+    setBenchmarksError(null);
+    fetchBenchmarks()
+      .then((rows) => {
+        if (cancelled) return;
+        setBenchmarks(rows);
+        setSelectedBenchmarkId((previous) => {
+          if (previous && rows.some((row) => row.id === previous)) {
+            return previous;
+          }
+          return (
+            rows.find((row) => row.id === DEFAULT_BENCHMARK_ID)?.id ??
+            rows[0]?.id ??
+            null
+          );
+        });
+      })
+      .catch((err: Error) => {
+        if (cancelled) return;
+        setBenchmarks([]);
+        setBenchmarksError(err.message || "Failed to load benchmarks");
+      })
+      .finally(() => {
+        if (!cancelled) setBenchmarksLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [toolMode, inputSource]);
+
+  useEffect(() => {
+    if (
+      toolMode !== "decomposed_kgc" ||
+      inputSource !== "benchmark" ||
+      !selectedBenchmarkId
+    ) {
+      return;
+    }
+    let cancelled = false;
+    fetchBenchmarkQuestions(selectedBenchmarkId, hopFilter)
+      .then((rows) => {
+        if (cancelled) return;
+        setBenchmarkQuestions(rows);
+        setSelectedBenchmarkQuestionId((previous) => {
+          if (previous && rows.some((row) => row.id === previous)) {
+            return previous;
+          }
+          return rows[0]?.id ?? null;
+        });
+      })
+      .catch((err: Error) => {
+        if (cancelled) return;
+        setBenchmarkQuestions([]);
+        setSelectedBenchmarkQuestionId(null);
+        setBenchmarksError(err.message || "Failed to load benchmark questions");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [toolMode, inputSource, selectedBenchmarkId, hopFilter]);
 
   const clearError = () => {
     setError(null);
@@ -185,30 +276,51 @@ export default function HomePage() {
   };
 
   const handleRunDecomposedKgc = async () => {
-    if (!customRunEnabled && !selectedId) return;
+    if (inputSource === "built_in" && !selectedId) return;
+    if (inputSource === "benchmark" && (!selectedBenchmarkId || !selectedBenchmarkQuestionId)) {
+      setError("Select a valid benchmark question");
+      return;
+    }
     setRunning(true);
     clearError();
     setDecomposedResult(null);
+    setBenchmarkScore(null);
     try {
-      const output = customRunEnabled
-        ? await runCustomDecomposedKgcBacktracking({
-            run_id: customRunId.trim() || undefined,
-            question: customQuestion,
-            context: customContext,
-            initial_answer: customAnswer.trim() || undefined,
-            clear_neo4j_before_run: clearNeo4jBeforeRun,
-            provider,
-            model,
-            max_iterations_per_sub_question: 3,
-          })
-        : await runDecomposedKgcBacktracking(selectedId!, {
-            provider,
-            model,
-            max_iterations_per_sub_question: 3,
-            answer_0_mode: answer0Mode,
-          });
-      setDecomposedResult(output);
-      setSelectedId(output.example_id);
+      if (inputSource === "custom") {
+        const output = await runCustomDecomposedKgcBacktracking({
+          run_id: customRunId.trim() || undefined,
+          question: customQuestion,
+          context: customContext,
+          initial_answer: customAnswer.trim() || undefined,
+          clear_neo4j_before_run: clearNeo4jBeforeRun,
+          provider,
+          model,
+          max_iterations_per_sub_question: 3,
+        });
+        setDecomposedResult(output);
+        setSelectedId(output.example_id);
+      } else if (inputSource === "benchmark") {
+        const output = await runBenchmarkQuestion({
+          benchmark_id: selectedBenchmarkId!,
+          question_id: selectedBenchmarkQuestionId!,
+          clear_neo4j_before_run: clearNeo4jBeforeRun,
+          provider,
+          model,
+          max_iterations_per_sub_question: 3,
+        });
+        setDecomposedResult(output.result);
+        setBenchmarkScore(output.benchmark);
+        setSelectedId(output.result.example_id);
+      } else {
+        const output = await runDecomposedKgcBacktracking(selectedId!, {
+          provider,
+          model,
+          max_iterations_per_sub_question: 3,
+          answer_0_mode: answer0Mode,
+        });
+        setDecomposedResult(output);
+        setSelectedId(output.example_id);
+      }
       await refreshNeo4jStatus();
     } catch (err) {
       handleApiFailure(err, "Decomposed KGc backtracking failed");
@@ -245,6 +357,33 @@ export default function HomePage() {
     setCustomQuestion(ex.question);
     setCustomContext(ex.context);
     setCustomAnswer(ex.initial_answer ?? "");
+  };
+
+  const selectedBenchmarkIndex = useMemo(
+    () =>
+      benchmarkQuestions.findIndex(
+        (row) => row.id === selectedBenchmarkQuestionId,
+      ),
+    [benchmarkQuestions, selectedBenchmarkQuestionId],
+  );
+
+  const handleBenchmarkPrevious = () => {
+    if (selectedBenchmarkIndex <= 0) return;
+    setSelectedBenchmarkQuestionId(
+      benchmarkQuestions[selectedBenchmarkIndex - 1].id,
+    );
+  };
+
+  const handleBenchmarkNext = () => {
+    if (
+      selectedBenchmarkIndex < 0 ||
+      selectedBenchmarkIndex >= benchmarkQuestions.length - 1
+    ) {
+      return;
+    }
+    setSelectedBenchmarkQuestionId(
+      benchmarkQuestions[selectedBenchmarkIndex + 1].id,
+    );
   };
 
   return (
@@ -303,9 +442,16 @@ export default function HomePage() {
         customQuestion={customQuestion}
         customContext={customContext}
         customAnswer={customAnswer}
-        customRunEnabled={customRunEnabled}
+        inputSource={inputSource}
         customRunId={customRunId}
         clearNeo4jBeforeRun={clearNeo4jBeforeRun}
+        benchmarks={benchmarks}
+        benchmarksLoading={benchmarksLoading}
+        benchmarksError={benchmarksError}
+        selectedBenchmarkId={selectedBenchmarkId}
+        hopFilter={hopFilter}
+        benchmarkQuestions={benchmarkQuestions}
+        selectedBenchmarkQuestionId={selectedBenchmarkQuestionId}
         onToolModeChange={setToolMode}
         onProviderChange={setProvider}
         onModelChange={setModel}
@@ -314,9 +460,14 @@ export default function HomePage() {
         onCustomQuestionChange={setCustomQuestion}
         onCustomContextChange={setCustomContext}
         onCustomAnswerChange={setCustomAnswer}
-        onCustomRunEnabledChange={setCustomRunEnabled}
+        onInputSourceChange={setInputSource}
         onCustomRunIdChange={setCustomRunId}
         onClearNeo4jBeforeRunChange={setClearNeo4jBeforeRun}
+        onSelectedBenchmarkIdChange={setSelectedBenchmarkId}
+        onHopFilterChange={setHopFilter}
+        onSelectedBenchmarkQuestionIdChange={setSelectedBenchmarkQuestionId}
+        onBenchmarkPrevious={handleBenchmarkPrevious}
+        onBenchmarkNext={handleBenchmarkNext}
         onRunKgc={handleRunKgc}
         onRunDecomposedKgc={handleRunDecomposedKgc}
         onRunBaseline={handleRunBaseline}
@@ -333,6 +484,7 @@ export default function HomePage() {
         <DecomposedKgcBacktrackingResultView
           result={decomposedResult}
           loading={running}
+          benchmarkScore={benchmarkScore}
         />
       ) : null}
 

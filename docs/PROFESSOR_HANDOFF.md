@@ -352,7 +352,15 @@ Bounded smoke:
   (`run_subprocess_with_timeout`) terminates and reaps owned child process
   groups when a subprocess architecture is used.
 
-## Professor verification commands
+## Benchmark question UI
+
+In **Decomposed Backtracking**, choose **Benchmark Question** to pick one
+Apollo or NHS WannaCry question (hop filter + Previous/Next). The selected
+question runs through the same custom decomposed pipeline. Expected answers
+and paths are scored only after inference and appear in the result panel /
+full JSON.
+
+Professor verification still includes:
 
 ```bash
 python -m pytest tests/
@@ -361,14 +369,6 @@ python scripts/run_multihop_benchmark.py \
   --test-set data/test_sets/nhs_wannacry_multihop_50.json \
   --validate-only
 ./scripts/run_nhs_wannacry_real_baseline.sh
-```
-
-Also useful:
-
-```bash
-python scripts/run_multihop_benchmark.py \
-  --test-set data/test_sets/apollo_multihop_50.json \
-  --validate-only
 ```
 
 ## Next recommended work

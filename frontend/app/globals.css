@@ -338,6 +338,51 @@ button.btn-small {
   border: 1px solid var(--nei-border);
 }
 
+.benchmark-run-fields {
+  margin-top: 0.75rem;
+}
+
+.benchmark-preview {
+  margin: 0.65rem 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel, transparent);
+}
+
+.benchmark-preview p {
+  margin: 0.25rem 0;
+}
+
+.benchmark-nav {
+  margin: 0.35rem 0 0.15rem;
+}
+
+.benchmark-score-card {
+  margin-bottom: 0.75rem;
+}
+
+.benchmark-score-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.benchmark-score-list li {
+  margin: 0.2rem 0;
+}
+
+.controls-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+
+.custom-run-fields label {
+  display: block;
+  margin-top: 0.55rem;
+}
+
 .controls-answer0-mode {
   margin-top: 0.65rem;
   padding-top: 0.65rem;

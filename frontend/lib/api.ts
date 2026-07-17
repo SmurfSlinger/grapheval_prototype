@@ -61,6 +61,8 @@ export type Provider = "mock" | "ollama";
 
 export type ToolMode = "kgc" | "decomposed_kgc" | "baseline" | "legacy";
 
+export type DecomposedInputSource = "built_in" | "custom" | "benchmark";
+
 export type VerificationLabel = "SUPPORTED" | "CONTRADICTED" | "NOT_ENOUGH_INFO";
 
 export interface ExampleSummary {
@@ -541,6 +543,67 @@ export async function runCustomDecomposedKgcBacktracking(
   } & RunOptions,
 ): Promise<DecomposedBacktrackingResult> {
   return apiFetch("/run-decomposed-kgc-backtracking-custom", {
+    method: "POST",
+    body: JSON.stringify({
+      ...payload,
+      max_iterations_per_sub_question:
+        payload.max_iterations_per_sub_question ?? 3,
+    }),
+  });
+}
+
+export interface BenchmarkSummary {
+  id: string;
+  title: string;
+  domain: string;
+  description: string;
+  question_count: number;
+  hop_distribution: Record<string, number>;
+}
+
+export interface BenchmarkQuestionSummary {
+  id: string;
+  hop_count: number;
+  question: string;
+}
+
+export interface BenchmarkRunScore {
+  benchmark_id: string;
+  question_id: string;
+  hop_count: number;
+  expected_answer: string;
+  exact_match: boolean;
+  contains_expected_answer: boolean;
+  resolved_by_pipeline: boolean;
+}
+
+export interface BenchmarkQuestionRunResponse {
+  result: DecomposedBacktrackingResult;
+  benchmark: BenchmarkRunScore;
+}
+
+export async function fetchBenchmarks(): Promise<BenchmarkSummary[]> {
+  return apiFetch("/benchmarks");
+}
+
+export async function fetchBenchmarkQuestions(
+  benchmarkId: string,
+  hop?: number | "all",
+): Promise<BenchmarkQuestionSummary[]> {
+  const params =
+    hop != null && hop !== "all" ? `?hop=${encodeURIComponent(String(hop))}` : "";
+  return apiFetch(`/benchmarks/${encodeURIComponent(benchmarkId)}/questions${params}`);
+}
+
+export async function runBenchmarkQuestion(
+  payload: {
+    benchmark_id: string;
+    question_id: string;
+    clear_neo4j_before_run: boolean;
+    max_iterations_per_sub_question?: number;
+  } & RunOptions,
+): Promise<BenchmarkQuestionRunResponse> {
+  return apiFetch("/run-benchmark-question", {
     method: "POST",
     body: JSON.stringify({
       ...payload,

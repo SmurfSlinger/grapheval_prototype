@@ -1,5 +1,8 @@
 import type {
   Answer0Mode,
+  BenchmarkQuestionSummary,
+  BenchmarkSummary,
+  DecomposedInputSource,
   ExampleSummary,
   Provider,
   ToolMode,
@@ -16,9 +19,16 @@ interface ControlsPanelProps {
   customQuestion: string;
   customContext: string;
   customAnswer: string;
-  customRunEnabled: boolean;
+  inputSource: DecomposedInputSource;
   customRunId: string;
   clearNeo4jBeforeRun: boolean;
+  benchmarks: BenchmarkSummary[];
+  benchmarksLoading: boolean;
+  benchmarksError: string | null;
+  selectedBenchmarkId: string | null;
+  hopFilter: number | "all";
+  benchmarkQuestions: BenchmarkQuestionSummary[];
+  selectedBenchmarkQuestionId: string | null;
   onToolModeChange: (mode: ToolMode) => void;
   onProviderChange: (provider: Provider) => void;
   onModelChange: (model: string) => void;
@@ -27,9 +37,14 @@ interface ControlsPanelProps {
   onCustomQuestionChange: (value: string) => void;
   onCustomContextChange: (value: string) => void;
   onCustomAnswerChange: (value: string) => void;
-  onCustomRunEnabledChange: (value: boolean) => void;
+  onInputSourceChange: (value: DecomposedInputSource) => void;
   onCustomRunIdChange: (value: string) => void;
   onClearNeo4jBeforeRunChange: (value: boolean) => void;
+  onSelectedBenchmarkIdChange: (value: string) => void;
+  onHopFilterChange: (value: number | "all") => void;
+  onSelectedBenchmarkQuestionIdChange: (value: string) => void;
+  onBenchmarkPrevious: () => void;
+  onBenchmarkNext: () => void;
   onRunKgc: () => void;
   onRunDecomposedKgc: () => void;
   onRunBaseline: () => void;
@@ -66,20 +81,21 @@ function SharedRunFields({
   examples,
   selectedId,
   running,
+  showExampleSelect,
   onProviderChange,
   onModelChange,
   onSelectExample,
-}: Pick<
-  ControlsPanelProps,
-  | "provider"
-  | "model"
-  | "examples"
-  | "selectedId"
-  | "running"
-  | "onProviderChange"
-  | "onModelChange"
-  | "onSelectExample"
->) {
+}: {
+  provider: Provider;
+  model: string;
+  examples: ExampleSummary[];
+  selectedId: string | null;
+  running: boolean;
+  showExampleSelect: boolean;
+  onProviderChange: (provider: Provider) => void;
+  onModelChange: (model: string) => void;
+  onSelectExample: (id: string) => void;
+}) {
   return (
     <div className="controls-grid">
       <label>
@@ -102,21 +118,23 @@ function SharedRunFields({
           placeholder="gemma4:e2b"
         />
       </label>
-      <label className="controls-example">
-        Example
-        <select
-          value={selectedId ?? ""}
-          onChange={(e) => onSelectExample(e.target.value)}
-          disabled={examples.length === 0}
-        >
-          {examples.length === 0 && <option value="">Loading…</option>}
-          {examples.map((ex) => (
-            <option key={ex.id} value={ex.id}>
-              {ex.id}
-            </option>
-          ))}
-        </select>
-      </label>
+      {showExampleSelect ? (
+        <label className="controls-example">
+          Example
+          <select
+            value={selectedId ?? ""}
+            onChange={(e) => onSelectExample(e.target.value)}
+            disabled={examples.length === 0}
+          >
+            {examples.length === 0 && <option value="">Loading…</option>}
+            {examples.map((ex) => (
+              <option key={ex.id} value={ex.id}>
+                {ex.id}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
     </div>
   );
 }
@@ -133,9 +151,16 @@ export default function ControlsPanel(props: ControlsPanelProps) {
     customQuestion,
     customContext,
     customAnswer,
-    customRunEnabled,
+    inputSource,
     customRunId,
     clearNeo4jBeforeRun,
+    benchmarks,
+    benchmarksLoading,
+    benchmarksError,
+    selectedBenchmarkId,
+    hopFilter,
+    benchmarkQuestions,
+    selectedBenchmarkQuestionId,
     onToolModeChange,
     onProviderChange,
     onModelChange,
@@ -144,9 +169,14 @@ export default function ControlsPanel(props: ControlsPanelProps) {
     onCustomQuestionChange,
     onCustomContextChange,
     onCustomAnswerChange,
-    onCustomRunEnabledChange,
+    onInputSourceChange,
     onCustomRunIdChange,
     onClearNeo4jBeforeRunChange,
+    onSelectedBenchmarkIdChange,
+    onHopFilterChange,
+    onSelectedBenchmarkQuestionIdChange,
+    onBenchmarkPrevious,
+    onBenchmarkNext,
     onRunKgc,
     onRunDecomposedKgc,
     onRunBaseline,
@@ -157,6 +187,15 @@ export default function ControlsPanel(props: ControlsPanelProps) {
 
   const selectedExample = examples.find((ex) => ex.id === selectedId);
   const presetAvailable = Boolean(selectedExample?.initial_answer?.trim());
+  const selectedBenchmark = benchmarks.find((row) => row.id === selectedBenchmarkId);
+  const selectedBenchmarkQuestion = benchmarkQuestions.find(
+    (row) => row.id === selectedBenchmarkQuestionId,
+  );
+  const selectedBenchmarkIndex = benchmarkQuestions.findIndex(
+    (row) => row.id === selectedBenchmarkQuestionId,
+  );
+  const showBuiltInExample =
+    toolMode !== "decomposed_kgc" || inputSource === "built_in";
 
   return (
     <section className="card controls-card controls-card-primary">
@@ -193,6 +232,7 @@ export default function ControlsPanel(props: ControlsPanelProps) {
         examples={examples}
         selectedId={selectedId}
         running={running}
+        showExampleSelect={showBuiltInExample}
         onProviderChange={onProviderChange}
         onModelChange={onModelChange}
         onSelectExample={onSelectExample}
@@ -240,17 +280,18 @@ export default function ControlsPanel(props: ControlsPanelProps) {
           <label>
             Input source
             <select
-              value={customRunEnabled ? "custom" : "built_in"}
+              value={inputSource}
               onChange={(e) =>
-                onCustomRunEnabledChange(e.target.value === "custom")
+                onInputSourceChange(e.target.value as DecomposedInputSource)
               }
             >
-              <option value="built_in">Built-in example</option>
-              <option value="custom">Custom local run</option>
+              <option value="built_in">Built-in Example</option>
+              <option value="custom">Custom Input</option>
+              <option value="benchmark">Benchmark Question</option>
             </select>
           </label>
 
-          {customRunEnabled ? (
+          {inputSource === "custom" ? (
             <div className="custom-run-fields">
               <label>
                 Run label / ID (optional)
@@ -302,18 +343,150 @@ export default function ControlsPanel(props: ControlsPanelProps) {
             </div>
           ) : null}
 
+          {inputSource === "benchmark" ? (
+            <div className="custom-run-fields benchmark-run-fields">
+              {benchmarksLoading ? (
+                <p className="controls-hint">Loading benchmarks…</p>
+              ) : null}
+              {benchmarksError ? (
+                <p className="controls-warning">{benchmarksError}</p>
+              ) : null}
+              <label>
+                Benchmark
+                <select
+                  value={selectedBenchmarkId ?? ""}
+                  onChange={(e) => onSelectedBenchmarkIdChange(e.target.value)}
+                  disabled={benchmarksLoading || benchmarks.length === 0}
+                >
+                  {benchmarks.length === 0 ? (
+                    <option value="">No benchmarks available</option>
+                  ) : null}
+                  {benchmarks.map((row) => (
+                    <option key={row.id} value={row.id}>
+                      {row.title} ({row.question_count})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Hop filter
+                <select
+                  value={hopFilter === "all" ? "all" : String(hopFilter)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    onHopFilterChange(
+                      value === "all" ? "all" : Number.parseInt(value, 10),
+                    );
+                  }}
+                >
+                  <option value="all">All</option>
+                  {Array.from({ length: 10 }, (_, index) => index + 1).map(
+                    (hop) => (
+                      <option key={hop} value={hop}>
+                        {hop}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
+              <label>
+                Question
+                <select
+                  value={selectedBenchmarkQuestionId ?? ""}
+                  onChange={(e) =>
+                    onSelectedBenchmarkQuestionIdChange(e.target.value)
+                  }
+                  disabled={benchmarkQuestions.length === 0}
+                >
+                  {benchmarkQuestions.length === 0 ? (
+                    <option value="">No questions for this filter</option>
+                  ) : null}
+                  {benchmarkQuestions.map((row) => (
+                    <option key={row.id} value={row.id}>
+                      {row.id} · hop {row.hop_count} · {row.question}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="row controls-actions benchmark-nav">
+                <button
+                  type="button"
+                  onClick={onBenchmarkPrevious}
+                  disabled={
+                    running ||
+                    selectedBenchmarkIndex < 0 ||
+                    selectedBenchmarkIndex === 0
+                  }
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={onBenchmarkNext}
+                  disabled={
+                    running ||
+                    selectedBenchmarkIndex < 0 ||
+                    selectedBenchmarkIndex >= benchmarkQuestions.length - 1
+                  }
+                >
+                  Next
+                </button>
+              </div>
+              {selectedBenchmark && selectedBenchmarkQuestion ? (
+                <div className="benchmark-preview">
+                  <p>
+                    <strong>{selectedBenchmark.title}</strong>
+                    {` · ${selectedBenchmark.question_count} questions`}
+                  </p>
+                  <p className="controls-hint">{selectedBenchmark.description}</p>
+                  <p>
+                    <strong>Hop:</strong> {selectedBenchmarkQuestion.hop_count}
+                  </p>
+                  <p>
+                    <strong>Question:</strong>{" "}
+                    {selectedBenchmarkQuestion.question}
+                  </p>
+                </div>
+              ) : null}
+              <label className="controls-checkbox">
+                <input
+                  type="checkbox"
+                  checked={clearNeo4jBeforeRun}
+                  onChange={(e) =>
+                    onClearNeo4jBeforeRunChange(e.target.checked)
+                  }
+                />
+                Clear Neo4j before run
+              </label>
+              <p className="controls-warning">
+                Deletes the local Neo4j graph before writing this run.
+              </p>
+              <p className="controls-hint">
+                Runs one selected benchmark question through the same decomposed
+                pipeline as custom input. Expected answers and paths are not
+                sent to inference.
+              </p>
+            </div>
+          ) : null}
+
           <div className="row controls-actions">
             <button
               type="button"
               onClick={onRunDecomposedKgc}
               disabled={
                 running ||
-                (customRunEnabled
+                (inputSource === "custom"
                   ? !customQuestion.trim() || !customContext.trim()
-                  : !selectedId)
+                  : inputSource === "benchmark"
+                    ? !selectedBenchmarkId || !selectedBenchmarkQuestionId
+                    : !selectedId)
               }
             >
-              {running ? "Running…" : "Run"}
+              {running
+                ? "Running…"
+                : inputSource === "benchmark"
+                  ? "Run Benchmark Question"
+                  : "Run"}
             </button>
           </div>
         </>

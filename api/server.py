@@ -10,6 +10,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from src.benchmarks import (
+    get_question,
+    is_approved_benchmark,
+    list_benchmarks,
+    list_questions,
+    score_result,
+    trusted_context,
+)
 from src.config import DEFAULT_MODEL
 from src.io_utils import load_examples, result_filename, save_result
 from src.llm.ollama_provider import (
@@ -99,6 +107,15 @@ class RunCustomDecomposedKgcBacktrackingRequest(BaseModel):
         "generated_external_projected",
         "context_grounded_per_subquestion",
     ] | None = None
+    clear_neo4j_before_run: bool = True
+
+
+class RunBenchmarkQuestionRequest(BaseModel):
+    benchmark_id: str
+    question_id: str
+    provider: Literal["mock", "ollama"] = "mock"
+    model: str = DEFAULT_MODEL
+    max_iterations_per_sub_question: int = 3
     clear_neo4j_before_run: bool = True
 
 
@@ -338,6 +355,85 @@ def run_decomposed_kgc_backtracking(
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     return result.to_dict()
+
+
+@app.get("/benchmarks")
+def get_benchmarks() -> list[dict[str, Any]]:
+    return list_benchmarks()
+
+
+@app.get("/benchmarks/{benchmark_id}/questions")
+def get_benchmark_questions(
+    benchmark_id: str,
+    hop: int | None = None,
+) -> list[dict[str, Any]]:
+    if not is_approved_benchmark(benchmark_id):
+        raise HTTPException(status_code=404, detail=f"Unknown benchmark_id: {benchmark_id}")
+    if hop is not None and hop not in range(1, 11):
+        raise HTTPException(status_code=400, detail="hop must be an integer from 1 to 10")
+    try:
+        return list_questions(benchmark_id, hop=hop)
+    except (FileNotFoundError, ValueError, KeyError) as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/run-benchmark-question")
+def run_benchmark_question(
+    request: RunBenchmarkQuestionRequest,
+) -> dict[str, Any]:
+    if not is_approved_benchmark(request.benchmark_id):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unknown benchmark_id: {request.benchmark_id}",
+        )
+    try:
+        question = get_question(request.benchmark_id, request.question_id)
+        context = trusted_context(request.benchmark_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (FileNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    question_text = str(question.get("question") or "").strip()
+    if not question_text:
+        raise HTTPException(status_code=422, detail="Benchmark question text is empty")
+
+    example = Example(
+        id=str(question["id"]),
+        question=question_text,
+        context=context,
+        initial_answer=None,
+    )
+    runner = _make_decomposed_backtracking_runner(
+        request.provider,
+        request.model,
+        max_iterations_per_sub_question=request.max_iterations_per_sub_question,
+        working_kgc_auto_promote=False,
+        answer_0_mode="generated_external_projected",
+        clear_neo4j_before_run=request.clear_neo4j_before_run,
+        neo4j_readback=True,
+        require_neo4j=True,
+    )
+    try:
+        result = runner.run_example(example)
+    except KgcExtractionError as exc:
+        _log_kgc_extraction_failure(example_id=example.id, exc=exc)
+        raise HTTPException(status_code=422, detail=exc.to_dict()) from exc
+    except OllamaError as exc:
+        _log_decomposed_runtime_failure(example_id=example.id, exc=exc)
+        raise _ollama_http_error(exc) from exc
+    except (RuntimeError, ValueError) as exc:
+        _log_decomposed_runtime_failure(example_id=example.id, exc=exc)
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    return {
+        "result": result.to_dict(),
+        "benchmark": score_result(
+            benchmark_id=request.benchmark_id,
+            question=question,
+            result=result,
+        ),
+    }
 
 
 @app.post("/run-decomposed-kgc-backtracking-custom")
