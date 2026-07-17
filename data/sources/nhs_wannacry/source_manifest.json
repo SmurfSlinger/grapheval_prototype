@@ -1,0 +1,74 @@
+[
+  {
+    "source_id": "nao_wannacry_2018",
+    "title": "Investigation: WannaCry cyber attack and the NHS (HC 414)",
+    "organization": "UK National Audit Office",
+    "publication_date": "2018-04-25",
+    "url": "https://www.nao.org.uk/reports/investigation-wannacry-cyber-attack-and-the-nhs/",
+    "local_extracted_file": "data/sources/nhs_wannacry/nao_wannacry_full.extracted.txt",
+    "local_html": null,
+    "sha256": "34e516b2e22d456f3adf8ed303eb9929161dee3ce6bf1958b10d9633da2c24e4",
+    "retrieval_date": "2026-07-17",
+    "notes": "Full extracted text of the NAO report. The locally preserved PDF is gitignored; its SHA-256 is recorded from hashes.sha256."
+  },
+  {
+    "source_id": "nao_wannacry_summary_2018",
+    "title": "Investigation: WannaCry cyber attack and the NHS - summary extract",
+    "organization": "UK National Audit Office",
+    "publication_date": "2018-04-25",
+    "url": "https://www.nao.org.uk/reports/investigation-wannacry-cyber-attack-and-the-nhs/",
+    "local_extracted_file": "data/sources/nhs_wannacry/nao_wannacry_summary.extracted.txt",
+    "local_html": null,
+    "sha256": "f1ebd5a24101955646a8fc70757748ff91d06fed34f23b5c961d654a89e2cd8e",
+    "retrieval_date": "2026-07-17",
+    "notes": "Summary pages extracted separately for convenient audit of high-level NAO findings. The source PDF is gitignored; its SHA-256 is recorded from hashes.sha256."
+  },
+  {
+    "source_id": "dhsc_lessons_2018",
+    "title": "Lessons learned review of the WannaCry Ransomware Cyber Attack",
+    "organization": "Department of Health and Social Care / Chief Information Officer for Health and Social Care",
+    "publication_date": "2018-02-01",
+    "url": "https://www.gov.uk/government/publications/lessons-learned-review-of-the-wannacry-ransomware-cyber-attack",
+    "local_extracted_file": "data/sources/nhs_wannacry/dhsc_lessons_learned.extracted.txt",
+    "local_html": null,
+    "sha256": "47087f5d192c74d9785b653ba74ce6926bff049a23984725dbdfb5f8aac62f3c",
+    "retrieval_date": "2026-07-17",
+    "notes": "CIO lessons-learned review extract. The locally preserved PDF is gitignored; its SHA-256 is recorded from hashes.sha256."
+  },
+  {
+    "source_id": "cisa_ta17_132a_2017",
+    "title": "Alert (TA17-132A): Indicators Associated With WannaCry Ransomware",
+    "organization": "US-CERT / CISA",
+    "publication_date": "2017-05-12",
+    "url": "https://www.us-cert.gov/ncas/alerts/TA17-132A",
+    "local_extracted_file": "data/sources/nhs_wannacry/cisa_ta17_132a.extracted.txt",
+    "local_html": null,
+    "sha256": "6c6b4281b450826cc037bd95e0e55d6122707d66ee0e6345a7ab50076bf5631c",
+    "retrieval_date": "2026-07-17",
+    "notes": "US-CERT alert extract retained for technical indicators and recommended mitigations. The locally preserved PDF is gitignored; its SHA-256 is recorded from hashes.sha256."
+  },
+  {
+    "source_id": "microsoft_ms17_010_2017",
+    "title": "Microsoft Security Bulletin MS17-010 - Critical",
+    "organization": "Microsoft",
+    "publication_date": "2017-03-14",
+    "url": "https://learn.microsoft.com/en-us/security-updates/securitybulletins/2017/ms17-010",
+    "local_extracted_file": null,
+    "local_html": "data/sources/nhs_wannacry/ms17_010.html",
+    "sha256": "33b85a5eff1e3d677b3f960fd0fea3aa7fbf2562fa728adec1cadc87a84449e2",
+    "retrieval_date": "2026-07-17",
+    "notes": "Locally preserved Microsoft Learn HTML for MS17-010; SHA-256 is recorded from hashes.sha256."
+  },
+  {
+    "source_id": "hashes_sha256_2026",
+    "title": "SHA-256 checksums for preserved NHS WannaCry source files",
+    "organization": "Local benchmark repository",
+    "publication_date": null,
+    "url": null,
+    "local_extracted_file": "data/sources/nhs_wannacry/hashes.sha256",
+    "local_html": null,
+    "sha256": null,
+    "retrieval_date": "2026-07-17",
+    "notes": "Checksum manifest for the preserved PDFs and HTML. Used for source integrity, not for incident facts."
+  }
+]

@@ -1,0 +1,2 @@
+# Ignore locally preserved full publications; commit manifests and extracted notes only.
+*.pdf
