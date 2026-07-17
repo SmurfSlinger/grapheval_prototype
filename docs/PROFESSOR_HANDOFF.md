@@ -178,7 +178,7 @@ cd ..
 pytest tests/
 ```
 
-Task 1 re-verification passed, including the frontend build, 255 backend
+Task 1 re-verification passed, including the frontend build, 260 backend
 tests, custom endpoint/UI controls, FACT readback, separate CLAIMS, raw
 trace availability, Apollo benchmark tests, and NHS WannaCry provenance /
 hop-semantics / wrapper tests.
@@ -274,20 +274,25 @@ Evidence (verified on this commit):
 - Source manifest: `data/sources/nhs_wannacry/source_manifest.json`
 - Authoritative sources: NAO HC 414; DHSC/NHS CIO lessons learned; CISA
   TA17-132A; Microsoft MS17-010
-- Hop semantics: declared hop count equals **minimum required directed path
-  length** from `reasoning_anchor_entities` to the answer; audit artifacts at
+- Hop semantics: declared hop count equals **question-required directed path
+  length** from anchors detected in `question_anchor_entities` to the answer;
+  `reasoning_anchor_entities` is retained only as a backwards-compatible alias.
+  Audit artifacts at
   `data/test_sets/nhs_wannacry_multihop_50.audit.json` and
-  `docs/NHS_WANNACRY_HOP_AUDIT.md` report **0 unresolved shortcuts** (15
-  shortcuts were present before redesign)
-- `--validate-only` exits 0 for NHS WannaCry (structural + shortcut checks)
+  `docs/NHS_WANNACRY_HOP_AUDIT.md` report **0 unresolved shortcuts**, **0
+  ambiguous discourse markers**, **3 locality warnings**, and **50 pending
+  human reviews**. The dataset no longer claims `manual_reviewed`.
+- `--validate-only` exits 0 for NHS WannaCry (structural + question-anchor /
+  shortcut / locality checks)
 - Apollo `--validate-only` still exits 0 (no regression)
-- Mock plumbing: 50 terminal `error` records, 0 completions, 50 projection
-  failures (plumbing only; not accuracy evidence)
+- Mock plumbing: 50 terminal `error` records, 0 completions (plumbing only; not
+  accuracy evidence)
 - Wrapper: `./scripts/run_nhs_wannacry_real_baseline.sh`
 - Canonical outputs:
   - `results/nhs_wannacry_multihop_real_baseline.json`
   - `results/nhs_wannacry_multihop_real_baseline.md`
-- Backend tests: **255 passed**
+- Targeted benchmark tests: **31 passed** via `.venv/bin/python -m pytest
+  tests/test_nhs_wannacry_benchmark.py tests/test_apollo_multihop_test_set.py`
 - Frontend `npm run build` passes
 - Real Ollama baseline: **not run** in this environment (Ollama unavailable).
   Do not start the expensive real run unless shortcut audit remains green.
@@ -314,6 +319,12 @@ Exact Fedora/local command when Ollama + Neo4j are available:
 - A full 50-question real-model benchmark on CPU is lengthy (~4 minutes per
   early hop observed). Partial checkpoints must not be described as full
   benchmark performance until `run_type=full_real`.
+- NHS WannaCry human review is pending in
+  `data/test_sets/nhs_wannacry_human_review.json`; structural validation allows
+  `human_review_status: "not_reviewed"` but rejects fake `manual_reviewed`
+  claims.
+- NHS locality warnings are surfaced in
+  `docs/NHS_WANNACRY_HOP_AUDIT.md`; they do not fail validate-only by default.
 - Per-question timeouts use in-process `SIGALRM` / `ITIMER_REAL`. The runner
   does not spawn a child process per question, so there is no process group to
   kill/reap on timeout. A timed-out HTTP call raises `TimeoutError` in the
@@ -333,12 +344,12 @@ scores.
 
 ## Spoken update
 
-I finished the local custom-context Neo4j-backed workflow and hardened the
-Apollo multi-hop measurement path, then added a second source-grounded
-benchmark for the NHS WannaCry incident with hop-semantics validation so
-declared hops equal minimum required path length. Backend tests: 255 passed.
-Frontend production build passes. Apollo and NHS WannaCry datasets both
-validate, including zero unresolved NHS shortcuts after redesign. NHS mock
-plumbing yields 50 terminal failure records and is not accuracy evidence.
-Real Ollama baselines were not run here because Ollama is unavailable; keep
-the PR draft until a local real run completes against the hop-valid dataset.
+The NHS WannaCry benchmark now separates graph root from question anchors.
+Each question stores detected `question_anchor_entities`, keeps
+`reasoning_anchor_entities` only as a compatibility alias, and validates
+question-required hop distance from the detected anchor without root fallback.
+Current audit: 0 unresolved shortcuts, 0 ambiguous discourse markers, 3
+locality warnings, and 50 pending human reviews. Targeted benchmark tests
+passed (31 tests). Apollo and NHS validate-only both pass. Real Ollama
+baselines were not run here; keep the PR draft until a local real run completes
+against the hop-valid dataset.
