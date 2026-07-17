@@ -30,7 +30,7 @@ PROMPT_SUB_ANSWER_PROJECTION = PROMPTS_DIR / "sub_answer_projection.txt"
 DEFAULT_LLM_PROVIDER = os.getenv("DEFAULT_LLM_PROVIDER", "mock")
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
-DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gemma4:12b")
+DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gemma4:e4b")
 TEST_MODELS = ["gemma4:e2b", "gemma4:e4b", "gemma4:12b"]
 OLLAMA_REQUEST_TIMEOUT = float(os.getenv("OLLAMA_REQUEST_TIMEOUT", "600"))
 _ollama_num_ctx = os.getenv("OLLAMA_NUM_CTX", "").strip()

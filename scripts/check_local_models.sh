@@ -10,7 +10,7 @@ if [[ -f "$ROOT/.env" ]]; then
 fi
 
 base_url="${OLLAMA_BASE_URL:-http://127.0.0.1:11434}"
-default_model="${DEFAULT_MODEL:-gemma4:12b}"
+default_model="${DEFAULT_MODEL:-gemma4:e4b}"
 num_ctx="${OLLAMA_NUM_CTX:-not set}"
 
 echo "GraphEval local model audit"

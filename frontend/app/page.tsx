@@ -48,7 +48,7 @@ function defaultSelectedExampleId(examples: ExampleSummary[]): string | null {
 export default function HomePage() {
   const [toolMode, setToolMode] = useState<ToolMode>("kgc");
   const [provider, setProvider] = useState<Provider>("mock");
-  const [model, setModel] = useState("gemma4:12b");
+  const [model, setModel] = useState("gemma4:e4b");
   const [examples, setExamples] = useState<ExampleSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [answer0Mode, setAnswer0Mode] = useState<Answer0Mode>("preset");

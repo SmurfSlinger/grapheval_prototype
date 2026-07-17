@@ -13,7 +13,7 @@
 #   1. CLI: --model VALUE or --model=VALUE
 #   2. Pre-existing environment variable MODEL
 #   3. MODEL from .env (applied only when MODEL was not already set)
-#   4. Default: gemma4:e2b
+#   4. Default: gemma4:e4b
 #
 # Canonical checkpoint paths (resume requires these exact files):
 #   results/nhs_wannacry_multihop_real_baseline.json

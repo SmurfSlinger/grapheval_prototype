@@ -117,7 +117,7 @@ def _run_wrapper_dry(
 
 def test_default_model_when_unset() -> None:
     data = _payload(_run_resolve())
-    assert data["model"] == "gemma4:e2b"
+    assert data["model"] == "gemma4:e4b"
     assert data["forward_args"] == []
     assert data["cli_model"] == ""
 

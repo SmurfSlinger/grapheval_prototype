@@ -115,7 +115,7 @@ function SharedRunFields({
           value={model}
           onChange={(e) => onModelChange(e.target.value)}
           disabled={provider === "mock"}
-          placeholder="gemma4:e2b"
+          placeholder="gemma4:e4b"
         />
       </label>
       {showExampleSelect ? (

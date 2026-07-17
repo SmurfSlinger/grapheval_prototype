@@ -26,20 +26,19 @@ and commands.
 cp .env.example .env
 ```
 
-Use an installed Ollama tag. Template default is `gemma4:12b`. For the
-verified cloud baseline tag:
+Use an installed Ollama tag. Template default is `gemma4:e4b`. Example:
 
 ```dotenv
-DEFAULT_MODEL=gemma4:e2b
+DEFAULT_MODEL=gemma4:e4b
 OLLAMA_NUM_CTX=8192
 OLLAMA_NUM_PREDICT=4096
 OLLAMA_REQUEST_TIMEOUT=600
 ```
 
-Or pull the configured 12b tag:
+Optional:
 
 ```bash
-ollama pull gemma4:12b
+ollama pull gemma4:e4b
 ```
 
 Start Ollama in one terminal:
@@ -324,7 +323,7 @@ Bounded smoke:
 
 ## Known limitations
 
-- `gemma4:12b` may not be installed; select `gemma4:e2b` or pull 12b.
+- `gemma4:12b` may not be installed; the template default is `gemma4:e4b`.
 - Prompt token telemetry is approximate and the provider boundary does not yet
   attach a stage name.
 - The comparator receives Python `KgcFact` objects reconstructed from Neo4j;

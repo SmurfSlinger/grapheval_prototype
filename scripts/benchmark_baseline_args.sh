@@ -12,7 +12,7 @@
 #   1. CLI --model VALUE / --model=VALUE
 #   2. Pre-existing MODEL environment variable
 #   3. MODEL from .env when previously unset
-#   4. Default gemma4:e2b (override with BASELINE_DEFAULT_MODEL)
+#   4. Default gemma4:e4b (override with BASELINE_DEFAULT_MODEL)
 
 benchmark_baseline_parse_args() {
   CLI_MODEL=""
@@ -57,7 +57,7 @@ benchmark_baseline_parse_args() {
 }
 
 benchmark_baseline_resolve_model() {
-  local default_model="${BASELINE_DEFAULT_MODEL:-gemma4:e2b}"
+  local default_model="${BASELINE_DEFAULT_MODEL:-gemma4:e4b}"
 
   if [[ -n "${CLI_MODEL}" ]]; then
     MODEL="$CLI_MODEL"

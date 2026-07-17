@@ -71,7 +71,7 @@ Configure `.env`:
 
 ```dotenv
 OLLAMA_BASE_URL=http://127.0.0.1:11434
-DEFAULT_MODEL=gemma4:12b
+DEFAULT_MODEL=gemma4:e4b
 OLLAMA_NUM_CTX=32768
 OLLAMA_NUM_PREDICT=4096
 OLLAMA_REQUEST_TIMEOUT=600
@@ -86,8 +86,8 @@ Install a locally available tag only when needed:
 
 ```bash
 ollama serve
-ollama pull gemma4:12b
-ollama show gemma4:12b
+ollama pull gemma4:e4b
+ollama show gemma4:e4b
 ```
 
 `OLLAMA_NUM_CTX`, when set, is sent to `/api/generate` as
@@ -98,8 +98,8 @@ attached at the provider boundary.
 
 Recommended progression:
 
-1. `gemma4:12b` with a moderate context.
-2. `gemma4:12b` with a larger context such as 32768.
+1. `gemma4:e4b` with a moderate context.
+2. `gemma4:e4b` with a larger context such as 32768.
 3. A larger Gemma model only if local memory and latency are acceptable.
 
 A larger context reduces cutoff risk but is slower and consumes more memory.
@@ -238,7 +238,7 @@ Model selection precedence in the wrapper (highest to lowest):
 1. CLI `--model VALUE` or `--model=VALUE`
 2. Pre-existing environment variable `MODEL`
 3. `MODEL` from `.env` (applied only when `MODEL` was not already set)
-4. Default `gemma4:e2b`
+4. Default `gemma4:e4b`
 
 The wrapper resolves that effective model **before** checking Ollama, then
 passes the same model to `run_multihop_benchmark.py`. Checkpoint/resume uses

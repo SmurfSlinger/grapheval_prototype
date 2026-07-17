@@ -6,7 +6,7 @@ BASELINE_OUTPUT_JSON_REL="results/nhs_wannacry_multihop_real_baseline.json"
 BASELINE_OUTPUT_MD_REL="results/nhs_wannacry_multihop_real_baseline.md"
 BASELINE_TEST_SET_REL="data/test_sets/nhs_wannacry_multihop_50.json"
 BASELINE_WRAPPER_NAME="run_nhs_wannacry_real_baseline.sh"
-BASELINE_DEFAULT_MODEL="${BASELINE_DEFAULT_MODEL:-gemma4:e2b}"
+BASELINE_DEFAULT_MODEL="${BASELINE_DEFAULT_MODEL:-gemma4:e4b}"
 
 NHS_WANNACRY_BASELINE_OUTPUT_JSON_REL="$BASELINE_OUTPUT_JSON_REL"
 NHS_WANNACRY_BASELINE_OUTPUT_MD_REL="$BASELINE_OUTPUT_MD_REL"
