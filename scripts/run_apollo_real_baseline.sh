@@ -9,37 +9,50 @@
 # Usage:
 #   ./scripts/run_apollo_real_baseline.sh [extra python runner args]
 #
-# The script passes all extra arguments through to run_multihop_benchmark.py.
-# Example with a different model:
+# Model selection precedence (highest to lowest):
+#   1. CLI: --model VALUE or --model=VALUE
+#   2. Pre-existing environment variable MODEL
+#   3. MODEL from .env (applied only when MODEL was not already set)
+#   4. Default: gemma4:e2b
+#
+# The model validated against Ollama is exactly the model passed to the runner.
+# Example:
 #   ./scripts/run_apollo_real_baseline.sh --model llama3:8b
 
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# 1. Find repository root
+# 1. Find repository root and load shared arg helpers
 # ---------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT"
 
+# shellcheck source=apollo_baseline_args.sh
+source "$SCRIPT_DIR/apollo_baseline_args.sh"
+
 # ---------------------------------------------------------------------------
-# 2. Load .env when present (does NOT override existing env vars)
+# 2. Parse CLI --model before any availability checks
 # ---------------------------------------------------------------------------
+apollo_baseline_parse_args "$@" || exit $?
+
+# ---------------------------------------------------------------------------
+# 3. Load .env without overriding pre-existing environment variables
+# ---------------------------------------------------------------------------
+apollo_baseline_capture_preexisting_model
 if [[ -f "$ROOT/.env" ]]; then
-  set -a
-  # shellcheck disable=SC1091
-  source "$ROOT/.env"
-  set +a
-  echo "[env] Loaded .env from $ROOT/.env"
+  apollo_baseline_source_env_file "$ROOT/.env"
+  echo "[env] Loaded unset keys from $ROOT/.env (existing env vars preserved)"
 else
   echo "[env] No .env found; using environment variables as-is."
   echo "      Copy .env.example to .env and edit it before running."
 fi
 
 # ---------------------------------------------------------------------------
-# 3. Configuration (override via .env or environment before running)
+# 4. Resolve effective model, then apply remaining configuration defaults
 # ---------------------------------------------------------------------------
-MODEL="${MODEL:-gemma4:e2b}"
+apollo_baseline_resolve_model || exit $?
+
 NUM_CTX="${NUM_CTX:-32768}"
 TIMEOUT_PER_QUESTION="${TIMEOUT_PER_QUESTION:-300}"
 COOLDOWN_SECONDS="${COOLDOWN_SECONDS:-3}"
@@ -51,7 +64,7 @@ OUTPUT_MD="$ROOT/results/apollo_multihop_real_summary.md"
 TEST_SET="$ROOT/data/test_sets/apollo_multihop_50.json"
 
 # ---------------------------------------------------------------------------
-# 4. Locate Python
+# 5. Locate Python
 # ---------------------------------------------------------------------------
 PYTHON=""
 for candidate in "$ROOT/.venv/bin/python" python3 python; do
@@ -67,9 +80,33 @@ if [[ -z "$PYTHON" ]]; then
 fi
 
 echo "[python] Using: $PYTHON"
+echo "[model] Effective model: $MODEL"
+
+# Optional dry-run for tests: resolve model/args without contacting Ollama.
+# The validated model and the runner --model value are the same resolved MODEL.
+if [[ "${APOLLO_BASELINE_DRY_RUN:-0}" == "1" ]]; then
+  export MODEL
+  if ((${#FORWARD_ARGS[@]})); then
+    FORWARD_JSON="$(printf '%s\n' "${FORWARD_ARGS[@]}" | python3 -c 'import json,sys; print(json.dumps([line.rstrip("\n") for line in sys.stdin]))')"
+  else
+    FORWARD_JSON='[]'
+  fi
+  export FORWARD_JSON
+  python3 - <<'PY'
+import json, os
+model = os.environ["MODEL"]
+print(json.dumps({
+    "model": model,
+    "checked_model": model,
+    "executed_model": model,
+    "forward_args": json.loads(os.environ["FORWARD_JSON"]),
+}))
+PY
+  exit 0
+fi
 
 # ---------------------------------------------------------------------------
-# 5. Verify Ollama is reachable
+# 6. Verify Ollama is reachable
 # ---------------------------------------------------------------------------
 echo "[check] Verifying Ollama at $OLLAMA_BASE_URL ..."
 if ! curl -sf "$OLLAMA_BASE_URL/api/tags" >/dev/null 2>&1; then
@@ -80,7 +117,7 @@ fi
 echo "[check] Ollama is reachable."
 
 # ---------------------------------------------------------------------------
-# 6. Verify the requested model is installed
+# 7. Verify the resolved model is installed (exact tag match)
 # ---------------------------------------------------------------------------
 echo "[check] Verifying model '$MODEL' is installed in Ollama ..."
 if ! curl -sf "$OLLAMA_BASE_URL/api/tags" | python3 -c "
@@ -106,7 +143,7 @@ fi
 echo "[check] Model '$MODEL' is available (exact tag match)."
 
 # ---------------------------------------------------------------------------
-# 7. Verify no active benchmark lock
+# 8. Verify no active benchmark lock
 # ---------------------------------------------------------------------------
 LOCK_FILE="$ROOT/.runtime/benchmark.lock"
 if [[ -f "$LOCK_FILE" ]]; then
@@ -121,7 +158,7 @@ if [[ -f "$LOCK_FILE" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 8. Validate benchmark dataset
+# 9. Validate benchmark dataset
 # ---------------------------------------------------------------------------
 echo "[check] Validating benchmark dataset ..."
 "$PYTHON" "$SCRIPT_DIR/run_multihop_benchmark.py" \
@@ -130,7 +167,7 @@ echo "[check] Validating benchmark dataset ..."
 echo "[check] Dataset is valid."
 
 # ---------------------------------------------------------------------------
-# 9. Run the benchmark
+# 10. Run the benchmark with the same resolved model
 # ---------------------------------------------------------------------------
 echo ""
 echo "========================================================"
@@ -160,4 +197,4 @@ exec "$PYTHON" "$SCRIPT_DIR/run_multihop_benchmark.py" \
   --max-consecutive-timeouts "$MAX_CONSECUTIVE_TIMEOUTS" \
   --output "$OUTPUT_JSON" \
   --summary "$OUTPUT_MD" \
-  "$@"
+  "${FORWARD_ARGS[@]+"${FORWARD_ARGS[@]}"}"

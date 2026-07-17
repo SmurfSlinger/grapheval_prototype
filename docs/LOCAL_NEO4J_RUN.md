@@ -229,13 +229,28 @@ Run the full real benchmark using the convenience wrapper (recommended):
 
 ```bash
 ./scripts/run_apollo_real_baseline.sh
+# or choose a model explicitly:
+./scripts/run_apollo_real_baseline.sh --model llama3:8b
 ```
 
-This script verifies Ollama is reachable, confirms the requested model tag is
-installed with an **exact** match (for example `gemma4:latest` does not satisfy
-`gemma4:e2b`), validates the dataset, and runs the benchmark with safe
-defaults. It does NOT download any model automatically. If the model is missing
-it prints the exact `ollama pull` command and exits.
+Model selection precedence in the wrapper (highest to lowest):
+
+1. CLI `--model VALUE` or `--model=VALUE`
+2. Pre-existing environment variable `MODEL`
+3. `MODEL` from `.env` (applied only when `MODEL` was not already set)
+4. Default `gemma4:e2b`
+
+The wrapper resolves that effective model **before** checking Ollama, then
+passes the same model to `run_multihop_benchmark.py`. It verifies Ollama is
+reachable, confirms the requested model tag is installed with an **exact**
+match (for example `gemma4:latest` does not satisfy `gemma4:e2b`), validates
+the dataset, and runs the benchmark with safe defaults. It does NOT download
+any model automatically. If the model is missing it prints the exact
+`ollama pull` command and exits.
+
+Note: a mock-provider 50-question run tests runner plumbing only. Fifty
+terminal failure records with zero completions are **not** evidence of answer
+accuracy.
 
 Or run the Python runner directly with full control:
 

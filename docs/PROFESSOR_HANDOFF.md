@@ -171,9 +171,10 @@ cd ..
 pytest tests/
 ```
 
-Task 1 re-verification passed, including the frontend build, 205 backend
-tests (up from 184), custom endpoint/UI controls, FACT readback, separate
-CLAIMS, raw trace availability, and the new benchmark runner tests.
+Task 1 re-verification passed, including the frontend build, 228 backend
+tests, custom endpoint/UI controls, FACT readback, separate CLAIMS, raw
+trace availability, benchmark runner tests, and Apollo baseline wrapper
+model-resolution tests.
 
 ---
 
@@ -181,9 +182,9 @@ CLAIMS, raw trace availability, and the new benchmark runner tests.
 
 **Status: READY**
 
-Evidence:
+Evidence (verified on this branch):
 - Frontend `npm run build` passes.
-- `pytest tests/` passes (205 tests).
+- `pytest tests/` passes (**228 tests**).
 - Custom route tests in `tests/test_local_neo4j_custom_run.py`.
 - FACT persistence and readback tested.
 - CLAIM separation tested.
@@ -193,9 +194,9 @@ Evidence:
 - `scripts/start-dev.sh` sources `.env` and starts Neo4j, backend, and
   frontend.
 
-Remaining local acceptance (requires user's Fedora machine):
-- Live Ollama + Neo4j smoke using a real model (cannot be verified in the
-  GitHub cloud environment).
+Remaining local acceptance (requires a machine with Ollama + Neo4j):
+- Live Ollama + Neo4j smoke using a real model (cannot be verified in this
+  cloud environment).
 
 ---
 
@@ -204,16 +205,20 @@ Remaining local acceptance (requires user's Fedora machine):
 **Repository implementation status: READY**
 
 **Real local baseline status: PARTIAL**
-(15 questions completed on the user's local machine; full 50-question
-baseline still requires running `./scripts/run_apollo_real_baseline.sh` on
-the user's home machine.)
+(15 questions completed on an earlier local run; full 50-question baseline
+still requires running `./scripts/run_apollo_real_baseline.sh` where Ollama
+and Neo4j are available.)
 
-Evidence:
-- 50 questions validated: 5 per hop count, 1–10.
-- `--validate-only` exits 0.
-- Full mock run: 50 terminal plumbing records, **0 successful completions**,
-  **50 projection failures**. Records are unique, hop distribution is correct,
-  JSON parses, and Markdown totals match. This validates runner plumbing only.
+Evidence (re-verified on this commit):
+- Dataset validation: `--validate-only` exits 0 (50 questions; 5 per hop
+  count for hops 1–10).
+- Full mock plumbing run (`--provider mock --continue-on-error`): **50
+  terminal `error` records**, **0 successful completions**, **50 projection
+  failures**. This is **not** a successful accuracy result; it confirms
+  runner plumbing (unique IDs, hop distribution, checkpoint/summary writers,
+  separate answer-match vs pipeline-resolution fields, populated
+  `attempt_number` / `resumed`). No lock or benchmark process remained
+  afterward.
 - Process locking: `BenchmarkLock` uses exclusive file creation (`O_CREAT|O_EXCL`)
   and refuses to overwrite malformed/unreadable lock files.
 - All new runner flags functional: `--retry-errors`, `--rerun-completed`,
@@ -222,11 +227,17 @@ Evidence:
 - Terminal states tracked: `completed`, `timeout`, `error`, `interrupted`.
 - Result schema includes: `terminal_state`, `error_type`, `error_message`,
   `attempt_number`, `resumed` (persisted across resume/retry attempts).
-- `scripts/run_apollo_real_baseline.sh` requires an **exact** Ollama model-tag
-  match (for example `gemma4:latest` does not satisfy `gemma4:e2b`).
-- Real baseline: `results/apollo_multihop_real_baseline.json` (partial; cite
-  as complete only when `run_type=full_real`). This cloud corrective pass did
-  **not** re-run the real local Ollama baseline.
+- `scripts/run_apollo_real_baseline.sh` resolves the effective model **before**
+  Ollama checks and uses that same model for the runner. Precedence:
+  1) CLI `--model VALUE` / `--model=VALUE`, 2) pre-existing `MODEL` env var,
+  3) `MODEL` from `.env` only when unset, 4) default `gemma4:e2b`. Exact
+  Ollama tag match is required (`gemma4:latest` does not satisfy `gemma4:e2b`).
+- Real baseline command (local machine with Ollama + Neo4j):
+  `./scripts/run_apollo_real_baseline.sh`
+  or with an explicit model: `./scripts/run_apollo_real_baseline.sh --model llama3:8b`
+- Real baseline artifact: `results/apollo_multihop_real_baseline.json`
+  (partial; cite as complete only when `run_type=full_real`). This pass did
+  **not** re-run the full real Ollama baseline.
 
 A COMPLETE real baseline requires terminal records for all 50 questions
 (completed, timeout, or error). Accuracy is not the readiness criterion;
@@ -268,9 +279,10 @@ deterministic labels merely to raise benchmark scores.
 I finished the local custom-context Neo4j-backed workflow and hardened the
 Apollo multi-hop measurement path. Custom runs can clear Neo4j, extract a
 graph from pasted context, persist trusted FACTS, keep answer CLAIMS
-separate, and evaluate from Neo4j-read base facts. The 50-question benchmark
-validates cleanly, reports match and resolve separately, checkpoints every
-question, and resumes safely. The mock plumbing run yields 50 terminal
-records with 0 successful completions and 50 projection failures. A partial
-real baseline checkpoint exists from an earlier local run; this pass did not
+separate, and evaluate from Neo4j-read base facts. Backend tests: 228 passed.
+Frontend production build passes. The 50-question dataset validates cleanly.
+The mock plumbing run yields 50 terminal failure records (0 completions,
+50 projection failures) and is not accuracy evidence. The Apollo baseline
+wrapper now validates and executes the same resolved model. A partial real
+baseline checkpoint exists from an earlier local run; this pass did not
 re-run the real Ollama baseline.
