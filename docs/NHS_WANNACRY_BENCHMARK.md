@@ -11,6 +11,47 @@ This benchmark is **not** a worldwide WannaCry encyclopedia. Unless a fact is
 explicitly scoped otherwise in the trusted context, the factual scope is the
 documented NHS England impact.
 
+## Hop-count semantics
+
+Declared `hop_count` is **not** merely root-to-answer graph depth.
+
+Exact definition encoded in the dataset:
+
+> `hop_count` = the minimum number of trusted directed graph edges needed to
+> derive the expected answer from the question's `reasoning_anchor_entities`,
+> under allowed alias normalization, without outside knowledge.
+
+Additional rules:
+
+- Traversal is directed.
+- Alias normalization: case-insensitive exact entity-string match; ordinary
+  linguistic coreference to the incident root is allowed when the question
+  refers to WannaCry / the NHS attack.
+- Questions may paraphrase relations but must not use raw relation labels as
+  quiz keys.
+- A **shortcut** is any shorter directed path from an explicit question anchor
+  to the answer, or naming the final-edge subject in questions with
+  `hop_count > 1`.
+- Semantically empty intermediate noun phrases used only to inflate path length
+  are invalid.
+
+Each question stores:
+
+- `reasoning_anchor_entities`
+- `hop_semantics: "minimum_required_path"`
+- `shortcut_audit` with computed shortest distance, final-subject mention flag,
+  and manual review status
+
+Committed audit artifacts:
+
+- `data/test_sets/nhs_wannacry_multihop_50.audit.json`
+- `docs/NHS_WANNACRY_HOP_AUDIT.md`
+
+Automated graph-distance / string checks cannot fully prove semantic necessity.
+They are paired with generator constraints and manual review metadata. The
+dataset should be described as supporting 1–10-hop measurement only while the
+shortcut audit reports zero unresolved shortcuts.
+
 ## Why this incident
 
 WannaCry connects:
@@ -52,20 +93,30 @@ Do **not** collapse these NAO distinctions:
 | Majority infected devices | unpatched supported Windows 7 |
 | XP share of estate on 12 May 2017 | about 5% (minority of infection issues) |
 
-Organizations contacting the WannaCry domain after the kill-switch are **not**
-automatically counted as infected.
-
 ## Dataset
 
 - Path: `data/test_sets/nhs_wannacry_multihop_50.json`
+- Builder: `scripts/build_nhs_wannacry_dataset.py`
 - Root: `WannaCry attack on the NHS`
 - 50 questions, 5 per hop count 1–10
-- Object-shaped facts with provenance (`source_id`, page/section, paraphrase)
+- Object-shaped facts with provenance
 - Expected answers/paths are scoring metadata only and are not passed to inference
+
+## Graph metrics (validated after hop-semantics redesign)
+
+- Nodes: 88
+- Directed facts: 87
+- Relation types: 20 (most reused ≥2 times)
+- Connected components: 1
+- Root out-degree: 12
+- Distinct 10-hop first edges: 5
+- Shortcut audit: 0 unresolved shortcuts
 
 ## Validation / mock / real commands
 
 ```bash
+python scripts/build_nhs_wannacry_dataset.py
+
 python scripts/run_multihop_benchmark.py \
   --test-set data/test_sets/nhs_wannacry_multihop_50.json \
   --validate-only
@@ -85,29 +136,19 @@ Canonical real-baseline outputs:
 - `results/nhs_wannacry_multihop_real_baseline.json`
 - `results/nhs_wannacry_multihop_real_baseline.md`
 
-Resume requires these exact paths. The wrapper rejects overrides of
-`--provider`, `--test-set`, `--output`, and `--summary`.
+## Verified repository results (this pass)
 
-## Verified repository results (this branch)
-
-- Backend: `pytest tests/` → **246 passed**
+- Backend: `pytest tests/` → **255 passed**
 - Frontend: `npm run build` → success
 - Apollo `--validate-only` → exit 0
-- NHS WannaCry `--validate-only` → exit 0
+- NHS WannaCry structural + shortcut/minimal-path validation → exit 0
 - NHS mock plumbing → 50 terminal error records, 0 completions (plumbing only)
-- Real Ollama NHS baseline → **not run** (Ollama unavailable in this environment)
-
-## Graph metrics (validated)
-
-- Nodes: 147
-- Directed facts: 161
-- Relation types: 29
-- Connected components: 1
-- Root out-degree: 12
-- Distinct 10-hop first edges: 5
+- Real Ollama NHS baseline → **not run** (Ollama unavailable; and hop-validity
+  gate must remain green before any expensive real run)
 
 ## Known limitations
 
 - Mock runs validate plumbing only; they are not accuracy evidence.
-- Real Ollama baselines require local Ollama + Neo4j and are environment-dependent.
-- Per-question timeouts remain in-process `SIGALRM` (see Apollo/timeout docs).
+- Automated shortcut checks are necessary but not a full semantic proof.
+- Real Ollama baselines require local Ollama + Neo4j.
+- Per-question timeouts remain in-process `SIGALRM`.

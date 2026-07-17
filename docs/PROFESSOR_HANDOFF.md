@@ -178,10 +178,10 @@ cd ..
 pytest tests/
 ```
 
-Task 1 re-verification passed, including the frontend build, 246 backend
+Task 1 re-verification passed, including the frontend build, 255 backend
 tests, custom endpoint/UI controls, FACT readback, separate CLAIMS, raw
 trace availability, Apollo benchmark tests, and NHS WannaCry provenance /
-wrapper tests.
+hop-semantics / wrapper tests.
 
 ---
 
@@ -191,7 +191,7 @@ wrapper tests.
 
 Evidence (verified on this branch):
 - Frontend `npm run build` passes.
-- `pytest tests/` passes (**246 tests**).
+- `pytest tests/` passes (**255 tests**).
 - Custom route tests in `tests/test_local_neo4j_custom_run.py`.
 - FACT persistence and readback tested.
 - CLAIM separation tested.
@@ -274,7 +274,12 @@ Evidence (verified on this commit):
 - Source manifest: `data/sources/nhs_wannacry/source_manifest.json`
 - Authoritative sources: NAO HC 414; DHSC/NHS CIO lessons learned; CISA
   TA17-132A; Microsoft MS17-010
-- `--validate-only` exits 0 for NHS WannaCry
+- Hop semantics: declared hop count equals **minimum required directed path
+  length** from `reasoning_anchor_entities` to the answer; audit artifacts at
+  `data/test_sets/nhs_wannacry_multihop_50.audit.json` and
+  `docs/NHS_WANNACRY_HOP_AUDIT.md` report **0 unresolved shortcuts** (15
+  shortcuts were present before redesign)
+- `--validate-only` exits 0 for NHS WannaCry (structural + shortcut checks)
 - Apollo `--validate-only` still exits 0 (no regression)
 - Mock plumbing: 50 terminal `error` records, 0 completions, 50 projection
   failures (plumbing only; not accuracy evidence)
@@ -282,8 +287,10 @@ Evidence (verified on this commit):
 - Canonical outputs:
   - `results/nhs_wannacry_multihop_real_baseline.json`
   - `results/nhs_wannacry_multihop_real_baseline.md`
-- Backend tests: **246 passed**
+- Backend tests: **255 passed**
 - Frontend `npm run build` passes
+- Real Ollama baseline: **not run** in this environment (Ollama unavailable).
+  Do not start the expensive real run unless shortcut audit remains green.
 
 Exact Fedora/local command when Ollama + Neo4j are available:
 
