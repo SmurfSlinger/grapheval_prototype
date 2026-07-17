@@ -131,7 +131,7 @@ python scripts/run_multihop_benchmark.py \
   --timeout-per-question 1200 \
   --continue-on-error \
   --resume \
-  --rerun-errors \
+  --retry-errors \
   --output results/apollo_multihop_real_baseline.json \
   --summary results/apollo_multihop_real_baseline.md
 ```
@@ -171,9 +171,65 @@ cd ..
 pytest tests/
 ```
 
-Task 1 re-verification passed, including the frontend build, 184 backend
-tests, custom endpoint/UI controls, FACT readback, separate CLAIMS, and raw
-trace availability.
+Task 1 re-verification passed, including the frontend build, 205 backend
+tests (up from 184), custom endpoint/UI controls, FACT readback, separate
+CLAIMS, raw trace availability, and the new benchmark runner tests.
+
+---
+
+## Task 1 — Local custom Neo4j workflow
+
+**Status: READY**
+
+Evidence:
+- Frontend `npm run build` passes.
+- `pytest tests/` passes (205 tests).
+- Custom route tests in `tests/test_local_neo4j_custom_run.py`.
+- FACT persistence and readback tested.
+- CLAIM separation tested.
+- Clear-before-run flag propagation tested.
+- Research Trace and Advanced / Raw Trace available in the UI.
+- `OLLAMA_NUM_CTX` propagates through the provider to the request payload.
+- `scripts/start-dev.sh` sources `.env` and starts Neo4j, backend, and
+  frontend.
+
+Remaining local acceptance (requires user's Fedora machine):
+- Live Ollama + Neo4j smoke using a real model (cannot be verified in the
+  GitHub cloud environment).
+
+---
+
+## Task 2 — Apollo multi-hop benchmark
+
+**Repository implementation status: READY**
+
+**Real local baseline status: PARTIAL**
+(15 questions completed on the user's local machine; full 50-question
+baseline still requires running `./scripts/run_apollo_real_baseline.sh` on
+the user's home machine.)
+
+Evidence:
+- 50 questions validated: 5 per hop count, 1–10.
+- `--validate-only` exits 0.
+- Full mock run: all 50 questions received terminal records, no duplicates,
+  correct hop distribution, JSON parses, Markdown totals match.
+- Process locking: `BenchmarkLock` prevents concurrent runs.
+- All new runner flags functional: `--retry-errors`, `--rerun-completed`,
+  `--cooldown-seconds`, `--max-consecutive-timeouts`, `--stop-after-minutes`,
+  `--lock-file`.
+- Terminal states tracked: `completed`, `timeout`, `error`, `interrupted`.
+- Result schema includes: `terminal_state`, `error_type`, `error_message`,
+  `attempt_number`, `resumed`.
+- `scripts/run_apollo_real_baseline.sh` verifies Ollama, model, Neo4j, and
+  lock before running.
+- Real baseline: `results/apollo_multihop_real_baseline.json` (partial; cite
+  as complete only when `run_type=full_real`).
+
+A COMPLETE real baseline requires terminal records for all 50 questions
+(completed, timeout, or error). Accuracy is not the readiness criterion;
+reliable measurement is.
+
+---
 
 ## Known limitations
 

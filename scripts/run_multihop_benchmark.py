@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scripts.benchmark_lock import BenchmarkLock, BenchmarkLockError
 from src.config import DEFAULT_MODEL, NEO4J_ENABLED, OLLAMA_NUM_CTX, PROJECT_ROOT
 from src.main import get_provider
 from src.models import Example, SubQuestionStopReason
@@ -31,6 +32,12 @@ from src.storage.neo4j_store import query_relationship_counts_if_enabled
 DEFAULT_TEST_SET = PROJECT_ROOT / "data" / "test_sets" / "apollo_multihop_50.json"
 DEFAULT_JSON_REPORT = PROJECT_ROOT / "results" / "apollo_multihop_report.json"
 DEFAULT_MD_REPORT = PROJECT_ROOT / "results" / "apollo_multihop_summary.md"
+
+# Terminal states recorded in each result row.
+TERMINAL_COMPLETED = "completed"
+TERMINAL_TIMEOUT = "timeout"
+TERMINAL_ERROR = "error"
+TERMINAL_INTERRUPTED = "interrupted"
 
 
 def normalize_answer(value: str) -> str:
@@ -123,9 +130,43 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--retry-errors",
         "--rerun-errors",
+        dest="retry_errors",
         action="store_true",
         help="With --resume, re-run question IDs whose prior row has an error.",
+    )
+    parser.add_argument(
+        "--rerun-completed",
+        action="store_true",
+        help="With --resume, re-run ALL prior rows including completed ones.",
+    )
+    parser.add_argument(
+        "--cooldown-seconds",
+        type=float,
+        default=0.0,
+        help="Seconds to sleep between questions (helps with resource contention).",
+    )
+    parser.add_argument(
+        "--max-consecutive-timeouts",
+        type=int,
+        default=0,
+        help="Stop after this many consecutive timeouts; 0 disables the limit.",
+    )
+    parser.add_argument(
+        "--stop-after-minutes",
+        type=float,
+        default=0.0,
+        help="Stop the run after this many wall-clock minutes; 0 disables it.",
+    )
+    parser.add_argument(
+        "--lock-file",
+        type=Path,
+        default=None,
+        help=(
+            "Path for the exclusive run-lock JSON file. "
+            "Defaults to .runtime/benchmark.lock under the project root."
+        ),
     )
     parser.add_argument(
         "--output",
@@ -166,11 +207,16 @@ def should_skip_prior_row(
     prior_row: dict[str, Any] | None,
     *,
     resume: bool,
-    rerun_errors: bool,
+    retry_errors: bool = False,
+    rerun_errors: bool = False,
+    rerun_completed: bool = False,
 ) -> bool:
     if not resume or prior_row is None:
         return False
-    if rerun_errors and prior_row.get("error"):
+    rerun_err = retry_errors or rerun_errors
+    if rerun_completed:
+        return False
+    if rerun_err and prior_row.get("error"):
         return False
     return True
 
@@ -406,6 +452,8 @@ def base_result_row(
     provider_name: str,
     model: str,
     num_ctx: int | None,
+    attempt_number: int = 1,
+    resumed: bool = False,
 ) -> dict[str, Any]:
     expected = str(question["expected_answer"])
     path = question["expected_path"]
@@ -452,8 +500,13 @@ def base_result_row(
         "approx_max_prompt_tokens": 0,
         "largest_prompt_stage": None,
         "runtime_seconds": 0.0,
+        "terminal_state": None,
+        "error_type": None,
+        "error_message": None,
         "error": None,
         "failure_category": None,
+        "attempt_number": attempt_number,
+        "resumed": resumed,
         "graph_difficulty": {
             "path_length": len(path),
             "unique_entities_needed": len(set(question["required_entities"])),
@@ -508,6 +561,7 @@ def run_one(
             )
     except Exception as exc:
         error = f"{type(exc).__name__}: {exc}"
+        is_timeout = isinstance(exc, TimeoutError)
         error_calls = list(getattr(provider, "call_telemetry", []))[call_start:]
         telemetry = telemetry_from_calls(error_calls, num_ctx)
         row.update(
@@ -521,6 +575,9 @@ def run_one(
                 "approx_max_prompt_tokens": telemetry["approx_max_prompt_tokens"],
                 "largest_prompt_stage": telemetry["largest_prompt_stage"],
                 "runtime_seconds": round(time.monotonic() - started, 3),
+                "terminal_state": TERMINAL_TIMEOUT if is_timeout else TERMINAL_ERROR,
+                "error_type": type(exc).__name__,
+                "error_message": str(exc),
                 "error": error,
                 "failure_category": failure_category(
                     error=error,
@@ -594,6 +651,7 @@ def run_one(
             "approx_max_prompt_tokens": telemetry["approx_max_prompt_tokens"],
             "largest_prompt_stage": telemetry["largest_prompt_stage"],
             "runtime_seconds": round(time.monotonic() - started, 3),
+            "terminal_state": TERMINAL_COMPLETED,
             "failure_category": failure_category(
                 error=None,
                 resolved_by_pipeline=resolved,
@@ -999,68 +1057,119 @@ def main() -> None:
 
     prior_by_id = load_prior_results(args.output_json) if args.resume else {}
     rows: list[dict[str, Any]] = []
-    for question in questions:
-        question_id = str(question["id"])
-        prior_row = prior_by_id.get(question_id)
-        executed_now = False
-        if question_id not in runnable_ids:
-            if prior_row is None:
-                continue
-            row = prior_row
-            print(
-                f"{row['id']}: kept_prior_before_start_at "
-                f"match={row.get('contains_expected_answer')} "
-                f"resolved={row.get('resolved_by_pipeline')} "
-                f"error={row.get('error') or 'none'}"
-            )
-        elif should_skip_prior_row(
-            prior_row,
-            resume=args.resume,
-            rerun_errors=args.rerun_errors,
-        ):
-            assert prior_row is not None
-            row = prior_row
-            print(
-                f"{row['id']}: skipped_resume "
-                f"match={row.get('contains_expected_answer')} "
-                f"resolved={row.get('resolved_by_pipeline')} "
-                f"error={row.get('error') or 'none'}"
-            )
-        else:
-            executed_now = True
-            row = run_one(
-                provider=provider,
-                provider_name=args.provider,
-                model=args.model,
-                num_ctx=args.num_ctx,
-                context=payload["trusted_context"],
-                question=question,
-                max_iterations=args.max_iterations,
-                clear_neo4j=args.clear_neo4j,
+    consecutive_timeouts = 0
+    run_start = time.monotonic()
+    stop_after_seconds = args.stop_after_minutes * 60.0 if args.stop_after_minutes > 0 else 0.0
+
+    lock = BenchmarkLock(
+        args.lock_file,
+        provider=args.provider,
+        model=args.model,
+        output_path=str(args.output_json),
+    )
+    try:
+        lock.acquire()
+    except BenchmarkLockError as exc:
+        raise SystemExit(str(exc)) from exc
+
+    interrupted = False
+    try:
+        for question in questions:
+            # Check wall-clock stop limit.
+            if stop_after_seconds > 0 and (time.monotonic() - run_start) >= stop_after_seconds:
+                print(f"Stopping: --stop-after-minutes={args.stop_after_minutes} elapsed.")
+                break
+
+            question_id = str(question["id"])
+            prior_row = prior_by_id.get(question_id)
+            executed_now = False
+            if question_id not in runnable_ids:
+                if prior_row is None:
+                    continue
+                row = prior_row
+                print(
+                    f"{row['id']}: kept_prior_before_start_at "
+                    f"match={row.get('contains_expected_answer')} "
+                    f"resolved={row.get('resolved_by_pipeline')} "
+                    f"error={row.get('error') or 'none'}"
+                )
+            elif should_skip_prior_row(
+                prior_row,
+                resume=args.resume,
+                retry_errors=args.retry_errors,
+                rerun_completed=args.rerun_completed,
+            ):
+                assert prior_row is not None
+                row = prior_row
+                print(
+                    f"{row['id']}: skipped_resume "
+                    f"match={row.get('contains_expected_answer')} "
+                    f"resolved={row.get('resolved_by_pipeline')} "
+                    f"error={row.get('error') or 'none'}"
+                )
+            else:
+                executed_now = True
+                row = run_one(
+                    provider=provider,
+                    provider_name=args.provider,
+                    model=args.model,
+                    num_ctx=args.num_ctx,
+                    context=payload["trusted_context"],
+                    question=question,
+                    max_iterations=args.max_iterations,
+                    clear_neo4j=args.clear_neo4j,
+                    neo4j_enabled=neo4j_enabled,
+                    timeout_seconds=args.timeout_per_question,
+                )
+                print(
+                    f"{row['id']}: match={row['contains_expected_answer']} "
+                    f"resolved={row['resolved_by_pipeline']} "
+                    f"error={row['error'] or 'none'}"
+                )
+                # Track consecutive timeouts.
+                if row.get("terminal_state") == TERMINAL_TIMEOUT:
+                    consecutive_timeouts += 1
+                else:
+                    consecutive_timeouts = 0
+            rows.append(row)
+            report = build_report(
+                payload=payload,
+                validation=validation,
+                args=args,
+                rows=rows,
+                selected_count=len(questions),
                 neo4j_enabled=neo4j_enabled,
-                timeout_seconds=args.timeout_per_question,
             )
-            print(
-                f"{row['id']}: match={row['contains_expected_answer']} "
-                f"resolved={row['resolved_by_pipeline']} "
-                f"error={row['error'] or 'none'}"
+            write_reports(
+                report,
+                output_json=args.output_json,
+                output_markdown=args.output_markdown,
             )
-        rows.append(row)
-        report = build_report(
-            payload=payload,
-            validation=validation,
-            args=args,
-            rows=rows,
-            selected_count=len(questions),
-            neo4j_enabled=neo4j_enabled,
-        )
-        write_reports(
-            report,
-            output_json=args.output_json,
-            output_markdown=args.output_markdown,
-        )
-        if executed_now and row.get("error") and not args.continue_on_error:
-            break
+            if executed_now and row.get("error") and not args.continue_on_error:
+                break
+            if (
+                args.max_consecutive_timeouts > 0
+                and consecutive_timeouts >= args.max_consecutive_timeouts
+            ):
+                print(
+                    f"Stopping: {consecutive_timeouts} consecutive timeouts "
+                    f"reached --max-consecutive-timeouts={args.max_consecutive_timeouts}."
+                )
+                break
+            if executed_now and args.cooldown_seconds > 0:
+                time.sleep(args.cooldown_seconds)
+
+    except KeyboardInterrupt:
+        interrupted = True
+        print("\nInterrupted by user (Ctrl+C).")
+    finally:
+        lock.release()
+
+    # Mark any executed rows that were not completed as interrupted.
+    if interrupted:
+        for row in rows:
+            if row.get("terminal_state") is None:
+                row["terminal_state"] = TERMINAL_INTERRUPTED
 
     report = build_report(
         payload=payload,

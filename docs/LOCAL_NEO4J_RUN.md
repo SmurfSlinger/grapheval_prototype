@@ -225,7 +225,18 @@ python scripts/run_multihop_benchmark.py \
   --validate-only
 ```
 
-Run selected or full real questions with bounded per-question execution:
+Run the full real benchmark using the convenience wrapper (recommended):
+
+```bash
+./scripts/run_apollo_real_baseline.sh
+```
+
+This script verifies Ollama is reachable, confirms the model is installed,
+validates the dataset, and runs the benchmark with safe defaults. It does NOT
+download any model automatically. If the model is missing it prints the exact
+`ollama pull` command and exits.
+
+Or run the Python runner directly with full control:
 
 ```bash
 python scripts/run_multihop_benchmark.py \
@@ -234,17 +245,38 @@ python scripts/run_multihop_benchmark.py \
   --model gemma4:e2b \
   --num-ctx 32768 \
   --clear-neo4j \
-  --limit 50 \
-  --timeout-per-question 180 \
+  --timeout-per-question 300 \
   --continue-on-error \
-  --output results/apollo_multihop_report.json \
-  --summary results/apollo_multihop_summary.md
+  --resume \
+  --cooldown-seconds 3 \
+  --max-consecutive-timeouts 5 \
+  --output results/apollo_multihop_real_report.json \
+  --summary results/apollo_multihop_real_summary.md
 ```
 
+Key flags:
+
+| Flag | Purpose |
+|------|---------|
+| `--resume` | Skip completed questions; resume after interruption |
+| `--retry-errors` | With `--resume`, re-run previously errored questions |
+| `--rerun-completed` | With `--resume`, re-run all questions including completed ones |
+| `--cooldown-seconds N` | Sleep N seconds between questions (reduces contention) |
+| `--max-consecutive-timeouts N` | Stop cleanly after N consecutive timeouts |
+| `--stop-after-minutes M` | Stop the run after M wall-clock minutes |
+| `--lock-file PATH` | Override the lock file path (default: `.runtime/benchmark.lock`) |
+| `--ids Q1,Q2` | Run only these question IDs |
+| `--start-at Q_ID` | Start from this ID after other filters |
+| `--limit N` | Run at most N questions |
+| `--validate-only` | Validate dataset structure without running the LLM |
+
+**Process locking**: the runner acquires an exclusive lock at startup to
+prevent two concurrent runs from interleaving writes. A second run will refuse
+to start if the lock owner is still alive. Stale locks from crashed runs are
+cleaned up automatically.
+
 Reports are written to `results/` and checkpointed after every question.
-`--ids apollo_hop_001,apollo_hop_011` selects explicit questions;
-`--start-at apollo_hop_021` supports resuming. Mock reports test runner
-plumbing only and are not model-accuracy evidence.
+Mock reports test runner plumbing only and are not model-accuracy evidence.
 
 ## What is safe for professor to try
 
