@@ -191,7 +191,7 @@ hop-semantics / wrapper tests.
 
 Evidence (verified on this branch):
 - Frontend `npm run build` passes.
-- `pytest tests/` passes (**255 tests**).
+- `pytest tests/` passes (**260 tests**).
 - Custom route tests in `tests/test_local_neo4j_custom_run.py`.
 - FACT persistence and readback tested.
 - CLAIM separation tested.
