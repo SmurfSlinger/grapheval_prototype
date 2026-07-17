@@ -2,26 +2,25 @@
 
 This is a measurement report, not a tuned success criterion.
 
-- Date/time: `2026-07-17T13:25:22.705000+00:00`
-- Branch: `feature/local-neo4j-custom-runs`
+- Date/time: `2026-07-17T14:11:39.947763+00:00`
+- Branch: `cursor/cloud-agent-1784294800421-ztfpf`
 - Provider/model: `ollama` / `gemma4:e2b`
-- Configured num_ctx: `32768`
+- Configured num_ctx: `8192`
 - Run type: **partial_real**
-- Attempted/completed/errored: 2 / 0 / 2
-- Exact-match accuracy: 0.0%
-- Contains-expected accuracy: 0.0%
-- Pipeline-resolved count: 0
-- Resolved and matched: 0
+- Attempted/completed/errored: 5 / 5 / 0
+- Exact-match accuracy: 80.0%
+- Contains-expected accuracy: 100.0%
+- Pipeline-resolved count: 5
+- Resolved and matched: 5
 - Unresolved but answer contained expected: 0
-- Average iterations: 0.00
-- Average runtime: 120.00s
+- Average iterations: 1.00
+- Average runtime: 236.74s
 
 ## Accuracy by hop count
 
 | Hop count | Questions | Completed | Exact match | Contains expected | Pipeline resolved | Avg iterations | Avg runtime | Common failures |
 |---:|---:|---:|---:|---:|---:|---:|---:|---|
-| 1 | 1 | 0 | 0 | 0 | 0 | 0.00 | 120.00s | model_timeout (1) |
-| 3 | 1 | 0 | 0 | 0 | 0 | 0.00 | 120.00s | model_timeout (1) |
+| 1 | 5 | 5 | 4 | 5 | 5 | 1.00 | 236.74s | — |
 
 ## Graph properties
 
@@ -36,16 +35,16 @@ This is a measurement report, not a tuned success criterion.
 
 ## Prompt/context size
 
-- Configured num_ctx: `32768`
-- Max prompt characters: 5928
-- Approximate max prompt tokens: 1482
+- Configured num_ctx: `8192`
+- Max prompt characters: 6023
+- Approximate max prompt tokens: 1506
 - Largest prompt stage: `None`
 - Any prompt approached window: False
 - Recommendation: The configured window covered observed prompts; increase it only if later questions show cutoff evidence and hardware permits.
 
 ## Failure categories
 
-- `model_timeout`: 2
+- None recorded.
 
 ## Interpretation
 
