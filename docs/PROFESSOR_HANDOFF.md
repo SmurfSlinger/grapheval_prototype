@@ -324,18 +324,21 @@ Exact Fedora/local command when Ollama + Neo4j are available:
 
 ## Next recommended work
 
-Let the resumable real baseline finish, inspect hop groups where pipeline
-resolution or textual matching degrades, and investigate general
-target/schema failures. Do not tune against expected answers or alter
-deterministic labels merely to raise benchmark scores.
+On a machine with Ollama and Neo4j, run
+`./scripts/run_nhs_wannacry_real_baseline.sh` against the hop-valid NHS
+dataset (shortcut audit must remain green). Then inspect hop groups where
+pipeline resolution or textual matching degrades. Do not tune against
+expected answers or alter deterministic labels merely to raise benchmark
+scores.
 
 ## Spoken update
 
 I finished the local custom-context Neo4j-backed workflow and hardened the
 Apollo multi-hop measurement path, then added a second source-grounded
-benchmark for the NHS WannaCry incident. Backend tests: 246 passed.
+benchmark for the NHS WannaCry incident with hop-semantics validation so
+declared hops equal minimum required path length. Backend tests: 255 passed.
 Frontend production build passes. Apollo and NHS WannaCry datasets both
-validate. NHS mock plumbing yields 50 terminal failure records and is not
-accuracy evidence. Real Ollama baselines were not rerun here because Ollama
-is unavailable in this environment; the NHS real wrapper is ready for a
-local machine with Ollama and Neo4j.
+validate, including zero unresolved NHS shortcuts after redesign. NHS mock
+plumbing yields 50 terminal failure records and is not accuracy evidence.
+Real Ollama baselines were not run here because Ollama is unavailable; keep
+the PR draft until a local real run completes against the hop-valid dataset.
