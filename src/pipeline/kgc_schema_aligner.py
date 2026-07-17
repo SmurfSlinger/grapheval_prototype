@@ -84,12 +84,14 @@ def _find_exact_canonical_match(
 def align_claims_to_kgc_schema(
     claims: list[Triple],
     kgc_facts: list[KgcFact],
+    *,
+    question_target=None,
 ) -> list[Triple]:
     """Map display-label claims to canonical KGc subject/relation when unambiguous."""
     if not kgc_facts:
         return claims
 
-    return [_align_claim(claim, kgc_facts) for claim in claims]
+    return [_align_claim(claim, kgc_facts, question_target=question_target) for claim in claims]
 
 
 def _find_first_stage_engine_schema_match(
@@ -153,7 +155,7 @@ def _find_launch_site_schema_match(
     return None
 
 
-def _align_claim(claim: Triple, kgc_facts: list[KgcFact]) -> Triple:
+def _align_claim(claim: Triple, kgc_facts: list[KgcFact], *, question_target=None) -> Triple:
     if _find_exact_canonical_match(claim, kgc_facts):
         return claim
 
@@ -168,6 +170,17 @@ def _align_claim(claim: Triple, kgc_facts: list[KgcFact]) -> Triple:
         match = _find_launch_site_schema_match(claim, kgc_facts)
     if match is None:
         return claim
+
+    if question_target is not None and question_target.expected_relations:
+        from src.pipeline.target_frame_normalizer import relation_in_target_family
+
+        claim_on_target = relation_in_target_family(claim.relation, question_target.intent)
+        match_on_target = relation_in_target_family(match.relation, question_target.intent)
+        if claim_on_target and not match_on_target:
+            return claim
+        if claim_on_target and match_on_target:
+            if normalize_relation(claim.relation) != normalize_relation(match.relation):
+                return claim
 
     if not relations_polarity_compatible(claim.relation, match.relation):
         return claim

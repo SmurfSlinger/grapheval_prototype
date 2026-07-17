@@ -1,0 +1,149 @@
+GraphEval
+
+Method: Decomposed Backtracking
+API connectedNeo4j connected
+
+Method
+
+Checks and corrects compound questions one part at a time.
+Provider
+Model
+Example
+What happened in this run
+
+All 7 questions resolved. The system checked 13 answer states, preserved 5 initially correct claim components, corrected 6 incorrect components, and combined the resolved answers into one final response.
+7 questions7 resolved13 answer checks6 revisions5 correct parts preserved6 incorrect parts corrected
+Knowledge graph growth
++0 direct facts+0 derived facts
+
+Newly added during this run only — not all trusted facts used.
+Compound question→7 atomic questions→Check and correct each one→Combine final answers
+Original compound question
+
+What diabetes diagnosis is documented for Patient Case D-314? What is the latest A1C? What CKD stage is documented and what is the current eGFR? Which diabetes medication was discontinued and why? Which diabetes medication is currently active and tolerated, and at what dose? Which medication was discussed but has not been started? What antibiotic allergy and reaction are recorded?
+Q2
+What is the latest A1C?
+
+Starting answer
+
+6.2%
+
+✓ Resolved after 1 revision
+ITERATION 1 — Check the starting answer
+
+Starting answer · Answer(0)
+CURRENT ANSWER
+
+6.2%
+↓
+WHAT THE ANSWER CLAIMS
+
+    A1C: 6.2%
+    Structured triple
+
+↓
+CHECK AGAINST THE KNOWLEDGE GRAPH
+✗
+Incorrect — correct this
+CONTRADICTED
+
+A1C
+Claimed6.2%
+→
+Trusted value9.1%
+Details
+
+↓
+WHAT NEEDS TO CHANGE?
+Keep
+
+Nothing to keep
+Change
+
+    6.2% → 9.1%
+
+Remove or investigate
+
+None
+↓
+KNOWLEDGE GRAPH UPDATE
+
+No new fact was needed. The trusted value used for this check was already present in the working knowledge graph.
+↓
+REVISED ANSWER
+
+9.1%
+ITERATION 2 — Check the revised answer
+
+Revised answer · Answer(1)
+CURRENT ANSWER
+
+9.1%
+↓
+WHAT THE ANSWER CLAIMS
+
+    A1C: 9.1%
+    Structured triple
+
+↓
+CHECK AGAINST THE KNOWLEDGE GRAPH
+✓
+Correct — keep this
+SUPPORTED
+
+A1C: 9.1%
+Details
+
+↓
+WHAT NEEDS TO CHANGE?
+Keep
+
+    A1C: 9.1%
+
+Change
+
+Nothing to change
+Remove or investigate
+
+None
+↓
+KNOWLEDGE GRAPH UPDATE
+
+No new fact was needed. The trusted value used for this check was already present in the working knowledge graph.
+FINAL RESULT
+
+✓ Resolved
+
+Final answer
+
+9.1%
+Combined final answer
+
+    1. What diabetes diagnosis is documented for Patient Case D-314?
+
+    type 2 diabetes mellitus
+
+    2. What is the latest A1C?
+
+    9.1%
+
+    3. What CKD stage is documented and what is the current eGFR?
+
+    CKD stage 3b with eGFR 38 mL/min/1.73 m²
+
+    4. Which diabetes medication was discontinued and why?
+
+    metformin because of severe gastrointestinal intolerance
+
+    5. Which diabetes medication is currently active and tolerated, and at what dose?
+
+    empagliflozin 10 mg daily
+
+    6. Which medication was discussed but has not been started?
+
+    semaglutide
+
+    7. What antibiotic allergy and reaction are recorded?
+
+    penicillin causing hives
+

@@ -1,0 +1,479 @@
+{
+  "test_set_id": "apollo_multihop_50",
+  "domain": "Apollo / early NASA",
+  "root_entity": "Apollo 11",
+  "description": "A path-following measurement set with five designed branches and five questions at every hop count from 1 through 10. Evaluation truth is entirely contained in trusted_context.",
+  "trusted_context": "Apollo 11 was crewed by Neil Armstrong. Neil Armstrong was born in Wapakoneta. Wapakoneta is located in Ohio. Ohio is part of the United States. The United States has its capital in Washington, D.C. Washington, D.C. is located on the Potomac River. The Potomac River flows to Chesapeake Bay. Chesapeake Bay opens into the Atlantic Ocean. The Atlantic Ocean is part of the Global Ocean. The Global Ocean is studied by Oceanography. Apollo 11 was launched by Saturn V. Saturn V had the S-IC as its first stage. The S-IC was built by Boeing. Boeing assembled the S-IC at Michoud Assembly Facility. Michoud Assembly Facility is located in New Orleans. New Orleans is located in the state of Louisiana. Louisiana belongs to the Gulf Coast region. The Gulf Coast borders the Gulf of Mexico. The Gulf of Mexico is connected to the Atlantic Ocean. The Atlantic Ocean is studied by Oceanography. Apollo 11 used Columbia as its command module. Columbia is preserved at the National Air and Space Museum. The National Air and Space Museum is located in Washington, D.C. For this designed graph, Washington, D.C. hosts the Smithsonian Institution. The Smithsonian Institution was founded by the United States Congress. The United States Congress convenes at the United States Capitol. The United States Capitol is located on Capitol Hill. Capitol Hill overlooks the National Mall. The National Mall contains the Smithsonian Castle. The Smithsonian Castle is administered by the Smithsonian Institution. Apollo 11 used Eagle as its lunar module. Eagle's descent stage is located on the Moon. The Moon has the Sea of Tranquility as the landing region for Eagle. The Sea of Tranquility is part of the Lunar Near Side. The Lunar Near Side is visible from Earth. Earth is studied by Lunar Geology for comparative purposes in this test graph. Lunar Geology uses samples from Apollo Missions. Apollo Missions includes Apollo 11. Apollo 11 was launched by Saturn V. Saturn V had the S-IC as its first stage. Apollo 11 was part of the Apollo Program. The Apollo Program was preceded by the Gemini Program. The Gemini Program included Gemini 8. Gemini 8 was commanded by Neil Armstrong. Neil Armstrong experienced the Stuck Thruster event during Gemini 8. The Stuck Thruster event was resolved by Mission Abort. Mission Abort is classified as an Emergency Procedure. The Emergency Procedure is documented in the Gemini 8 Mission Report. The Gemini 8 Mission Report is archived by NASA. NASA is headquartered in Washington, D.C.",
+  "expected_graph_facts": [
+    ["Apollo 11", "crewed_by", "Neil Armstrong"],
+    ["Neil Armstrong", "born_in", "Wapakoneta"],
+    ["Wapakoneta", "located_in", "Ohio"],
+    ["Ohio", "part_of", "United States"],
+    ["United States", "has_capital", "Washington, D.C."],
+    ["Washington, D.C.", "located_on", "Potomac River"],
+    ["Potomac River", "flows_to", "Chesapeake Bay"],
+    ["Chesapeake Bay", "opens_into", "Atlantic Ocean"],
+    ["Atlantic Ocean", "part_of", "Global Ocean"],
+    ["Global Ocean", "studied_by", "Oceanography"],
+    ["Apollo 11", "launched_by", "Saturn V"],
+    ["Saturn V", "has_first_stage", "S-IC"],
+    ["S-IC", "built_by", "Boeing"],
+    ["Boeing", "assembled_at", "Michoud Assembly Facility"],
+    ["Michoud Assembly Facility", "located_in", "New Orleans"],
+    ["New Orleans", "located_in_state", "Louisiana"],
+    ["Louisiana", "belongs_to_region", "Gulf Coast"],
+    ["Gulf Coast", "borders", "Gulf of Mexico"],
+    ["Gulf of Mexico", "connected_to", "Atlantic Ocean"],
+    ["Atlantic Ocean", "studied_by", "Oceanography"],
+    ["Apollo 11", "command_module", "Columbia"],
+    ["Columbia", "preserved_at", "National Air and Space Museum"],
+    ["National Air and Space Museum", "located_in", "Washington, D.C."],
+    ["Washington, D.C.", "hosts_institution", "Smithsonian Institution"],
+    ["Smithsonian Institution", "founded_by", "United States Congress"],
+    ["United States Congress", "convenes_at", "United States Capitol"],
+    ["United States Capitol", "located_on", "Capitol Hill"],
+    ["Capitol Hill", "overlooks", "National Mall"],
+    ["National Mall", "contains", "Smithsonian Castle"],
+    ["Smithsonian Castle", "administered_by", "Smithsonian Institution"],
+    ["Apollo 11", "lunar_module", "Eagle"],
+    ["Eagle", "descent_stage_location", "Moon"],
+    ["Moon", "has_landing_region", "Sea of Tranquility"],
+    ["Sea of Tranquility", "part_of", "Lunar Near Side"],
+    ["Lunar Near Side", "visible_from", "Earth"],
+    ["Earth", "studied_by", "Lunar Geology"],
+    ["Lunar Geology", "uses_samples_from", "Apollo Missions"],
+    ["Apollo Missions", "includes_mission", "Apollo 11"],
+    ["Apollo 11", "part_of", "Apollo Program"],
+    ["Apollo Program", "preceded_by_program", "Gemini Program"],
+    ["Gemini Program", "included_mission", "Gemini 8"],
+    ["Gemini 8", "commanded_by", "Neil Armstrong"],
+    ["Neil Armstrong", "experienced_event", "Stuck Thruster"],
+    ["Stuck Thruster", "resolved_by", "Mission Abort"],
+    ["Mission Abort", "classified_as", "Emergency Procedure"],
+    ["Emergency Procedure", "documented_in", "Gemini 8 Mission Report"],
+    ["Gemini 8 Mission Report", "archived_by", "NASA"],
+    ["NASA", "headquartered_in", "Washington, D.C."]
+  ],
+  "graph_properties": {
+    "edge_count_designed": 48,
+    "connected_components_designed": 1,
+    "root_node": "Apollo 11",
+    "max_designed_hop_depth": 10,
+    "average_expected_hop_count": 5.5,
+    "branching_factor_from_root": 5,
+    "questions_per_hop": 5,
+    "node_count": 42,
+    "node_count_note": "Computed from unique subjects and objects in expected_graph_facts; shared/cyclic nodes reduce the count."
+  },
+  "questions": [
+    {
+      "id": "apollo_hop_001", "hop_count": 1,
+      "question": "Who crewed Apollo 11?",
+      "expected_answer": "Neil Armstrong",
+      "expected_path": [["Apollo 11", "crewed_by", "Neil Armstrong"]],
+      "required_entities": ["Apollo 11", "Neil Armstrong"], "required_relations": ["crewed_by"],
+      "difficulty_notes": "Direct crew fact.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": false, "requires_composed_answer": false, "requires_carry_forward": false
+    },
+    {
+      "id": "apollo_hop_002", "hop_count": 1,
+      "question": "Which launch vehicle launched Apollo 11?",
+      "expected_answer": "Saturn V",
+      "expected_path": [["Apollo 11", "launched_by", "Saturn V"]],
+      "required_entities": ["Apollo 11", "Saturn V"], "required_relations": ["launched_by"],
+      "difficulty_notes": "Launch vehicle is a natural-language alias for rocket.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": false, "requires_composed_answer": false, "requires_carry_forward": false
+    },
+    {
+      "id": "apollo_hop_003", "hop_count": 1,
+      "question": "What was Apollo 11's command module?",
+      "expected_answer": "Columbia",
+      "expected_path": [["Apollo 11", "command_module", "Columbia"]],
+      "required_entities": ["Apollo 11", "Columbia"], "required_relations": ["command_module"],
+      "difficulty_notes": "Direct spacecraft component fact.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": false, "requires_composed_answer": false, "requires_carry_forward": false
+    },
+    {
+      "id": "apollo_hop_004", "hop_count": 1,
+      "question": "What was Apollo 11's lunar module?",
+      "expected_answer": "Eagle",
+      "expected_path": [["Apollo 11", "lunar_module", "Eagle"]],
+      "required_entities": ["Apollo 11", "Eagle"], "required_relations": ["lunar_module"],
+      "difficulty_notes": "Direct lunar module fact.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": false, "requires_composed_answer": false, "requires_carry_forward": false
+    },
+    {
+      "id": "apollo_hop_005", "hop_count": 1,
+      "question": "Which program included Apollo 11?",
+      "expected_answer": "Apollo Program",
+      "expected_path": [["Apollo 11", "part_of", "Apollo Program"]],
+      "required_entities": ["Apollo 11", "Apollo Program"], "required_relations": ["part_of"],
+      "difficulty_notes": "Direct program-membership fact.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": false, "requires_composed_answer": false, "requires_carry_forward": false
+    },
+
+    {
+      "id": "apollo_hop_006", "hop_count": 2,
+      "question": "In which town was the Apollo 11 crew member Neil Armstrong born?",
+      "expected_answer": "Wapakoneta",
+      "expected_path": [["Apollo 11", "crewed_by", "Neil Armstrong"], ["Neil Armstrong", "born_in", "Wapakoneta"]],
+      "required_entities": ["Apollo 11", "Neil Armstrong", "Wapakoneta"], "required_relations": ["crewed_by", "born_in"],
+      "difficulty_notes": "Links mission crew to birthplace.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": false
+    },
+    {
+      "id": "apollo_hop_007", "hop_count": 2,
+      "question": "What was the first stage of the rocket that launched Apollo 11?",
+      "expected_answer": "S-IC",
+      "expected_path": [["Apollo 11", "launched_by", "Saturn V"], ["Saturn V", "has_first_stage", "S-IC"]],
+      "required_entities": ["Apollo 11", "Saturn V", "S-IC"], "required_relations": ["launched_by", "has_first_stage"],
+      "difficulty_notes": "Resolves rocket to its first stage.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": false
+    },
+    {
+      "id": "apollo_hop_008", "hop_count": 2,
+      "question": "Where is Apollo 11's command module preserved?",
+      "expected_answer": "National Air and Space Museum",
+      "expected_path": [["Apollo 11", "command_module", "Columbia"], ["Columbia", "preserved_at", "National Air and Space Museum"]],
+      "required_entities": ["Apollo 11", "Columbia", "National Air and Space Museum"], "required_relations": ["command_module", "preserved_at"],
+      "difficulty_notes": "Links module identity to museum.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": false
+    },
+    {
+      "id": "apollo_hop_009", "hop_count": 2,
+      "question": "On which body is the descent stage of Apollo 11's lunar module located?",
+      "expected_answer": "Moon",
+      "expected_path": [["Apollo 11", "lunar_module", "Eagle"], ["Eagle", "descent_stage_location", "Moon"]],
+      "required_entities": ["Apollo 11", "Eagle", "Moon"], "required_relations": ["lunar_module", "descent_stage_location"],
+      "difficulty_notes": "Links lunar module to descent-stage location.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": false
+    },
+    {
+      "id": "apollo_hop_010", "hop_count": 2,
+      "question": "Which program immediately preceded the program containing Apollo 11?",
+      "expected_answer": "Gemini Program",
+      "expected_path": [["Apollo 11", "part_of", "Apollo Program"], ["Apollo Program", "preceded_by_program", "Gemini Program"]],
+      "required_entities": ["Apollo 11", "Apollo Program", "Gemini Program"], "required_relations": ["part_of", "preceded_by_program"],
+      "difficulty_notes": "Program lineage.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": false
+    },
+
+    {
+      "id": "apollo_hop_011", "hop_count": 3,
+      "question": "In which state is the birthplace of Apollo 11 crew member Neil Armstrong?",
+      "expected_answer": "Ohio",
+      "expected_path": [["Apollo 11", "crewed_by", "Neil Armstrong"], ["Neil Armstrong", "born_in", "Wapakoneta"], ["Wapakoneta", "located_in", "Ohio"]],
+      "required_entities": ["Apollo 11", "Neil Armstrong", "Wapakoneta", "Ohio"], "required_relations": ["crewed_by", "born_in", "located_in"],
+      "difficulty_notes": "Crew biography and geography.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_012", "hop_count": 3,
+      "question": "Which company built the first stage of the rocket that launched Apollo 11?",
+      "expected_answer": "Boeing",
+      "expected_path": [["Apollo 11", "launched_by", "Saturn V"], ["Saturn V", "has_first_stage", "S-IC"], ["S-IC", "built_by", "Boeing"]],
+      "required_entities": ["Apollo 11", "Saturn V", "S-IC", "Boeing"], "required_relations": ["launched_by", "has_first_stage", "built_by"],
+      "difficulty_notes": "Canonical three-hop launch-manufacturing question.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_013", "hop_count": 3,
+      "question": "In which city is the museum preserving Apollo 11's command module?",
+      "expected_answer": "Washington, D.C.",
+      "expected_path": [["Apollo 11", "command_module", "Columbia"], ["Columbia", "preserved_at", "National Air and Space Museum"], ["National Air and Space Museum", "located_in", "Washington, D.C."]],
+      "required_entities": ["Apollo 11", "Columbia", "National Air and Space Museum", "Washington, D.C."], "required_relations": ["command_module", "preserved_at", "located_in"],
+      "difficulty_notes": "Spacecraft-to-museum geography.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_014", "hop_count": 3,
+      "question": "Which landing region is associated with the body holding Eagle's descent stage?",
+      "expected_answer": "Sea of Tranquility",
+      "expected_path": [["Apollo 11", "lunar_module", "Eagle"], ["Eagle", "descent_stage_location", "Moon"], ["Moon", "has_landing_region", "Sea of Tranquility"]],
+      "required_entities": ["Apollo 11", "Eagle", "Moon", "Sea of Tranquility"], "required_relations": ["lunar_module", "descent_stage_location", "has_landing_region"],
+      "difficulty_notes": "Component, body, and landing region.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_015", "hop_count": 3,
+      "question": "Which mission was included in the program that preceded Apollo 11's program?",
+      "expected_answer": "Gemini 8",
+      "expected_path": [["Apollo 11", "part_of", "Apollo Program"], ["Apollo Program", "preceded_by_program", "Gemini Program"], ["Gemini Program", "included_mission", "Gemini 8"]],
+      "required_entities": ["Apollo 11", "Apollo Program", "Gemini Program", "Gemini 8"], "required_relations": ["part_of", "preceded_by_program", "included_mission"],
+      "difficulty_notes": "Cross-program mission lookup.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+
+    {
+      "id": "apollo_hop_016", "hop_count": 4,
+      "question": "Which country contains the state containing Neil Armstrong's birthplace?",
+      "expected_answer": "United States",
+      "expected_path": [["Apollo 11", "crewed_by", "Neil Armstrong"], ["Neil Armstrong", "born_in", "Wapakoneta"], ["Wapakoneta", "located_in", "Ohio"], ["Ohio", "part_of", "United States"]],
+      "required_entities": ["Apollo 11", "Neil Armstrong", "Wapakoneta", "Ohio", "United States"], "required_relations": ["crewed_by", "born_in", "located_in", "part_of"],
+      "difficulty_notes": "Nested biographical geography.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_017", "hop_count": 4,
+      "question": "At which facility did the builder of Apollo 11's launch vehicle first stage assemble it?",
+      "expected_answer": "Michoud Assembly Facility",
+      "expected_path": [["Apollo 11", "launched_by", "Saturn V"], ["Saturn V", "has_first_stage", "S-IC"], ["S-IC", "built_by", "Boeing"], ["Boeing", "assembled_at", "Michoud Assembly Facility"]],
+      "required_entities": ["Apollo 11", "Saturn V", "S-IC", "Boeing", "Michoud Assembly Facility"], "required_relations": ["launched_by", "has_first_stage", "built_by", "assembled_at"],
+      "difficulty_notes": "Manufacturing facility after company resolution.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_018", "hop_count": 4,
+      "question": "Which institution is hosted by the city containing the museum preserving Apollo 11's command module?",
+      "expected_answer": "Smithsonian Institution",
+      "expected_path": [["Apollo 11", "command_module", "Columbia"], ["Columbia", "preserved_at", "National Air and Space Museum"], ["National Air and Space Museum", "located_in", "Washington, D.C."], ["Washington, D.C.", "hosts_institution", "Smithsonian Institution"]],
+      "required_entities": ["Apollo 11", "Columbia", "National Air and Space Museum", "Washington, D.C.", "Smithsonian Institution"], "required_relations": ["command_module", "preserved_at", "located_in", "hosts_institution"],
+      "difficulty_notes": "Path includes location evidence before institutional membership.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_019", "hop_count": 4,
+      "question": "Which part of the Moon contains Eagle's landing region?",
+      "expected_answer": "Lunar Near Side",
+      "expected_path": [["Apollo 11", "lunar_module", "Eagle"], ["Eagle", "descent_stage_location", "Moon"], ["Moon", "has_landing_region", "Sea of Tranquility"], ["Sea of Tranquility", "part_of", "Lunar Near Side"]],
+      "required_entities": ["Apollo 11", "Eagle", "Moon", "Sea of Tranquility", "Lunar Near Side"], "required_relations": ["lunar_module", "descent_stage_location", "has_landing_region", "part_of"],
+      "difficulty_notes": "Landing hierarchy.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_020", "hop_count": 4,
+      "question": "Who commanded the mission included in the program preceding Apollo 11's program?",
+      "expected_answer": "Neil Armstrong",
+      "expected_path": [["Apollo 11", "part_of", "Apollo Program"], ["Apollo Program", "preceded_by_program", "Gemini Program"], ["Gemini Program", "included_mission", "Gemini 8"], ["Gemini 8", "commanded_by", "Neil Armstrong"]],
+      "required_entities": ["Apollo 11", "Apollo Program", "Gemini Program", "Gemini 8", "Neil Armstrong"], "required_relations": ["part_of", "preceded_by_program", "included_mission", "commanded_by"],
+      "difficulty_notes": "Returns to a person shared with the crew branch.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+
+    {
+      "id": "apollo_hop_021", "hop_count": 5,
+      "question": "What is the capital of the country containing Neil Armstrong's birthplace state?",
+      "expected_answer": "Washington, D.C.",
+      "expected_path": [["Apollo 11", "crewed_by", "Neil Armstrong"], ["Neil Armstrong", "born_in", "Wapakoneta"], ["Wapakoneta", "located_in", "Ohio"], ["Ohio", "part_of", "United States"], ["United States", "has_capital", "Washington, D.C."]],
+      "required_entities": ["Apollo 11", "Neil Armstrong", "Wapakoneta", "Ohio", "United States", "Washington, D.C."], "required_relations": ["crewed_by", "born_in", "located_in", "part_of", "has_capital"],
+      "difficulty_notes": "Five-hop biography-to-capital path.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_022", "hop_count": 5,
+      "question": "In which city is the facility where Apollo 11's first-stage builder assembled the stage?",
+      "expected_answer": "New Orleans",
+      "expected_path": [["Apollo 11", "launched_by", "Saturn V"], ["Saturn V", "has_first_stage", "S-IC"], ["S-IC", "built_by", "Boeing"], ["Boeing", "assembled_at", "Michoud Assembly Facility"], ["Michoud Assembly Facility", "located_in", "New Orleans"]],
+      "required_entities": ["Apollo 11", "Saturn V", "S-IC", "Boeing", "Michoud Assembly Facility", "New Orleans"], "required_relations": ["launched_by", "has_first_stage", "built_by", "assembled_at", "located_in"],
+      "difficulty_notes": "Launch manufacturing geography.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_023", "hop_count": 5,
+      "question": "Who founded the institution containing the museum preserving Columbia?",
+      "expected_answer": "United States Congress",
+      "expected_path": [["Apollo 11", "command_module", "Columbia"], ["Columbia", "preserved_at", "National Air and Space Museum"], ["National Air and Space Museum", "located_in", "Washington, D.C."], ["Washington, D.C.", "hosts_institution", "Smithsonian Institution"], ["Smithsonian Institution", "founded_by", "United States Congress"]],
+      "required_entities": ["Apollo 11", "Columbia", "National Air and Space Museum", "Washington, D.C.", "Smithsonian Institution", "United States Congress"], "required_relations": ["command_module", "preserved_at", "located_in", "hosts_institution", "founded_by"],
+      "difficulty_notes": "Museum-to-founder chain.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_024", "hop_count": 5,
+      "question": "From which world is the lunar region containing Eagle's landing site visible?",
+      "expected_answer": "Earth",
+      "expected_path": [["Apollo 11", "lunar_module", "Eagle"], ["Eagle", "descent_stage_location", "Moon"], ["Moon", "has_landing_region", "Sea of Tranquility"], ["Sea of Tranquility", "part_of", "Lunar Near Side"], ["Lunar Near Side", "visible_from", "Earth"]],
+      "required_entities": ["Apollo 11", "Eagle", "Moon", "Sea of Tranquility", "Lunar Near Side", "Earth"], "required_relations": ["lunar_module", "descent_stage_location", "has_landing_region", "part_of", "visible_from"],
+      "difficulty_notes": "Lunar hierarchy to observer.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_025", "hop_count": 5,
+      "question": "What emergency event occurred on the mission commanded by the commander reached through Apollo 11's preceding program?",
+      "expected_answer": "Stuck Thruster",
+      "expected_path": [["Apollo 11", "part_of", "Apollo Program"], ["Apollo Program", "preceded_by_program", "Gemini Program"], ["Gemini Program", "included_mission", "Gemini 8"], ["Gemini 8", "commanded_by", "Neil Armstrong"], ["Neil Armstrong", "experienced_event", "Stuck Thruster"]],
+      "required_entities": ["Apollo 11", "Apollo Program", "Gemini Program", "Gemini 8", "Neil Armstrong", "Stuck Thruster"], "required_relations": ["part_of", "preceded_by_program", "included_mission", "commanded_by", "experienced_event"],
+      "difficulty_notes": "Shared person entity can tempt a crew-branch shortcut.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+
+    {
+      "id": "apollo_hop_026", "hop_count": 6,
+      "question": "Which river runs beside the capital of the country containing Neil Armstrong's birthplace?",
+      "expected_answer": "Potomac River",
+      "expected_path": [["Apollo 11", "crewed_by", "Neil Armstrong"], ["Neil Armstrong", "born_in", "Wapakoneta"], ["Wapakoneta", "located_in", "Ohio"], ["Ohio", "part_of", "United States"], ["United States", "has_capital", "Washington, D.C."], ["Washington, D.C.", "located_on", "Potomac River"]],
+      "required_entities": ["Apollo 11", "Neil Armstrong", "Wapakoneta", "Ohio", "United States", "Washington, D.C.", "Potomac River"], "required_relations": ["crewed_by", "born_in", "located_in", "part_of", "has_capital", "located_on"],
+      "difficulty_notes": "Biography, political geography, and river.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_027", "hop_count": 6,
+      "question": "In which state is the city containing the facility that assembled Apollo 11's first stage?",
+      "expected_answer": "Louisiana",
+      "expected_path": [["Apollo 11", "launched_by", "Saturn V"], ["Saturn V", "has_first_stage", "S-IC"], ["S-IC", "built_by", "Boeing"], ["Boeing", "assembled_at", "Michoud Assembly Facility"], ["Michoud Assembly Facility", "located_in", "New Orleans"], ["New Orleans", "located_in_state", "Louisiana"]],
+      "required_entities": ["Apollo 11", "Saturn V", "S-IC", "Boeing", "Michoud Assembly Facility", "New Orleans", "Louisiana"], "required_relations": ["launched_by", "has_first_stage", "built_by", "assembled_at", "located_in", "located_in_state"],
+      "difficulty_notes": "Six-hop manufacturing location.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_028", "hop_count": 6,
+      "question": "Where does the body that founded Columbia's museum institution convene?",
+      "expected_answer": "United States Capitol",
+      "expected_path": [["Apollo 11", "command_module", "Columbia"], ["Columbia", "preserved_at", "National Air and Space Museum"], ["National Air and Space Museum", "located_in", "Washington, D.C."], ["Washington, D.C.", "hosts_institution", "Smithsonian Institution"], ["Smithsonian Institution", "founded_by", "United States Congress"], ["United States Congress", "convenes_at", "United States Capitol"]],
+      "required_entities": ["Apollo 11", "Columbia", "National Air and Space Museum", "Washington, D.C.", "Smithsonian Institution", "United States Congress", "United States Capitol"], "required_relations": ["command_module", "preserved_at", "located_in", "hosts_institution", "founded_by", "convenes_at"],
+      "difficulty_notes": "Institutional founder to meeting place.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_029", "hop_count": 6,
+      "question": "Which field studies the world from which Eagle's lunar region is visible?",
+      "expected_answer": "Lunar Geology",
+      "expected_path": [["Apollo 11", "lunar_module", "Eagle"], ["Eagle", "descent_stage_location", "Moon"], ["Moon", "has_landing_region", "Sea of Tranquility"], ["Sea of Tranquility", "part_of", "Lunar Near Side"], ["Lunar Near Side", "visible_from", "Earth"], ["Earth", "studied_by", "Lunar Geology"]],
+      "required_entities": ["Apollo 11", "Eagle", "Moon", "Sea of Tranquility", "Lunar Near Side", "Earth", "Lunar Geology"], "required_relations": ["lunar_module", "descent_stage_location", "has_landing_region", "part_of", "visible_from", "studied_by"],
+      "difficulty_notes": "Long lunar semantic chain.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_030", "hop_count": 6,
+      "question": "How was the emergency event on Gemini 8 resolved?",
+      "expected_answer": "Mission Abort",
+      "expected_path": [["Apollo 11", "part_of", "Apollo Program"], ["Apollo Program", "preceded_by_program", "Gemini Program"], ["Gemini Program", "included_mission", "Gemini 8"], ["Gemini 8", "commanded_by", "Neil Armstrong"], ["Neil Armstrong", "experienced_event", "Stuck Thruster"], ["Stuck Thruster", "resolved_by", "Mission Abort"]],
+      "required_entities": ["Apollo 11", "Apollo Program", "Gemini Program", "Gemini 8", "Neil Armstrong", "Stuck Thruster", "Mission Abort"], "required_relations": ["part_of", "preceded_by_program", "included_mission", "commanded_by", "experienced_event", "resolved_by"],
+      "difficulty_notes": "Mission-history resolution chain.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+
+    {
+      "id": "apollo_hop_031", "hop_count": 7,
+      "question": "Into which bay does the river beside the capital reached through Neil Armstrong's birthplace flow?",
+      "expected_answer": "Chesapeake Bay",
+      "expected_path": [["Apollo 11", "crewed_by", "Neil Armstrong"], ["Neil Armstrong", "born_in", "Wapakoneta"], ["Wapakoneta", "located_in", "Ohio"], ["Ohio", "part_of", "United States"], ["United States", "has_capital", "Washington, D.C."], ["Washington, D.C.", "located_on", "Potomac River"], ["Potomac River", "flows_to", "Chesapeake Bay"]],
+      "required_entities": ["Apollo 11", "Neil Armstrong", "Wapakoneta", "Ohio", "United States", "Washington, D.C.", "Potomac River", "Chesapeake Bay"], "required_relations": ["crewed_by", "born_in", "located_in", "part_of", "has_capital", "located_on", "flows_to"],
+      "difficulty_notes": "Seven-hop biography-to-hydrology path.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_032", "hop_count": 7,
+      "question": "Which region contains the state containing the city where Apollo 11's first stage was assembled?",
+      "expected_answer": "Gulf Coast",
+      "expected_path": [["Apollo 11", "launched_by", "Saturn V"], ["Saturn V", "has_first_stage", "S-IC"], ["S-IC", "built_by", "Boeing"], ["Boeing", "assembled_at", "Michoud Assembly Facility"], ["Michoud Assembly Facility", "located_in", "New Orleans"], ["New Orleans", "located_in_state", "Louisiana"], ["Louisiana", "belongs_to_region", "Gulf Coast"]],
+      "required_entities": ["Apollo 11", "Saturn V", "S-IC", "Boeing", "Michoud Assembly Facility", "New Orleans", "Louisiana", "Gulf Coast"], "required_relations": ["launched_by", "has_first_stage", "built_by", "assembled_at", "located_in", "located_in_state", "belongs_to_region"],
+      "difficulty_notes": "Seven-hop launch-manufacturing geography.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_033", "hop_count": 7,
+      "question": "On which hill is the place where the founder of Columbia's museum institution convenes?",
+      "expected_answer": "Capitol Hill",
+      "expected_path": [["Apollo 11", "command_module", "Columbia"], ["Columbia", "preserved_at", "National Air and Space Museum"], ["National Air and Space Museum", "located_in", "Washington, D.C."], ["Washington, D.C.", "hosts_institution", "Smithsonian Institution"], ["Smithsonian Institution", "founded_by", "United States Congress"], ["United States Congress", "convenes_at", "United States Capitol"], ["United States Capitol", "located_on", "Capitol Hill"]],
+      "required_entities": ["Apollo 11", "Columbia", "National Air and Space Museum", "Washington, D.C.", "Smithsonian Institution", "United States Congress", "United States Capitol", "Capitol Hill"], "required_relations": ["command_module", "preserved_at", "located_in", "hosts_institution", "founded_by", "convenes_at", "located_on"],
+      "difficulty_notes": "Museum, institution, legislature, and landmark.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_034", "hop_count": 7,
+      "question": "Which mission family supplies samples to the field studying Earth in the Eagle landing chain?",
+      "expected_answer": "Apollo Missions",
+      "expected_path": [["Apollo 11", "lunar_module", "Eagle"], ["Eagle", "descent_stage_location", "Moon"], ["Moon", "has_landing_region", "Sea of Tranquility"], ["Sea of Tranquility", "part_of", "Lunar Near Side"], ["Lunar Near Side", "visible_from", "Earth"], ["Earth", "studied_by", "Lunar Geology"], ["Lunar Geology", "uses_samples_from", "Apollo Missions"]],
+      "required_entities": ["Apollo 11", "Eagle", "Moon", "Sea of Tranquility", "Lunar Near Side", "Earth", "Lunar Geology", "Apollo Missions"], "required_relations": ["lunar_module", "descent_stage_location", "has_landing_region", "part_of", "visible_from", "studied_by", "uses_samples_from"],
+      "difficulty_notes": "Field-to-sample-source relation.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_035", "hop_count": 7,
+      "question": "How is the action that resolved Gemini 8's emergency classified?",
+      "expected_answer": "Emergency Procedure",
+      "expected_path": [["Apollo 11", "part_of", "Apollo Program"], ["Apollo Program", "preceded_by_program", "Gemini Program"], ["Gemini Program", "included_mission", "Gemini 8"], ["Gemini 8", "commanded_by", "Neil Armstrong"], ["Neil Armstrong", "experienced_event", "Stuck Thruster"], ["Stuck Thruster", "resolved_by", "Mission Abort"], ["Mission Abort", "classified_as", "Emergency Procedure"]],
+      "required_entities": ["Apollo 11", "Apollo Program", "Gemini Program", "Gemini 8", "Neil Armstrong", "Stuck Thruster", "Mission Abort", "Emergency Procedure"], "required_relations": ["part_of", "preceded_by_program", "included_mission", "commanded_by", "experienced_event", "resolved_by", "classified_as"],
+      "difficulty_notes": "Event-resolution classification.", "requires_alias_resolution": false, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+
+    {
+      "id": "apollo_hop_036", "hop_count": 8,
+      "question": "Which ocean receives the bay fed by the river beside the capital reached through Neil Armstrong's birthplace?",
+      "expected_answer": "Atlantic Ocean",
+      "expected_path": [["Apollo 11", "crewed_by", "Neil Armstrong"], ["Neil Armstrong", "born_in", "Wapakoneta"], ["Wapakoneta", "located_in", "Ohio"], ["Ohio", "part_of", "United States"], ["United States", "has_capital", "Washington, D.C."], ["Washington, D.C.", "located_on", "Potomac River"], ["Potomac River", "flows_to", "Chesapeake Bay"], ["Chesapeake Bay", "opens_into", "Atlantic Ocean"]],
+      "required_entities": ["Apollo 11", "Neil Armstrong", "Wapakoneta", "Ohio", "United States", "Washington, D.C.", "Potomac River", "Chesapeake Bay", "Atlantic Ocean"], "required_relations": ["crewed_by", "born_in", "located_in", "part_of", "has_capital", "located_on", "flows_to", "opens_into"],
+      "difficulty_notes": "Eight-hop biographical hydrology chain.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_037", "hop_count": 8,
+      "question": "Which body of water borders the region containing the state containing the city where Apollo 11's first stage was assembled?",
+      "expected_answer": "Gulf of Mexico",
+      "expected_path": [["Apollo 11", "launched_by", "Saturn V"], ["Saturn V", "has_first_stage", "S-IC"], ["S-IC", "built_by", "Boeing"], ["Boeing", "assembled_at", "Michoud Assembly Facility"], ["Michoud Assembly Facility", "located_in", "New Orleans"], ["New Orleans", "located_in_state", "Louisiana"], ["Louisiana", "belongs_to_region", "Gulf Coast"], ["Gulf Coast", "borders", "Gulf of Mexico"]],
+      "required_entities": ["Apollo 11", "Saturn V", "S-IC", "Boeing", "Michoud Assembly Facility", "New Orleans", "Louisiana", "Gulf Coast", "Gulf of Mexico"], "required_relations": ["launched_by", "has_first_stage", "built_by", "assembled_at", "located_in", "located_in_state", "belongs_to_region", "borders"],
+      "difficulty_notes": "Suggested long manufacturing/geography question.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_038", "hop_count": 8,
+      "question": "What landmark is overlooked by the hill holding the place where Columbia's museum founder convenes?",
+      "expected_answer": "National Mall",
+      "expected_path": [["Apollo 11", "command_module", "Columbia"], ["Columbia", "preserved_at", "National Air and Space Museum"], ["National Air and Space Museum", "located_in", "Washington, D.C."], ["Washington, D.C.", "hosts_institution", "Smithsonian Institution"], ["Smithsonian Institution", "founded_by", "United States Congress"], ["United States Congress", "convenes_at", "United States Capitol"], ["United States Capitol", "located_on", "Capitol Hill"], ["Capitol Hill", "overlooks", "National Mall"]],
+      "required_entities": ["Apollo 11", "Columbia", "National Air and Space Museum", "Washington, D.C.", "Smithsonian Institution", "United States Congress", "United States Capitol", "Capitol Hill", "National Mall"], "required_relations": ["command_module", "preserved_at", "located_in", "hosts_institution", "founded_by", "convenes_at", "located_on", "overlooks"],
+      "difficulty_notes": "Eight-hop museum and civic-landmark chain.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_039", "hop_count": 8,
+      "question": "Which specific mission is included in the mission family supplying samples in Eagle's landing chain?",
+      "expected_answer": "Apollo 11",
+      "expected_path": [["Apollo 11", "lunar_module", "Eagle"], ["Eagle", "descent_stage_location", "Moon"], ["Moon", "has_landing_region", "Sea of Tranquility"], ["Sea of Tranquility", "part_of", "Lunar Near Side"], ["Lunar Near Side", "visible_from", "Earth"], ["Earth", "studied_by", "Lunar Geology"], ["Lunar Geology", "uses_samples_from", "Apollo Missions"], ["Apollo Missions", "includes_mission", "Apollo 11"]],
+      "required_entities": ["Apollo 11", "Eagle", "Moon", "Sea of Tranquility", "Lunar Near Side", "Earth", "Lunar Geology", "Apollo Missions"], "required_relations": ["lunar_module", "descent_stage_location", "has_landing_region", "part_of", "visible_from", "studied_by", "uses_samples_from", "includes_mission"],
+      "difficulty_notes": "Designed cycle returns to the root.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_040", "hop_count": 8,
+      "question": "Which report documents the procedure used after Gemini 8's stuck-thruster event?",
+      "expected_answer": "Gemini 8 Mission Report",
+      "expected_path": [["Apollo 11", "part_of", "Apollo Program"], ["Apollo Program", "preceded_by_program", "Gemini Program"], ["Gemini Program", "included_mission", "Gemini 8"], ["Gemini 8", "commanded_by", "Neil Armstrong"], ["Neil Armstrong", "experienced_event", "Stuck Thruster"], ["Stuck Thruster", "resolved_by", "Mission Abort"], ["Mission Abort", "classified_as", "Emergency Procedure"], ["Emergency Procedure", "documented_in", "Gemini 8 Mission Report"]],
+      "required_entities": ["Apollo 11", "Apollo Program", "Gemini Program", "Gemini 8", "Neil Armstrong", "Stuck Thruster", "Mission Abort", "Emergency Procedure", "Gemini 8 Mission Report"], "required_relations": ["part_of", "preceded_by_program", "included_mission", "commanded_by", "experienced_event", "resolved_by", "classified_as", "documented_in"],
+      "difficulty_notes": "Eight-hop mission history/document chain.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+
+    {
+      "id": "apollo_hop_041", "hop_count": 9,
+      "question": "Of what global body is the ocean receiving Chesapeake Bay a part?",
+      "expected_answer": "Global Ocean",
+      "expected_path": [["Apollo 11", "crewed_by", "Neil Armstrong"], ["Neil Armstrong", "born_in", "Wapakoneta"], ["Wapakoneta", "located_in", "Ohio"], ["Ohio", "part_of", "United States"], ["United States", "has_capital", "Washington, D.C."], ["Washington, D.C.", "located_on", "Potomac River"], ["Potomac River", "flows_to", "Chesapeake Bay"], ["Chesapeake Bay", "opens_into", "Atlantic Ocean"], ["Atlantic Ocean", "part_of", "Global Ocean"]],
+      "required_entities": ["Apollo 11", "Neil Armstrong", "Wapakoneta", "Ohio", "United States", "Washington, D.C.", "Potomac River", "Chesapeake Bay", "Atlantic Ocean", "Global Ocean"], "required_relations": ["crewed_by", "born_in", "located_in", "part_of", "has_capital", "located_on", "flows_to", "opens_into", "part_of"],
+      "difficulty_notes": "Nine-hop path with repeated relation family.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_042", "hop_count": 9,
+      "question": "Which ocean is connected to the water bordering the region of the state where Apollo 11's first stage was assembled?",
+      "expected_answer": "Atlantic Ocean",
+      "expected_path": [["Apollo 11", "launched_by", "Saturn V"], ["Saturn V", "has_first_stage", "S-IC"], ["S-IC", "built_by", "Boeing"], ["Boeing", "assembled_at", "Michoud Assembly Facility"], ["Michoud Assembly Facility", "located_in", "New Orleans"], ["New Orleans", "located_in_state", "Louisiana"], ["Louisiana", "belongs_to_region", "Gulf Coast"], ["Gulf Coast", "borders", "Gulf of Mexico"], ["Gulf of Mexico", "connected_to", "Atlantic Ocean"]],
+      "required_entities": ["Apollo 11", "Saturn V", "S-IC", "Boeing", "Michoud Assembly Facility", "New Orleans", "Louisiana", "Gulf Coast", "Gulf of Mexico", "Atlantic Ocean"], "required_relations": ["launched_by", "has_first_stage", "built_by", "assembled_at", "located_in", "located_in_state", "belongs_to_region", "borders", "connected_to"],
+      "difficulty_notes": "Nine-hop launch-to-ocean chain.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_043", "hop_count": 9,
+      "question": "Which building is contained in the landmark overlooked by the hill of the legislature that founded Columbia's museum institution?",
+      "expected_answer": "Smithsonian Castle",
+      "expected_path": [["Apollo 11", "command_module", "Columbia"], ["Columbia", "preserved_at", "National Air and Space Museum"], ["National Air and Space Museum", "located_in", "Washington, D.C."], ["Washington, D.C.", "hosts_institution", "Smithsonian Institution"], ["Smithsonian Institution", "founded_by", "United States Congress"], ["United States Congress", "convenes_at", "United States Capitol"], ["United States Capitol", "located_on", "Capitol Hill"], ["Capitol Hill", "overlooks", "National Mall"], ["National Mall", "contains", "Smithsonian Castle"]],
+      "required_entities": ["Apollo 11", "Columbia", "National Air and Space Museum", "Washington, D.C.", "Smithsonian Institution", "United States Congress", "United States Capitol", "Capitol Hill", "National Mall", "Smithsonian Castle"], "required_relations": ["command_module", "preserved_at", "located_in", "hosts_institution", "founded_by", "convenes_at", "located_on", "overlooks", "contains"],
+      "difficulty_notes": "Nine-hop museum/civic chain.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_044", "hop_count": 9,
+      "question": "Which rocket launched the mission reached again through the lunar sample chain starting from Apollo 11?",
+      "expected_answer": "Saturn V",
+      "expected_path": [["Apollo 11", "lunar_module", "Eagle"], ["Eagle", "descent_stage_location", "Moon"], ["Moon", "has_landing_region", "Sea of Tranquility"], ["Sea of Tranquility", "part_of", "Lunar Near Side"], ["Lunar Near Side", "visible_from", "Earth"], ["Earth", "studied_by", "Lunar Geology"], ["Lunar Geology", "uses_samples_from", "Apollo Missions"], ["Apollo Missions", "includes_mission", "Apollo 11"], ["Apollo 11", "launched_by", "Saturn V"]],
+      "required_entities": ["Apollo 11", "Eagle", "Moon", "Sea of Tranquility", "Lunar Near Side", "Earth", "Lunar Geology", "Apollo Missions", "Saturn V"], "required_relations": ["lunar_module", "descent_stage_location", "has_landing_region", "part_of", "visible_from", "studied_by", "uses_samples_from", "includes_mission", "launched_by"],
+      "difficulty_notes": "Cycle plus cross-branch launch edge.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_045", "hop_count": 9,
+      "question": "Which organization archives the report documenting Gemini 8's emergency procedure?",
+      "expected_answer": "NASA",
+      "expected_path": [["Apollo 11", "part_of", "Apollo Program"], ["Apollo Program", "preceded_by_program", "Gemini Program"], ["Gemini Program", "included_mission", "Gemini 8"], ["Gemini 8", "commanded_by", "Neil Armstrong"], ["Neil Armstrong", "experienced_event", "Stuck Thruster"], ["Stuck Thruster", "resolved_by", "Mission Abort"], ["Mission Abort", "classified_as", "Emergency Procedure"], ["Emergency Procedure", "documented_in", "Gemini 8 Mission Report"], ["Gemini 8 Mission Report", "archived_by", "NASA"]],
+      "required_entities": ["Apollo 11", "Apollo Program", "Gemini Program", "Gemini 8", "Neil Armstrong", "Stuck Thruster", "Mission Abort", "Emergency Procedure", "Gemini 8 Mission Report", "NASA"], "required_relations": ["part_of", "preceded_by_program", "included_mission", "commanded_by", "experienced_event", "resolved_by", "classified_as", "documented_in", "archived_by"],
+      "difficulty_notes": "Nine-hop program-to-archive chain.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+
+    {
+      "id": "apollo_hop_046", "hop_count": 10,
+      "question": "Which field studies the global body containing the ocean reached through Neil Armstrong's birthplace and the Potomac watershed?",
+      "expected_answer": "Oceanography",
+      "expected_path": [["Apollo 11", "crewed_by", "Neil Armstrong"], ["Neil Armstrong", "born_in", "Wapakoneta"], ["Wapakoneta", "located_in", "Ohio"], ["Ohio", "part_of", "United States"], ["United States", "has_capital", "Washington, D.C."], ["Washington, D.C.", "located_on", "Potomac River"], ["Potomac River", "flows_to", "Chesapeake Bay"], ["Chesapeake Bay", "opens_into", "Atlantic Ocean"], ["Atlantic Ocean", "part_of", "Global Ocean"], ["Global Ocean", "studied_by", "Oceanography"]],
+      "required_entities": ["Apollo 11", "Neil Armstrong", "Wapakoneta", "Ohio", "United States", "Washington, D.C.", "Potomac River", "Chesapeake Bay", "Atlantic Ocean", "Global Ocean", "Oceanography"], "required_relations": ["crewed_by", "born_in", "located_in", "part_of", "has_capital", "located_on", "flows_to", "opens_into", "part_of", "studied_by"],
+      "difficulty_notes": "Full ten-hop biography/geography/hydrology branch.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_047", "hop_count": 10,
+      "question": "Which field studies the ocean connected to the water bordering the region containing the state where Apollo 11's first stage was assembled?",
+      "expected_answer": "Oceanography",
+      "expected_path": [["Apollo 11", "launched_by", "Saturn V"], ["Saturn V", "has_first_stage", "S-IC"], ["S-IC", "built_by", "Boeing"], ["Boeing", "assembled_at", "Michoud Assembly Facility"], ["Michoud Assembly Facility", "located_in", "New Orleans"], ["New Orleans", "located_in_state", "Louisiana"], ["Louisiana", "belongs_to_region", "Gulf Coast"], ["Gulf Coast", "borders", "Gulf of Mexico"], ["Gulf of Mexico", "connected_to", "Atlantic Ocean"], ["Atlantic Ocean", "studied_by", "Oceanography"]],
+      "required_entities": ["Apollo 11", "Saturn V", "S-IC", "Boeing", "Michoud Assembly Facility", "New Orleans", "Louisiana", "Gulf Coast", "Gulf of Mexico", "Atlantic Ocean", "Oceanography"], "required_relations": ["launched_by", "has_first_stage", "built_by", "assembled_at", "located_in", "located_in_state", "belongs_to_region", "borders", "connected_to", "studied_by"],
+      "difficulty_notes": "Full ten-hop manufacturing/geography branch.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_048", "hop_count": 10,
+      "question": "Which institution administers the building in the landmark overlooked by the hill holding the legislature that founded Columbia's museum institution?",
+      "expected_answer": "Smithsonian Institution",
+      "expected_path": [["Apollo 11", "command_module", "Columbia"], ["Columbia", "preserved_at", "National Air and Space Museum"], ["National Air and Space Museum", "located_in", "Washington, D.C."], ["Washington, D.C.", "hosts_institution", "Smithsonian Institution"], ["Smithsonian Institution", "founded_by", "United States Congress"], ["United States Congress", "convenes_at", "United States Capitol"], ["United States Capitol", "located_on", "Capitol Hill"], ["Capitol Hill", "overlooks", "National Mall"], ["National Mall", "contains", "Smithsonian Castle"], ["Smithsonian Castle", "administered_by", "Smithsonian Institution"]],
+      "required_entities": ["Apollo 11", "Columbia", "National Air and Space Museum", "Washington, D.C.", "Smithsonian Institution", "United States Congress", "United States Capitol", "Capitol Hill", "National Mall", "Smithsonian Castle"], "required_relations": ["command_module", "preserved_at", "located_in", "hosts_institution", "founded_by", "convenes_at", "located_on", "overlooks", "contains", "administered_by"],
+      "difficulty_notes": "Full ten-hop museum branch returns to a prior institution.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_049", "hop_count": 10,
+      "question": "What first stage belongs to the rocket launching the mission reached through Eagle's lunar sample chain?",
+      "expected_answer": "S-IC",
+      "expected_path": [["Apollo 11", "lunar_module", "Eagle"], ["Eagle", "descent_stage_location", "Moon"], ["Moon", "has_landing_region", "Sea of Tranquility"], ["Sea of Tranquility", "part_of", "Lunar Near Side"], ["Lunar Near Side", "visible_from", "Earth"], ["Earth", "studied_by", "Lunar Geology"], ["Lunar Geology", "uses_samples_from", "Apollo Missions"], ["Apollo Missions", "includes_mission", "Apollo 11"], ["Apollo 11", "launched_by", "Saturn V"], ["Saturn V", "has_first_stage", "S-IC"]],
+      "required_entities": ["Apollo 11", "Eagle", "Moon", "Sea of Tranquility", "Lunar Near Side", "Earth", "Lunar Geology", "Apollo Missions", "Saturn V", "S-IC"], "required_relations": ["lunar_module", "descent_stage_location", "has_landing_region", "part_of", "visible_from", "studied_by", "uses_samples_from", "includes_mission", "launched_by", "has_first_stage"],
+      "difficulty_notes": "Full ten-hop lunar cycle crossing into launch branch.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    },
+    {
+      "id": "apollo_hop_050", "hop_count": 10,
+      "question": "In which city is the organization archiving the report about the procedure that resolved Gemini 8's emergency headquartered?",
+      "expected_answer": "Washington, D.C.",
+      "expected_path": [["Apollo 11", "part_of", "Apollo Program"], ["Apollo Program", "preceded_by_program", "Gemini Program"], ["Gemini Program", "included_mission", "Gemini 8"], ["Gemini 8", "commanded_by", "Neil Armstrong"], ["Neil Armstrong", "experienced_event", "Stuck Thruster"], ["Stuck Thruster", "resolved_by", "Mission Abort"], ["Mission Abort", "classified_as", "Emergency Procedure"], ["Emergency Procedure", "documented_in", "Gemini 8 Mission Report"], ["Gemini 8 Mission Report", "archived_by", "NASA"], ["NASA", "headquartered_in", "Washington, D.C."]],
+      "required_entities": ["Apollo 11", "Apollo Program", "Gemini Program", "Gemini 8", "Neil Armstrong", "Stuck Thruster", "Mission Abort", "Emergency Procedure", "Gemini 8 Mission Report", "NASA", "Washington, D.C."], "required_relations": ["part_of", "preceded_by_program", "included_mission", "commanded_by", "experienced_event", "resolved_by", "classified_as", "documented_in", "archived_by", "headquartered_in"],
+      "difficulty_notes": "Full ten-hop mission-history/document/archive branch.", "requires_alias_resolution": true, "requires_avoiding_sibling_branches": true, "requires_composed_answer": false, "requires_carry_forward": true
+    }
+  ]
+}

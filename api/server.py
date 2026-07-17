@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Any, Literal
 
@@ -20,8 +21,13 @@ from src.llm.ollama_provider import (
 from src.main import get_provider
 from src.models import Example
 from src.pipeline.backtracking_runner import BacktrackingRunner
+from src.pipeline.decomposed_backtracking_runner import DecomposedBacktrackingRunner
 from src.pipeline.runner import PipelineRunner
+from src.pipeline.structured_output import KgcExtractionError
 from src.storage.neo4j_store import query_claims_if_enabled
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
 app = FastAPI(title="GraphEval Prototype API", version="0.1.0")
 
@@ -67,6 +73,35 @@ class RunKgcBacktrackingRequest(BaseModel):
     answer_0_mode: Literal["preset", "generated"] = "preset"
 
 
+class RunDecomposedKgcBacktrackingRequest(BaseModel):
+    example_id: str
+    provider: Literal["mock", "ollama"] = "mock"
+    model: str = DEFAULT_MODEL
+    max_iterations_per_sub_question: int = 3
+    working_kgc_auto_promote: bool = False
+    answer_0_mode: Literal[
+        "preset",
+        "generated",
+        "context_grounded_per_subquestion",
+    ] = "preset"
+
+
+class RunCustomDecomposedKgcBacktrackingRequest(BaseModel):
+    run_id: str | None = None
+    question: str
+    context: str
+    initial_answer: str | None = None
+    provider: Literal["mock", "ollama"] = "mock"
+    model: str = DEFAULT_MODEL
+    max_iterations_per_sub_question: int = 3
+    answer_0_mode: Literal[
+        "preset_external_projected",
+        "generated_external_projected",
+        "context_grounded_per_subquestion",
+    ] | None = None
+    clear_neo4j_before_run: bool = True
+
+
 class ExampleSummary(BaseModel):
     id: str
     question: str
@@ -89,6 +124,32 @@ class GraphClaimsResponse(BaseModel):
     enabled: bool
     claims: list[StoredClaim]
     error: str | None = None
+
+
+def _make_decomposed_backtracking_runner(
+    provider_name: str,
+    model: str,
+    *,
+    max_iterations_per_sub_question: int = 3,
+    working_kgc_auto_promote: bool = False,
+    answer_0_mode: str = "preset",
+    clear_neo4j_before_run: bool = False,
+    neo4j_readback: bool = False,
+    require_neo4j: bool = False,
+) -> DecomposedBacktrackingRunner:
+    try:
+        provider = get_provider(provider_name, model=model, fallback_to_mock=False)
+    except OllamaError as exc:
+        raise _ollama_http_error(exc) from exc
+    return DecomposedBacktrackingRunner(
+        provider,
+        max_iterations_per_sub_question=max_iterations_per_sub_question,
+        working_kgc_auto_promote=working_kgc_auto_promote,
+        answer_0_mode=answer_0_mode,
+        clear_neo4j_before_run=clear_neo4j_before_run,
+        neo4j_readback=neo4j_readback,
+        require_neo4j=require_neo4j,
+    )
 
 
 def _make_backtracking_runner(
@@ -133,6 +194,40 @@ def _ollama_http_error(exc: OllamaError) -> HTTPException:
     if isinstance(exc, OllamaTimeoutError):
         return HTTPException(status_code=504, detail=str(exc))
     return HTTPException(status_code=502, detail=str(exc))
+
+
+def _log_kgc_extraction_failure(
+    *,
+    example_id: str,
+    exc: KgcExtractionError,
+) -> None:
+    logger.error(
+        "Decomposed KGc extraction failed for example=%s stage=%s error=%s",
+        example_id,
+        exc.trace.stage,
+        exc,
+    )
+    for attempt in exc.trace.attempts:
+        if attempt.error:
+            logger.error(
+                "  attempt=%s format=%s parser_error=%s",
+                attempt.attempt,
+                attempt.format,
+                attempt.error,
+            )
+
+
+def _log_decomposed_runtime_failure(
+    *,
+    example_id: str,
+    exc: Exception,
+) -> None:
+    logger.error(
+        "Decomposed KGc run failed for example=%s error=%s",
+        example_id,
+        exc,
+        exc_info=True,
+    )
 
 
 @app.get("/health")
@@ -214,6 +309,82 @@ def run_kgc_backtracking(request: RunKgcBacktrackingRequest) -> dict[str, Any]:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     return result.to_dict()
+
+
+@app.post("/run-decomposed-kgc-backtracking")
+def run_decomposed_kgc_backtracking(
+    request: RunDecomposedKgcBacktrackingRequest,
+) -> dict[str, Any]:
+    examples = {ex.id: ex for ex in load_examples()}
+    if request.example_id not in examples:
+        raise HTTPException(status_code=404, detail=f"Example not found: {request.example_id}")
+
+    runner = _make_decomposed_backtracking_runner(
+        request.provider,
+        request.model,
+        max_iterations_per_sub_question=request.max_iterations_per_sub_question,
+        working_kgc_auto_promote=request.working_kgc_auto_promote,
+        answer_0_mode=request.answer_0_mode,
+    )
+    try:
+        result = runner.run_example(examples[request.example_id])
+    except KgcExtractionError as exc:
+        _log_kgc_extraction_failure(example_id=request.example_id, exc=exc)
+        raise HTTPException(status_code=422, detail=exc.to_dict()) from exc
+    except (OllamaError, ValueError) as exc:
+        _log_decomposed_runtime_failure(example_id=request.example_id, exc=exc)
+        if isinstance(exc, OllamaError):
+            raise _ollama_http_error(exc) from exc
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    return result.to_dict()
+
+
+@app.post("/run-decomposed-kgc-backtracking-custom")
+def run_custom_decomposed_kgc_backtracking(
+    request: RunCustomDecomposedKgcBacktrackingRequest,
+) -> dict[str, Any]:
+    question = request.question.strip()
+    context = request.context.strip()
+    initial_answer = (request.initial_answer or "").strip() or None
+    run_id = (request.run_id or "").strip() or f"custom_{uuid.uuid4().hex[:8]}"
+    if not question or not context:
+        raise HTTPException(status_code=400, detail="question and context are required")
+    if len(run_id) > 120:
+        raise HTTPException(status_code=400, detail="run_id must be 120 characters or fewer")
+
+    answer_0_mode = request.answer_0_mode or (
+        "preset_external_projected"
+        if initial_answer
+        else "generated_external_projected"
+    )
+    example = Example(
+        id=run_id,
+        question=question,
+        context=context,
+        initial_answer=initial_answer,
+    )
+    runner = _make_decomposed_backtracking_runner(
+        request.provider,
+        request.model,
+        max_iterations_per_sub_question=request.max_iterations_per_sub_question,
+        working_kgc_auto_promote=False,
+        answer_0_mode=answer_0_mode,
+        clear_neo4j_before_run=request.clear_neo4j_before_run,
+        neo4j_readback=True,
+        require_neo4j=True,
+    )
+    try:
+        return runner.run_example(example).to_dict()
+    except KgcExtractionError as exc:
+        _log_kgc_extraction_failure(example_id=run_id, exc=exc)
+        raise HTTPException(status_code=422, detail=exc.to_dict()) from exc
+    except OllamaError as exc:
+        _log_decomposed_runtime_failure(example_id=run_id, exc=exc)
+        raise _ollama_http_error(exc) from exc
+    except (RuntimeError, ValueError) as exc:
+        _log_decomposed_runtime_failure(example_id=run_id, exc=exc)
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
 @app.post("/run-custom")

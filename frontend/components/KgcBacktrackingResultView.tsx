@@ -16,7 +16,7 @@ export default function KgcBacktrackingResultView({
   if (loading) {
     return (
       <section className="card">
-        <p className="loading">Running KGc backtracking…</p>
+        <p className="loading">Running…</p>
       </section>
     );
   }
@@ -24,10 +24,7 @@ export default function KgcBacktrackingResultView({
   if (!result) {
     return (
       <section className="card">
-        <p className="muted-text">
-          Select an example, choose an Answer(0) source, then click Run KGc
-          backtracking.
-        </p>
+        <p className="muted-text">Select an example and run.</p>
       </section>
     );
   }

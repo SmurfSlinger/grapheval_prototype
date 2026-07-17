@@ -1,0 +1,21 @@
+Extract factual triples from the trusted context below. Each triple is one row in a context knowledge graph (KGc).
+
+Preserve negation. Encode negative statements in relation names (e.g. does_not_carry).
+
+Return CSV only. No prose before or after the CSV.
+
+Required header row (exact):
+subject,relation,object,evidence
+
+Each data row:
+- subject: entity the fact is about
+- relation: short snake_case relation name
+- object: value or related entity
+- evidence: supporting phrase from context (may be empty)
+
+If any field contains commas, double quotes, or line breaks, wrap the entire field in double quotes and escape internal quotes by doubling them.
+
+Context:
+{context}
+
+CSV:

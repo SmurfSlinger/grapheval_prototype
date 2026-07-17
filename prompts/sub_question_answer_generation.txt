@@ -1,0 +1,16 @@
+Answer ONLY the current sub-question below using the trusted context.
+
+Rules:
+- Give the shortest complete answer supported by the context.
+- Do not copy long surrounding sentences verbatim.
+- Do not include facts unrelated to this sub-question.
+- Do not answer other sub-questions.
+- Do not add explanation unless necessary.
+
+Trusted context:
+{context}
+
+Current sub-question:
+{question}
+
+Answer:

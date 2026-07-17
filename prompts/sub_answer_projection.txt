@@ -1,0 +1,22 @@
+Project the compound Answer(0) below onto each atomic sub-question.
+
+Do NOT correct facts.
+Do NOT use the trusted context.
+Split the compound answer into one fragment per sub-question, preserving factual errors.
+
+Return valid JSON only with this exact shape:
+{{"answers": [{{"id": 1, "answer": "..."}}, {{"id": 2, "answer": "..."}}]}}
+
+Allowed keys per item: id, answer.
+No prose before or after the JSON.
+
+Compound question:
+{question}
+
+Sub-questions:
+{sub_questions}
+
+Compound Answer(0):
+{compound_answer_0}
+
+JSON:

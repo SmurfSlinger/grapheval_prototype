@@ -8,6 +8,13 @@ cd "$ROOT"
 PID_DIR="$ROOT/scripts/.pids"
 mkdir -p "$PID_DIR"
 
+if [[ -f "$ROOT/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/.env"
+  set +a
+fi
+
 CONTAINER_NAME="grapheval-neo4j"
 BACKEND_PID_FILE="$PID_DIR/backend.pid"
 FRONTEND_PID_FILE="$PID_DIR/frontend.pid"

@@ -7,7 +7,12 @@ import urllib.error
 import urllib.request
 from typing import Any
 
-from src.config import DEFAULT_MODEL, OLLAMA_BASE_URL, OLLAMA_REQUEST_TIMEOUT
+from src.config import (
+    DEFAULT_MODEL,
+    OLLAMA_BASE_URL,
+    OLLAMA_NUM_CTX,
+    OLLAMA_REQUEST_TIMEOUT,
+)
 from src.llm.base import LLMProvider
 
 
@@ -39,6 +44,7 @@ class OllamaProvider(LLMProvider):
         model: str = DEFAULT_MODEL,
         base_url: str = OLLAMA_BASE_URL,
         timeout: float = OLLAMA_REQUEST_TIMEOUT,
+        num_ctx: int | None = OLLAMA_NUM_CTX,
         *,
         verify_on_init: bool = True,
     ) -> None:
@@ -46,6 +52,8 @@ class OllamaProvider(LLMProvider):
         self.base_url = base_url.rstrip("/")
         self.generate_url = f"{self.base_url}/api/generate"
         self.timeout = timeout
+        self.num_ctx = num_ctx
+        self.call_telemetry: list[dict[str, int | str | None]] = []
         if verify_on_init:
             self.check_server(self.base_url, timeout=min(timeout, 10))
             self.check_model_installed(self.model, self.base_url, timeout=min(timeout, 10))
@@ -116,6 +124,8 @@ class OllamaProvider(LLMProvider):
             "prompt": prompt,
             "stream": False,
         }
+        if self.num_ctx is not None:
+            payload["options"] = {"num_ctx": self.num_ctx}
         body = json.dumps(payload).encode("utf-8")
         request = urllib.request.Request(
             self.generate_url,
@@ -161,4 +171,17 @@ class OllamaProvider(LLMProvider):
                 f"{raw[:200]}"
             )
 
-        return str(data["response"]).strip()
+        result = str(data["response"]).strip()
+        self.call_telemetry.append(
+            {
+                "call_index": len(self.call_telemetry) + 1,
+                "stage": None,
+                "model": self.model,
+                "configured_num_ctx": self.num_ctx,
+                "prompt_characters": len(prompt),
+                "approx_prompt_tokens": (len(prompt) + 3) // 4,
+                "response_characters": len(result),
+                "retry_count": 0,
+            }
+        )
+        return result

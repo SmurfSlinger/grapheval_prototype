@@ -13,6 +13,9 @@ env/
 .DS_Store
 results/*.json
 !results/.gitkeep
+!results/apollo_multihop_report.json
+!results/apollo_multihop_real_smoke.json
+!results/apollo_multihop_partial_real.json
 frontend/node_modules/
 frontend/.next/
 frontend/out/

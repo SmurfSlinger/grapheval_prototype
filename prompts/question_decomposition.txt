@@ -1,0 +1,23 @@
+Decompose the compound question below into ordered atomic sub-questions.
+
+Rules:
+- Preserve the original order of topics as they appear in the compound question.
+- Each sub-question must be answerable independently with the trusted context.
+- Resolve pronouns and vague references ("its", "the mission", "they") into explicit entities.
+- Do not merge unrelated topics into one sub-question.
+- Do not answer the questions; only split them.
+- Use integer ids starting at 1 in order.
+- When a single sentence asks for tightly coupled attributes of one finding, keep them as ONE sub-question. Examples of coupled attributes that must stay together:
+  - disease stage and a related lab measurement in the same sentence (e.g. CKD stage and eGFR)
+  - a medication and why it was discontinued
+  - an active/tolerated medication and its dose
+  - an allergy and its reaction
+- Do not split "What CKD stage is documented and what is the current eGFR?" into two questions.
+
+Return valid JSON only, with this exact shape:
+{{"questions": [{{"id": 1, "question": "..."}}, {{"id": 2, "question": "..."}}]}}
+
+Compound question:
+{question}
+
+JSON:

@@ -13,6 +13,17 @@ from src.pipeline.kgc_matching import (
     relations_equivalent_for_engine_claim,
     subjects_compatible_first_stage,
 )
+from src.pipeline.question_target import QuestionTarget
+from src.pipeline.target_frame_normalizer import (
+    TargetEvaluationFrame,
+    TargetFrameTrace,
+    build_target_evaluation_facts,
+    normalize_claim_for_target,
+    objects_compatible_for_intent,
+    objects_conflict_for_intent,
+    relations_share_target_family,
+    subjects_compatible_for_target,
+)
 
 
 def _fact_evidence(fact: KgcFact) -> str:
@@ -24,7 +35,27 @@ class GraphComparator:
         self,
         claims: list[Triple],
         kgc_facts: list[KgcFact],
+        *,
+        question_target: QuestionTarget | None = None,
+        question: str | None = None,
+        frame_trace: TargetFrameTrace | None = None,
     ) -> list[KgcEvaluationResult]:
+        if (
+            question_target is not None
+            and question_target.expected_relations
+            and question
+        ):
+            return [
+                self._evaluate_claim_target_frame(
+                    claim,
+                    kgc_facts,
+                    question_target,
+                    question,
+                    frame_trace,
+                )
+                for claim in claims
+            ]
+
         exact_index: dict[tuple[str, str, str], KgcFact] = {}
         relation_index: dict[tuple[str, str], list[KgcFact]] = {}
 
@@ -36,11 +67,141 @@ class GraphComparator:
             relation_index.setdefault((subject, relation), []).append(fact)
 
         return [
-            self._evaluate_claim(claim, exact_index, relation_index, kgc_facts)
+            self._evaluate_claim_legacy(claim, exact_index, relation_index, kgc_facts)
             for claim in claims
         ]
 
-    def _evaluate_claim(
+    def _evaluate_claim_target_frame(
+        self,
+        claim: Triple,
+        kgc_facts: list[KgcFact],
+        target: QuestionTarget,
+        question: str,
+        frame_trace: TargetFrameTrace | None,
+    ) -> KgcEvaluationResult:
+        claim_frame = normalize_claim_for_target(
+            claim,
+            intent=target.intent,
+            primary_subject=target.primary_subject,
+            canonical_relation=target.canonical_relation,
+            question=question,
+            trace=frame_trace,
+        )
+        eval_frames = build_target_evaluation_facts(
+            kgc_facts,
+            intent=target.intent,
+            primary_subject=target.primary_subject,
+            canonical_relation=target.canonical_relation,
+            question=question,
+            trace=frame_trace,
+        )
+
+        matched_fact: KgcFact | None = None
+        matched_frame: TargetEvaluationFrame | None = None
+        for frame in eval_frames:
+            if not relations_share_target_family(
+                claim_frame.raw_relation,
+                frame.raw_relation,
+                target.intent,
+            ):
+                continue
+            if not subjects_compatible_for_target(
+                claim_frame.subject,
+                frame.subject,
+                primary_subject=target.primary_subject,
+                question=question,
+            ):
+                continue
+            if objects_compatible_for_intent(
+                claim_frame.object,
+                frame.object,
+                target.intent,
+                claim_relation=claim_frame.raw_relation,
+            ):
+                matched_frame = frame
+                matched_fact = _frame_source_fact(frame, kgc_facts)
+                if frame_trace:
+                    frame_trace.relation_family_matches += 1
+                break
+
+        if matched_fact is not None and matched_frame is not None:
+            reason = "Claim matches KGc fact in question-scoped evaluation frame."
+            if matched_frame.projected:
+                reason = (
+                    "Claim matches projected question-scoped evaluation view of trusted fact."
+                )
+            elif matched_frame.subject_alias_match or claim_frame.subject_alias_match:
+                reason = (
+                    "Claim matches KGc fact after question-scoped subject canonicalization."
+                )
+            elif not relations_share_target_family(
+                claim_frame.raw_relation,
+                matched_frame.raw_relation,
+                target.intent,
+            ):
+                reason = "Claim matches KGc fact after relation-family normalization."
+            elif (
+                normalize_relation(claim.relation) != normalize_relation(matched_fact.relation)
+            ):
+                reason = "Claim matches KGc fact after relation-family normalization."
+            return KgcEvaluationResult(
+                triple=claim,
+                label=KgcClaimLabel.SUPPORTED,
+                reason=reason,
+                evidence=_fact_evidence(matched_fact),
+                matched_kgc_fact=matched_fact,
+                original_claim=claim,
+            )
+
+        conflicting_fact: KgcFact | None = None
+        conflicting_object: str | None = None
+        for frame in eval_frames:
+            if not relations_share_target_family(
+                claim_frame.raw_relation,
+                frame.raw_relation,
+                target.intent,
+            ):
+                continue
+            if not subjects_compatible_for_target(
+                claim_frame.subject,
+                frame.subject,
+                primary_subject=target.primary_subject,
+                question=question,
+            ):
+                continue
+            if objects_conflict_for_intent(
+                claim_frame.object,
+                frame.object,
+                target.intent,
+                claim_relation=claim_frame.raw_relation,
+            ):
+                conflicting_fact = _frame_source_fact(frame, kgc_facts)
+                conflicting_object = frame.object
+                break
+
+        if conflicting_fact is not None:
+            return KgcEvaluationResult(
+                triple=claim,
+                label=KgcClaimLabel.CONTRADICTED,
+                reason=(
+                    f"Claim object '{claim.object}' conflicts with KGc fact "
+                    f"'{conflicting_object}' for relation family '{target.intent}'."
+                ),
+                evidence=_fact_evidence(conflicting_fact),
+                conflicting_object=conflicting_object,
+                conflicting_fact=conflicting_fact,
+                original_claim=claim,
+            )
+
+        return KgcEvaluationResult(
+            triple=claim,
+            label=KgcClaimLabel.NO_EVIDENCE,
+            reason="KGc has no matching fact for this claim in the question-scoped frame.",
+            evidence="No supporting KGc fact found.",
+            original_claim=claim,
+        )
+
+    def _evaluate_claim_legacy(
         self,
         claim: Triple,
         exact_index: dict[tuple[str, str, str], KgcFact],
@@ -168,3 +329,18 @@ class GraphComparator:
                 continue
             return fact
         return None
+
+
+def _frame_source_fact(frame: TargetEvaluationFrame, kgc_facts: list[KgcFact]) -> KgcFact:
+    for fact in kgc_facts:
+        if (
+            normalize(fact.subject) == normalize(frame.raw_subject)
+            and normalize_relation(fact.relation) == normalize_relation(frame.raw_relation)
+            and normalize(fact.object) == normalize(frame.raw_object)
+        ):
+            return fact
+    return KgcFact(
+        subject=frame.raw_subject,
+        relation=frame.raw_relation,
+        object=frame.raw_object,
+    )

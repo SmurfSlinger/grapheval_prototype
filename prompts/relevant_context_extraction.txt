@@ -1,0 +1,28 @@
+Extract factual triples from the trusted context that are relevant to answering or evaluating the sub-question below.
+
+Do NOT answer the question.
+Extract only facts supported by the trusted context text.
+Return only facts necessary to answer or evaluate this sub-question.
+Omit merely related facts that are not needed for this question.
+Prefer the smallest sufficient set — one fact when one suffices.
+Do not extract extra temporal or background facts unrelated to the sub-question.
+Use the shortest justified relation names.
+Do not invent facts not stated in the context.
+If the context only supports a direct event (e.g. spoke with President X), do not infer stronger temporal roles (e.g. president at time) unless explicitly stated.
+
+Return valid JSON only with this exact shape:
+{{"triples": [{{"subject": "...", "relation": "...", "object": "...", "evidence": "..."}}]}}
+
+Allowed keys per triple: subject, relation, object, evidence.
+No prose before or after the JSON.
+
+Sub-question:
+{question}
+
+Existing working KGc facts (avoid duplicating these):
+{existing_kgc_facts}
+
+Trusted context:
+{context}
+
+JSON:

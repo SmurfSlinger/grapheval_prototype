@@ -1,0 +1,441 @@
+"""Parse and validate structured LLM outputs (CSV triples, JSON question splits)."""
+
+from __future__ import annotations
+
+import csv
+import io
+import json
+from dataclasses import asdict, dataclass, field
+from typing import Any, Callable, TypeVar
+
+from src.models import KgcFact, SubQuestion, Triple
+
+T = TypeVar("T")
+
+CONTEXT_FACT_HEADERS = ("subject", "relation", "object", "evidence")
+CLAIM_HEADERS = ("subject", "relation", "object", "source_sentence")
+
+RAW_PREVIEW_LIMIT = 1200
+
+
+class StructuredOutputError(ValueError):
+    """LLM returned malformed structured output."""
+
+
+@dataclass
+class ExtractionAttempt:
+    attempt: int
+    format: str
+    raw_preview: str
+    error: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class StructuredExtractionTrace:
+    stage: str
+    format_used: str | None = None
+    retry_count: int = 0
+    attempts: list[ExtractionAttempt] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "stage": self.stage,
+            "format_used": self.format_used,
+            "retry_count": self.retry_count,
+            "attempts": [attempt.to_dict() for attempt in self.attempts],
+        }
+
+
+class KgcExtractionError(ValueError):
+    """Context KGc extraction failed after retries; run must not continue."""
+
+    def __init__(self, message: str, *, trace: StructuredExtractionTrace) -> None:
+        super().__init__(message)
+        self.trace = trace
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "error": str(self),
+            "message": str(self),
+            "stage": self.trace.stage,
+            "attempts": [attempt.to_dict() for attempt in self.trace.attempts],
+            "trace": self.trace.to_dict(),
+        }
+
+
+def raw_preview(text: str, limit: int = RAW_PREVIEW_LIMIT) -> str:
+    cleaned = text.strip()
+    if len(cleaned) <= limit:
+        return cleaned
+    return f"{cleaned[:limit]}…"
+
+
+def _strip_code_fences(text: str) -> str:
+    text = text.strip()
+    if not text.startswith("```"):
+        return text
+    lines = [line for line in text.splitlines() if not line.strip().startswith("```")]
+    return "\n".join(lines).strip()
+
+
+def _looks_like_csv(text: str, headers: tuple[str, ...]) -> bool:
+    first_line = text.strip().splitlines()[0].strip().lower() if text.strip() else ""
+    return first_line == ",".join(headers)
+
+
+def _row_is_blank(record: dict[str, str]) -> bool:
+    return not any(value.strip() for value in record.values())
+
+
+def parse_csv_rows(text: str, headers: tuple[str, ...]) -> list[dict[str, str]]:
+    """Parse CSV with exact header row; validate width and required fields."""
+    cleaned = _strip_code_fences(text)
+    if not cleaned:
+        raise StructuredOutputError("Empty CSV response.")
+
+    if not _looks_like_csv(cleaned, headers):
+        raise StructuredOutputError(
+            f"CSV must start with header row: {','.join(headers)}"
+        )
+
+    reader = csv.DictReader(io.StringIO(cleaned))
+    if reader.fieldnames is None:
+        raise StructuredOutputError("CSV has no header row.")
+
+    normalized_fieldnames = [name.strip().lower() for name in reader.fieldnames]
+    expected = [h.lower() for h in headers]
+    if normalized_fieldnames != expected:
+        raise StructuredOutputError(
+            f"CSV headers must be exactly {','.join(headers)}; "
+            f"got {','.join(reader.fieldnames)}"
+        )
+
+    rows: list[dict[str, str]] = []
+    for line_no, row in enumerate(reader, start=2):
+        record = {header: (row.get(header) or "").strip() for header in headers}
+        if _row_is_blank(record):
+            continue
+        if not all(record[headers[i]] for i in range(3)):
+            preview = ", ".join(f"{key}={value!r}" for key, value in record.items())
+            raise StructuredOutputError(
+                f"CSV row {line_no}: subject, relation, and object are required "
+                f"(row={preview})."
+            )
+        rows.append(record)
+
+    if not rows:
+        raise StructuredOutputError("CSV contains no data rows.")
+    return rows
+
+
+def parse_context_facts_csv(text: str) -> list[KgcFact]:
+    rows = parse_csv_rows(text, CONTEXT_FACT_HEADERS)
+    return [
+        KgcFact(
+            subject=row["subject"],
+            relation=row["relation"],
+            object=row["object"],
+            evidence=row["evidence"] or None,
+        )
+        for row in rows
+    ]
+
+
+def parse_claims_csv(text: str) -> list[Triple]:
+    rows = parse_csv_rows(text, CLAIM_HEADERS)
+    return [
+        Triple(
+            subject=row["subject"],
+            relation=row["relation"],
+            object=row["object"],
+            source_sentence=row["source_sentence"] or None,
+        )
+        for row in rows
+    ]
+
+
+def parse_context_facts_json(text: str) -> list[KgcFact]:
+    data = _parse_json_object(text)
+    triples = data.get("triples")
+    if not isinstance(triples, list):
+        raise StructuredOutputError("JSON must contain a 'triples' list.")
+    facts: list[KgcFact] = []
+    for item in triples:
+        if not isinstance(item, dict):
+            raise StructuredOutputError("Each triple must be an object.")
+        subject = str(item.get("subject", "")).strip()
+        relation = str(item.get("relation", "")).strip()
+        obj = str(item.get("object", "")).strip()
+        if not subject or not relation or not obj:
+            raise StructuredOutputError(
+                "Each context fact must have subject, relation, and object."
+            )
+        facts.append(
+            KgcFact(
+                subject=subject,
+                relation=relation,
+                object=obj,
+                evidence=(str(item["evidence"]).strip() if item.get("evidence") else None),
+            )
+        )
+    return facts
+
+
+def parse_claims_json(text: str) -> list[Triple]:
+    data = _parse_json_object(text)
+    triples = data.get("triples")
+    if not isinstance(triples, list):
+        raise StructuredOutputError("JSON must contain a 'triples' list.")
+    claims: list[Triple] = []
+    for item in triples:
+        if not isinstance(item, dict):
+            raise StructuredOutputError("Each triple must be an object.")
+        subject = str(item.get("subject", "")).strip()
+        relation = str(item.get("relation", "")).strip()
+        obj = str(item.get("object", "")).strip()
+        if not subject or not relation or not obj:
+            raise StructuredOutputError(
+                "Each claim must have subject, relation, and object."
+            )
+        claims.append(
+            Triple(
+                subject=subject,
+                relation=relation,
+                object=obj,
+                source_sentence=(
+                    str(item["source_sentence"]).strip()
+                    if item.get("source_sentence")
+                    else None
+                ),
+            )
+        )
+    return claims
+
+
+def parse_context_facts_response(text: str) -> list[KgcFact]:
+    """Accept CSV or legacy JSON triples."""
+    cleaned = _strip_code_fences(text)
+    if _looks_like_csv(cleaned, CONTEXT_FACT_HEADERS):
+        return parse_context_facts_csv(cleaned)
+    return parse_context_facts_json(cleaned)
+
+
+def parse_claims_response(text: str) -> list[Triple]:
+    """Accept CSV or legacy JSON triples."""
+    cleaned = _strip_code_fences(text)
+    if _looks_like_csv(cleaned, CLAIM_HEADERS):
+        return parse_claims_csv(cleaned)
+    return parse_claims_json(cleaned)
+
+
+def parse_question_split_response(text: str) -> list[SubQuestion]:
+    data = _parse_json_object(text)
+    if not isinstance(data, dict):
+        raise StructuredOutputError("Question split must be a JSON object.")
+
+    questions = data.get("questions")
+    if not isinstance(questions, list) or not questions:
+        raise StructuredOutputError("'questions' must be a non-empty list.")
+
+    parsed: list[SubQuestion] = []
+    seen_ids: set[int] = set()
+    for item in questions:
+        if not isinstance(item, dict):
+            raise StructuredOutputError("Each sub-question must be an object.")
+        if "id" not in item or "question" not in item:
+            raise StructuredOutputError("Each sub-question needs 'id' and 'question'.")
+
+        sub_id = item["id"]
+        if not isinstance(sub_id, int):
+            raise StructuredOutputError(f"Sub-question id must be integer, got {sub_id!r}.")
+        if sub_id in seen_ids:
+            raise StructuredOutputError(f"Duplicate sub-question id: {sub_id}.")
+        seen_ids.add(sub_id)
+
+        question = str(item["question"]).strip()
+        if not question:
+            raise StructuredOutputError(f"Sub-question {sub_id} has empty question text.")
+
+        parsed.append(SubQuestion(id=sub_id, question=question))
+
+    parsed.sort(key=lambda sq: sq.id)
+    expected_ids = list(range(1, len(parsed) + 1))
+    actual_ids = [sq.id for sq in parsed]
+    if actual_ids != expected_ids:
+        raise StructuredOutputError(
+            f"Sub-question ids must be unique sequential integers starting at 1; "
+            f"got {actual_ids}."
+        )
+    return parsed
+
+
+def parse_sub_answer_projection_response(
+    text: str,
+    expected_ids: list[int],
+) -> list[SubQuestionInitialAnswer]:
+    from src.models import SubQuestionInitialAnswer
+
+    data = _parse_json_object(text)
+    answers = data.get("answers")
+    if not isinstance(answers, list) or not answers:
+        raise StructuredOutputError("'answers' must be a non-empty list.")
+
+    parsed: list[SubQuestionInitialAnswer] = []
+    seen_ids: set[int] = set()
+    for item in answers:
+        if not isinstance(item, dict):
+            raise StructuredOutputError("Each projected answer must be an object.")
+        if "id" not in item or "answer" not in item:
+            raise StructuredOutputError("Each projected answer needs 'id' and 'answer'.")
+        sub_id = item["id"]
+        if not isinstance(sub_id, int):
+            raise StructuredOutputError(f"Projected answer id must be integer, got {sub_id!r}.")
+        if sub_id in seen_ids:
+            raise StructuredOutputError(f"Duplicate projected answer id: {sub_id}.")
+        seen_ids.add(sub_id)
+        answer = str(item["answer"]).strip()
+        if not answer:
+            raise StructuredOutputError(f"Projected answer for id {sub_id} is empty.")
+        parsed.append(SubQuestionInitialAnswer(sub_question_id=sub_id, answer=answer))
+
+    parsed.sort(key=lambda item: item.sub_question_id)
+    actual_ids = [item.sub_question_id for item in parsed]
+    if actual_ids != expected_ids:
+        raise StructuredOutputError(
+            f"Projected answer ids must match sub-questions exactly; "
+            f"expected {expected_ids}, got {actual_ids}."
+        )
+    return parsed
+
+
+def _balance_json_suffix(text: str) -> str:
+    """Append missing closing brackets/braces when LLM output is truncated."""
+    stack: list[str] = []
+    in_string = False
+    escape = False
+    for ch in text:
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == "{":
+            stack.append("}")
+        elif ch == "[":
+            stack.append("]")
+        elif ch == "}" and stack and stack[-1] == "}":
+            stack.pop()
+        elif ch == "]" and stack and stack[-1] == "]":
+            stack.pop()
+    return text + "".join(reversed(stack))
+
+
+def _parse_json_object(text: str) -> dict[str, Any]:
+    cleaned = _strip_code_fences(text)
+    start = cleaned.find("{")
+    if start == -1:
+        raise StructuredOutputError(
+            f"No JSON object found. Snippet: {cleaned[:300]}"
+        )
+    fragment = cleaned[start:]
+    candidates = [fragment]
+    end = cleaned.rfind("}")
+    if end != -1 and end > start:
+        candidates.append(cleaned[start : end + 1])
+    candidates.append(_balance_json_suffix(fragment))
+
+    last_exc: json.JSONDecodeError | None = None
+    for candidate in candidates:
+        try:
+            payload = json.loads(candidate)
+        except json.JSONDecodeError as exc:
+            last_exc = exc
+            continue
+        if not isinstance(payload, dict):
+            raise StructuredOutputError("Top-level JSON value must be an object.")
+        return payload
+
+    assert last_exc is not None
+    raise StructuredOutputError(
+        f"Invalid JSON: {last_exc}. Snippet: {fragment[:300]}"
+    ) from last_exc
+
+
+def complete_with_retry(
+    complete_fn: Callable[[str], str],
+    prompt: str,
+    parser: Callable[[str], T],
+    *,
+    retry_suffix: str = (
+        "\n\nReturn ONLY the required structured output with no prose before or after."
+    ),
+) -> tuple[T, int]:
+    """Call LLM once; retry once on StructuredOutputError. Returns (result, retry_count)."""
+    raw = complete_fn(prompt)
+    try:
+        return parser(raw), 0
+    except StructuredOutputError:
+        raw = complete_fn(prompt + retry_suffix)
+        return parser(raw), 1
+
+
+def complete_with_trace(
+    complete_fn: Callable[[str], str],
+    prompt: str,
+    parser: Callable[[str], T],
+    *,
+    stage: str,
+    output_format: str,
+    retry_suffix: str | None = None,
+    alternate_prompt: str | None = None,
+) -> tuple[T, StructuredExtractionTrace]:
+    """Parse with one retry; optional alternate prompt switches format on final attempt."""
+    trace = StructuredExtractionTrace(stage=stage)
+    suffix = retry_suffix or (
+        "\n\nReturn ONLY the required structured output with no prose before or after."
+    )
+
+    raw = complete_fn(prompt)
+    trace.attempts.append(
+        ExtractionAttempt(
+            attempt=1,
+            format=output_format,
+            raw_preview=raw_preview(raw),
+        )
+    )
+    try:
+        parsed = parser(raw)
+        trace.format_used = output_format
+        return parsed, trace
+    except StructuredOutputError as first_exc:
+        trace.attempts[-1].error = str(first_exc)
+        trace.retry_count = 1
+
+        retry_prompt = alternate_prompt if alternate_prompt is not None else prompt + suffix
+        retry_format = "json" if alternate_prompt is not None else output_format
+        raw_retry = complete_fn(retry_prompt)
+        trace.attempts.append(
+            ExtractionAttempt(
+                attempt=2,
+                format=retry_format,
+                raw_preview=raw_preview(raw_retry),
+            )
+        )
+        try:
+            parsed = parser(raw_retry)
+            trace.format_used = retry_format
+            return parsed, trace
+        except StructuredOutputError as second_exc:
+            trace.attempts[-1].error = str(second_exc)
+            raise KgcExtractionError(
+                f"{stage} failed after {len(trace.attempts)} attempts: {second_exc}",
+                trace=trace,
+            ) from second_exc

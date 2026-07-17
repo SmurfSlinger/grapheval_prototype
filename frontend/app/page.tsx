@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import ControlsPanel from "@/components/ControlsPanel";
+import DecomposedKgcBacktrackingResultView from "@/components/DecomposedKgcBacktrackingResultView";
 import KgcBacktrackingResultView from "@/components/KgcBacktrackingResultView";
 import PipelineResultView from "@/components/PipelineResultView";
 import {
@@ -10,10 +11,14 @@ import {
   fetchHealth,
   runAllExamples,
   runCustomExample,
+  runCustomDecomposedKgcBacktracking,
+  runDecomposedKgcBacktracking,
   runExample,
   runKgcBacktracking,
+  ApiError,
   type Answer0Mode,
   type BacktrackingResult,
+  type DecomposedBacktrackingResult,
   type ExampleSummary,
   type PipelineResult,
   type Provider,
@@ -35,14 +40,17 @@ function defaultSelectedExampleId(examples: ExampleSummary[]): string | null {
 export default function HomePage() {
   const [toolMode, setToolMode] = useState<ToolMode>("kgc");
   const [provider, setProvider] = useState<Provider>("mock");
-  const [model, setModel] = useState("gemma4:e2b");
+  const [model, setModel] = useState("gemma4:12b");
   const [examples, setExamples] = useState<ExampleSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [answer0Mode, setAnswer0Mode] = useState<Answer0Mode>("preset");
   const [result, setResult] = useState<PipelineResult | null>(null);
   const [kgcResult, setKgcResult] = useState<BacktrackingResult | null>(null);
+  const [decomposedResult, setDecomposedResult] =
+    useState<DecomposedBacktrackingResult | null>(null);
   const [allResults, setAllResults] = useState<PipelineResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<unknown>(null);
   const [running, setRunning] = useState(false);
   const [apiStatus, setApiStatus] = useState<"ok" | "down" | "checking">(
     "checking",
@@ -54,6 +62,9 @@ export default function HomePage() {
   const [customQuestion, setCustomQuestion] = useState("");
   const [customContext, setCustomContext] = useState("");
   const [customAnswer, setCustomAnswer] = useState("");
+  const [customRunEnabled, setCustomRunEnabled] = useState(false);
+  const [customRunId, setCustomRunId] = useState("");
+  const [clearNeo4jBeforeRun, setClearNeo4jBeforeRun] = useState(true);
 
   const refreshNeo4jStatus = useCallback(async () => {
     try {
@@ -83,6 +94,21 @@ export default function HomePage() {
       })
       .catch((err: Error) => setError(err.message));
   }, [refreshNeo4jStatus]);
+
+  const clearError = () => {
+    setError(null);
+    setErrorDetails(null);
+  };
+
+  const handleApiFailure = (err: unknown, fallback: string) => {
+    if (err instanceof ApiError) {
+      setError(err.message);
+      setErrorDetails(err.details ?? null);
+      return;
+    }
+    setError(err instanceof Error ? err.message : fallback);
+    setErrorDetails(null);
+  };
 
   const runOptions = useCallback(
     () => ({ provider, model, answer_0_mode: answer0Mode }),
@@ -158,6 +184,39 @@ export default function HomePage() {
     }
   };
 
+  const handleRunDecomposedKgc = async () => {
+    if (!customRunEnabled && !selectedId) return;
+    setRunning(true);
+    clearError();
+    setDecomposedResult(null);
+    try {
+      const output = customRunEnabled
+        ? await runCustomDecomposedKgcBacktracking({
+            run_id: customRunId.trim() || undefined,
+            question: customQuestion,
+            context: customContext,
+            initial_answer: customAnswer.trim() || undefined,
+            clear_neo4j_before_run: clearNeo4jBeforeRun,
+            provider,
+            model,
+            max_iterations_per_sub_question: 3,
+          })
+        : await runDecomposedKgcBacktracking(selectedId!, {
+            provider,
+            model,
+            max_iterations_per_sub_question: 3,
+            answer_0_mode: answer0Mode,
+          });
+      setDecomposedResult(output);
+      setSelectedId(output.example_id);
+      await refreshNeo4jStatus();
+    } catch (err) {
+      handleApiFailure(err, "Decomposed KGc backtracking failed");
+    } finally {
+      setRunning(false);
+    }
+  };
+
   const handleRunCustomBaseline = async () => {
     setRunning(true);
     setError(null);
@@ -189,37 +248,49 @@ export default function HomePage() {
   };
 
   return (
-    <main className={toolMode === "kgc" ? "main-wide" : undefined}>
+    <main className={toolMode === "kgc" || toolMode === "decomposed_kgc" ? "main-wide" : undefined}>
       <header className="page-header">
         <div>
-          <h1>GraphEval Prototype</h1>
+          <h1>GraphEval</h1>
           <p className="subtitle">
             {toolMode === "kgc"
-              ? "KGc backtracking demo"
-              : toolMode === "baseline"
-                ? "Baseline comparison"
-                : "Legacy tools"}
+              ? "Method: Backtracking"
+              : toolMode === "decomposed_kgc"
+                ? "Method: Decomposed Backtracking"
+                : toolMode === "baseline"
+                  ? "Method: Baseline"
+                  : "Method: Legacy Tools"}
           </p>
         </div>
         <div className="status-row">
           <span
             className={`api-badge ${apiStatus === "ok" ? "ok" : apiStatus === "down" ? "down" : ""}`}
           >
-            {apiStatus === "checking" && "API checking…"}
+            {apiStatus === "checking" && "API…"}
             {apiStatus === "ok" && "API connected"}
             {apiStatus === "down" && "API disconnected"}
           </span>
           <span
             className={`api-badge ${neo4jStatus === "enabled" ? "ok" : neo4jStatus === "disabled" ? "down" : ""}`}
           >
-            {neo4jStatus === "checking" && "Neo4j checking…"}
-            {neo4jStatus === "enabled" && "Neo4j storage enabled"}
-            {neo4jStatus === "disabled" && "Neo4j storage disabled"}
+            {neo4jStatus === "checking" && "Neo4j…"}
+            {neo4jStatus === "enabled" && "Neo4j connected"}
+            {neo4jStatus === "disabled" && "Neo4j disabled"}
           </span>
         </div>
       </header>
 
-      {error && <div className="error">{error}</div>}
+      {error && (
+        <div className="error">
+          <div>{error}</div>
+          {errorDetails != null && (
+            <details className="error-details">
+              <summary>Advanced error details</summary>
+              <pre>{JSON.stringify(errorDetails, null, 2)}</pre>
+            </details>
+          )}
+        </div>
+      )}
 
       <ControlsPanel
         toolMode={toolMode}
@@ -232,6 +303,9 @@ export default function HomePage() {
         customQuestion={customQuestion}
         customContext={customContext}
         customAnswer={customAnswer}
+        customRunEnabled={customRunEnabled}
+        customRunId={customRunId}
+        clearNeo4jBeforeRun={clearNeo4jBeforeRun}
         onToolModeChange={setToolMode}
         onProviderChange={setProvider}
         onModelChange={setModel}
@@ -240,7 +314,11 @@ export default function HomePage() {
         onCustomQuestionChange={setCustomQuestion}
         onCustomContextChange={setCustomContext}
         onCustomAnswerChange={setCustomAnswer}
+        onCustomRunEnabledChange={setCustomRunEnabled}
+        onCustomRunIdChange={setCustomRunId}
+        onClearNeo4jBeforeRunChange={setClearNeo4jBeforeRun}
         onRunKgc={handleRunKgc}
+        onRunDecomposedKgc={handleRunDecomposedKgc}
         onRunBaseline={handleRunBaseline}
         onRunAllBaseline={handleRunAllBaseline}
         onRunCustomBaseline={handleRunCustomBaseline}
@@ -251,9 +329,15 @@ export default function HomePage() {
         <KgcBacktrackingResultView result={kgcResult} loading={running} />
       ) : null}
 
+      {toolMode === "decomposed_kgc" ? (
+        <DecomposedKgcBacktrackingResultView
+          result={decomposedResult}
+          loading={running}
+        />
+      ) : null}
+
       {toolMode === "baseline" ? (
         <section className="results-stack">
-          <h2 className="results-section-title">Baseline comparison</h2>
           <PipelineResultView
             result={result}
             loading={running}
@@ -267,10 +351,6 @@ export default function HomePage() {
 
       {toolMode === "legacy" ? (
         <section className="results-stack">
-          <h2 className="results-section-title">Legacy tools</h2>
-          <p className="controls-hint controls-mode-note">
-            These are older prototype tools, kept for comparison/debugging.
-          </p>
           <PipelineResultView
             result={result}
             loading={running}

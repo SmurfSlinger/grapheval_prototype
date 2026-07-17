@@ -1,0 +1,83 @@
+{
+  "test_set_id": "apollo_multihop_50",
+  "provider": "ollama",
+  "model": "gemma4:e2b",
+  "configured_num_ctx": 32768,
+  "prompt_profile": "default",
+  "neo4j_enabled": true,
+  "clear_neo4j_between_runs": true,
+  "graph_properties_defined": {
+    "edge_count_designed": 50,
+    "connected_components_designed": 1,
+    "root_node": "Apollo 11",
+    "max_designed_hop_depth": 10,
+    "average_expected_hop_count": 5.5,
+    "branching_factor_from_root": 5,
+    "questions_per_hop": 5,
+    "node_count": 42,
+    "node_count_note": "Computed from unique subjects and objects in expected_graph_facts; shared/cyclic nodes reduce the count."
+  },
+  "graph_metrics_computed": {
+    "node_count": 42,
+    "edge_count": 50,
+    "connected_components": 1,
+    "branching_factor_from_root": 5
+  },
+  "summary": {
+    "total_questions": 1,
+    "correct": 1,
+    "accuracy": 1.0,
+    "by_hop": {
+      "1": {
+        "questions": 1,
+        "correct": 1,
+        "accuracy": 1.0,
+        "unresolved": 1,
+        "average_iterations": 1.0,
+        "retries": 0
+      }
+    },
+    "common_failure_types": {
+      "one_or_more_sub_questions_unresolved": 1
+    }
+  },
+  "results": [
+    {
+      "id": "apollo_hop_001",
+      "hop_count": 1,
+      "question": "Who crewed Apollo 11?",
+      "expected_answer": "Neil Armstrong",
+      "predicted_answer": "Neil Armstrong crewed Apollo 11.",
+      "normalized_match": true,
+      "resolved": false,
+      "final_label_counts": {
+        "supported": 1,
+        "contradicted": 0,
+        "no_evidence": 0
+      },
+      "iterations": 1,
+      "retries": 0,
+      "focused_extraction_occurred": false,
+      "derived_facts_used": false,
+      "failure_reason": "one_or_more_sub_questions_unresolved",
+      "elapsed_seconds": 60.509,
+      "prompt_telemetry": {
+        "llm_call_count": 6,
+        "max_prompt_characters": 5901,
+        "approx_max_prompt_tokens": 1476,
+        "largest_prompt_stage": null,
+        "configured_num_ctx": 32768,
+        "approached_context_limit": false
+      },
+      "graph_difficulty": {
+        "path_length": 1,
+        "unique_entities_needed": 2,
+        "unique_relations_needed": 1,
+        "requires_alias_resolution": false,
+        "requires_avoiding_sibling_branches": false,
+        "requires_composed_answer": false,
+        "requires_carry_forward": false
+      }
+    }
+  ]
+}

@@ -16,6 +16,9 @@ interface ControlsPanelProps {
   customQuestion: string;
   customContext: string;
   customAnswer: string;
+  customRunEnabled: boolean;
+  customRunId: string;
+  clearNeo4jBeforeRun: boolean;
   onToolModeChange: (mode: ToolMode) => void;
   onProviderChange: (provider: Provider) => void;
   onModelChange: (model: string) => void;
@@ -24,32 +27,38 @@ interface ControlsPanelProps {
   onCustomQuestionChange: (value: string) => void;
   onCustomContextChange: (value: string) => void;
   onCustomAnswerChange: (value: string) => void;
+  onCustomRunEnabledChange: (value: boolean) => void;
+  onCustomRunIdChange: (value: string) => void;
+  onClearNeo4jBeforeRunChange: (value: boolean) => void;
   onRunKgc: () => void;
+  onRunDecomposedKgc: () => void;
   onRunBaseline: () => void;
   onRunAllBaseline: () => void;
   onRunCustomBaseline: () => void;
   onFillCustomFromSelected: () => void;
 }
 
+/** Display labels only — internal ToolMode values are unchanged. */
 const TOOL_MODE_LABELS: Record<ToolMode, string> = {
-  kgc: "KGc backtracking demo",
-  baseline: "Plain LLM baseline",
-  legacy: "Legacy GraphEval tools",
+  baseline: "Baseline",
+  kgc: "Backtracking",
+  decomposed_kgc: "Decomposed Backtracking",
+  legacy: "Legacy Tools",
 };
 
-function answer0ModeHint(mode: Answer0Mode): string {
-  if (mode === "preset") {
-    return "Demo mode: KGc checks a flawed external LLM answer.";
-  }
-  return "Research-style: generate Answer(0) from raw context, then audit with KGc.";
-}
+const TOOL_MODE_BLURBS: Record<ToolMode, string> = {
+  baseline: "Generate and verify answers against trusted context.",
+  kgc: "Correct a flawed answer using the knowledge graph.",
+  decomposed_kgc: "Checks and corrects compound questions one part at a time.",
+  legacy: "Older comparison and custom-input tools.",
+};
 
-function answer0TestNote(mode: Answer0Mode): string {
-  if (mode === "preset") {
-    return "Flawed answer → KGc feedback → revised answer.";
-  }
-  return "Optional path when no preset baseline is available.";
-}
+const TOOL_MODE_ORDER: ToolMode[] = [
+  "baseline",
+  "kgc",
+  "decomposed_kgc",
+  "legacy",
+];
 
 function SharedRunFields({
   provider,
@@ -124,6 +133,9 @@ export default function ControlsPanel(props: ControlsPanelProps) {
     customQuestion,
     customContext,
     customAnswer,
+    customRunEnabled,
+    customRunId,
+    clearNeo4jBeforeRun,
     onToolModeChange,
     onProviderChange,
     onModelChange,
@@ -132,7 +144,11 @@ export default function ControlsPanel(props: ControlsPanelProps) {
     onCustomQuestionChange,
     onCustomContextChange,
     onCustomAnswerChange,
+    onCustomRunEnabledChange,
+    onCustomRunIdChange,
+    onClearNeo4jBeforeRunChange,
     onRunKgc,
+    onRunDecomposedKgc,
     onRunBaseline,
     onRunAllBaseline,
     onRunCustomBaseline,
@@ -144,21 +160,31 @@ export default function ControlsPanel(props: ControlsPanelProps) {
 
   return (
     <section className="card controls-card controls-card-primary">
-      <div className="controls-tool-mode">
-        <label className="controls-tool-mode-label">
-          Tool mode
-          <select
-            value={toolMode}
-            onChange={(e) => onToolModeChange(e.target.value as ToolMode)}
-          >
-            <option value="kgc">KGc backtracking demo</option>
-            <option value="baseline">Plain LLM baseline</option>
-            <option value="legacy">Legacy GraphEval tools</option>
-          </select>
-        </label>
-        <p className="controls-mode-active">
-          Active: <strong>{TOOL_MODE_LABELS[toolMode]}</strong>
-        </p>
+      <div className="controls-method">
+        <p className="controls-method-label">Method</p>
+        <div
+          className="controls-method-tabs"
+          role="tablist"
+          aria-label="Method"
+        >
+          {TOOL_MODE_ORDER.map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              role="tab"
+              aria-selected={toolMode === mode}
+              className={
+                toolMode === mode
+                  ? "controls-method-tab controls-method-tab-active"
+                  : "controls-method-tab"
+              }
+              onClick={() => onToolModeChange(mode)}
+            >
+              {TOOL_MODE_LABELS[mode]}
+            </button>
+          ))}
+        </div>
+        <p className="controls-method-blurb">{TOOL_MODE_BLURBS[toolMode]}</p>
       </div>
 
       <SharedRunFields
@@ -184,21 +210,15 @@ export default function ControlsPanel(props: ControlsPanelProps) {
                 }
               >
                 <option value="preset" disabled={!presetAvailable}>
-                  Preset flawed baseline (demo)
+                  Preset flawed answer
                 </option>
-                <option value="generated">
-                  Research: generate from raw context
-                </option>
+                <option value="generated">Generate from context</option>
               </select>
             </label>
-            <p className="controls-hint">{answer0ModeHint(answer0Mode)}</p>
-            <p className="controls-test-note">
-              <strong>What this shows:</strong> {answer0TestNote(answer0Mode)}
-            </p>
             {answer0Mode === "preset" && !presetAvailable ? (
               <p className="controls-warning">
-                No preset initial_answer for this example; run will generate
-                Answer(0) from raw context.
+                No preset answer for this example; the run will generate one from
+                context.
               </p>
             ) : null}
           </div>
@@ -209,35 +229,110 @@ export default function ControlsPanel(props: ControlsPanelProps) {
               onClick={onRunKgc}
               disabled={!selectedId || running}
             >
-              {running ? "Running…" : "Run KGc backtracking"}
+              {running ? "Running…" : "Run"}
+            </button>
+          </div>
+        </>
+      ) : null}
+
+      {toolMode === "decomposed_kgc" ? (
+        <>
+          <label>
+            Input source
+            <select
+              value={customRunEnabled ? "custom" : "built_in"}
+              onChange={(e) =>
+                onCustomRunEnabledChange(e.target.value === "custom")
+              }
+            >
+              <option value="built_in">Built-in example</option>
+              <option value="custom">Custom local run</option>
+            </select>
+          </label>
+
+          {customRunEnabled ? (
+            <div className="custom-run-fields">
+              <label>
+                Run label / ID (optional)
+                <input
+                  type="text"
+                  value={customRunId}
+                  onChange={(e) => onCustomRunIdChange(e.target.value)}
+                  placeholder="professor-test-1"
+                />
+              </label>
+              <label>
+                Trusted context
+                <textarea
+                  value={customContext}
+                  onChange={(e) => onCustomContextChange(e.target.value)}
+                />
+              </label>
+              <label>
+                Compound question
+                <textarea
+                  value={customQuestion}
+                  onChange={(e) => onCustomQuestionChange(e.target.value)}
+                />
+              </label>
+              <label>
+                Flawed initial answer (optional)
+                <textarea
+                  value={customAnswer}
+                  onChange={(e) => onCustomAnswerChange(e.target.value)}
+                />
+              </label>
+              <label className="controls-checkbox">
+                <input
+                  type="checkbox"
+                  checked={clearNeo4jBeforeRun}
+                  onChange={(e) =>
+                    onClearNeo4jBeforeRunChange(e.target.checked)
+                  }
+                />
+                Clear Neo4j before run
+              </label>
+              <p className="controls-warning">
+                Deletes the local Neo4j graph before writing this run.
+              </p>
+              <p className="controls-hint">
+                With an initial answer, preset external projection is used.
+                Otherwise GraphEval generates and projects Answer(0).
+              </p>
+            </div>
+          ) : null}
+
+          <div className="row controls-actions">
+            <button
+              type="button"
+              onClick={onRunDecomposedKgc}
+              disabled={
+                running ||
+                (customRunEnabled
+                  ? !customQuestion.trim() || !customContext.trim()
+                  : !selectedId)
+              }
+            >
+              {running ? "Running…" : "Run"}
             </button>
           </div>
         </>
       ) : null}
 
       {toolMode === "baseline" ? (
-        <>
-          <p className="controls-hint controls-mode-note">
-            Secondary path: verify triples against raw context without KGc
-            backtracking.
-          </p>
-          <div className="row controls-actions">
-            <button
-              type="button"
-              onClick={onRunBaseline}
-              disabled={!selectedId || running}
-            >
-              {running ? "Running…" : "Run baseline"}
-            </button>
-          </div>
-        </>
+        <div className="row controls-actions">
+          <button
+            type="button"
+            onClick={onRunBaseline}
+            disabled={!selectedId || running}
+          >
+            {running ? "Running…" : "Run"}
+          </button>
+        </div>
       ) : null}
 
       {toolMode === "legacy" ? (
         <>
-          <p className="controls-hint controls-mode-note">
-            These are older prototype tools, kept for comparison/debugging.
-          </p>
           <div className="row controls-actions">
             <button
               type="button"
@@ -253,32 +348,29 @@ export default function ControlsPanel(props: ControlsPanelProps) {
               onClick={onRunAllBaseline}
               disabled={running || examples.length === 0}
             >
-              {running ? "Running…" : "Run all baseline"}
+              {running ? "Running…" : "Run all"}
             </button>
           </div>
-          <h4 className="legacy-tools-subtitle">Custom baseline input</h4>
+          <h4 className="legacy-tools-subtitle">Custom input</h4>
           <label>
             Question
             <textarea
               value={customQuestion}
               onChange={(e) => onCustomQuestionChange(e.target.value)}
-              placeholder="What should the model answer?"
             />
           </label>
           <label>
-            Context (trusted source)
+            Context
             <textarea
               value={customContext}
               onChange={(e) => onCustomContextChange(e.target.value)}
-              placeholder="Ground-truth context for verification"
             />
           </label>
           <label>
-            Initial answer (may contain errors)
+            Initial answer
             <textarea
               value={customAnswer}
               onChange={(e) => onCustomAnswerChange(e.target.value)}
-              placeholder="LLM answer to verify and revise"
             />
           </label>
           <div className="row">
@@ -301,17 +393,17 @@ export default function ControlsPanel(props: ControlsPanelProps) {
                 !customAnswer.trim()
               }
             >
-              {running ? "Running…" : "Run custom baseline"}
+              {running ? "Running…" : "Run custom"}
             </button>
           </div>
         </>
       ) : null}
 
-      {provider === "ollama" && (
+      {provider === "ollama" ? (
         <p className="controls-hint">
           Requires <code>ollama serve</code> and <code>ollama pull {model}</code>
         </p>
-      )}
+      ) : null}
     </section>
   );
 }

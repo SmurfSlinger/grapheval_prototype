@@ -1,0 +1,33 @@
+Extract factual triples from the answer below as CSV rows.
+
+The sub-question defines what the answer must express. Interpret terse answer fragments in the semantic frame of the sub-question.
+
+KGc facts define canonical entity and relation names when a claim maps to KGc. Never copy a KGc object value unless that exact value appears in the answer.
+
+The object column must always reflect what the answer states, not KGc evidence.
+
+Return the minimal non-redundant claims needed for this sub-question. Prefer one canonical claim for a single-value answer.
+
+Preserve negation. Do not merge negated and positive relations.
+
+Return CSV only. No prose before or after the CSV.
+
+Required header row (exact):
+subject,relation,object,source_sentence
+
+Each data row:
+- subject: entity (prefer KGc canonical subject when known)
+- relation: relation name matching sub-question intent (prefer KGc canonical relation when known)
+- object: value explicitly stated in the answer
+- source_sentence: phrase from the answer supporting this triple
+
+Sub-question:
+{question}
+
+KGc facts (canonical schema):
+{kgc_facts}
+
+Answer:
+{answer}
+
+CSV:

@@ -167,7 +167,7 @@ Assuming **Tool mode = KGc backtracking demo** (default) and **Provider = mock**
 
 | UI element | Meaning | Why it exists | Code source | If asked, say |
 |------------|---------|---------------|-------------|---------------|
-| **Tool mode** | Selects KGc demo vs baseline vs legacy | Keeps demo path primary | `ControlsPanel.tsx`, `page.tsx` `toolMode` | “Default is KGc backtracking; other modes are comparison tools.” |
+| **Tool mode** | Selects KGc demo vs decomposed vs baseline vs legacy | Keeps demo path primary | `ControlsPanel.tsx`, `page.tsx` `toolMode` | “Default is KGc backtracking; decomposed is experimental.” |
 | **KGc backtracking demo** | Primary mode | Professor-facing demo | Default `toolMode="kgc"` | “This is the milestone we’re showing.” |
 | **Provider** | `mock` or `ollama` | Swappable LLM backend | `get_provider()` in `src/main.py` | “Mock is deterministic for demos; Ollama runs real local models.” |
 | **Model** | Ollama model tag | Used when provider=ollama | Passed to `OllamaProvider` | “Ignored for mock provider.” |
@@ -183,6 +183,7 @@ Assuming **Tool mode = KGc backtracking demo** (default) and **Provider = mock**
 | **Advanced details** | Trace, JSON, reference answer | Debug/research | `KgcBacktrackingResultView.tsx` | “Full payload for digging deeper.” |
 | **Baseline comparison** | Tool mode: plain GraphEval | Secondary comparison | `PipelineResultView` when `toolMode="baseline"` | “Original verify-against-raw-context path.” |
 | **Legacy tools** | Tool mode: run-all, custom input | Older prototype tools | `toolMode="legacy"` | “Kept for debugging, not the main story.” |
+| **Decomposed iterative KGc** | Tool mode: experimental compound-question path | Split → iterate per sub-Q → combine | `DecomposedBacktrackingRunner`, `DecomposedKgcFlowView` | “Research path; try `apollo_complex`. See `DECOMPOSED_ITERATIVE_KGC_DESIGN.md`.” |
 
 ---
 
@@ -452,6 +453,56 @@ Saturn V, Launch Complex 39A, F-1 engines, Moon landing preserved.
 - **Apollo KGc fact count:** mock profile has **4** context facts (not 6); UI shows “4 facts” for mock runs.
 - **“Route”** is not a defined API or code concept—use “pipeline” or “flow” instead.
 - **`trace.answer_n_source`** and **`kgc_reference_answer_source`** both describe the reference-answer path; the main evaluated path is Answer(0) via `evaluated_answer`.
+
+---
+
+## Final stabilization milestone (frozen)
+
+**Summary:** The prototype now supports decomposing a compound question, projecting an external flawed Answer(0) into atomic sub-answers, enriching a working KGc from trusted context per sub-question, deterministically evaluating claims, revising and re-evaluating each answer until resolved or honestly stopped, and comparing decomposed processing against the monolithic baseline.
+
+### Implemented architecture (decomposed path)
+
+```
+Compound question
+  → QuestionSplitter
+  → preset/generated compound Answer(0)
+  → SubAnswerProjector (deterministic labeled fields OR LLM + faithfulness check)
+  → for each sub-question:
+      proactive focused context extraction → working KGc merge
+      Answer(0) sub-answer → claim extract → align → GraphComparator (deterministic)
+      → target adequacy gate → feedback → revise → repeat
+  → combine_sub_answers
+```
+
+### Professor-note flow (`apollo_complex`)
+
+1. Preset compound Answer(0) with five intentional errors (dates, crew, launch site, president, amount).
+2. Deterministic projection preserves each wrong value per sub-question.
+3. Per sub-question: focused extraction enriches working KGc; claims evaluated against target-scoped frames.
+4. Q1–Q3, Q5: CONTRADICTED → revision → SUPPORTED → RESOLVED (4/5 target).
+5. Q4: wrong president unsupported; abstention stops honestly — no unsafe relation equivalence.
+
+### Experimental conditions
+
+| Condition | Runner | Example | Answer(0) |
+|-----------|--------|---------|-----------|
+| Monolithic | `BacktrackingRunner` | `apollo_complex` | compound preset |
+| Decomposed | `DecomposedBacktrackingRunner` | `apollo_complex` | `preset_external_projected` |
+
+Verification: `pytest tests/` (**139 passed**), `npm run build` (**success**), `scripts/stabilization_milestone_report.py`.
+
+### Key stabilization modules
+
+| Module | Role |
+|--------|------|
+| `labeled_field_projection.py` | Deterministic Answer(0) split + faithfulness validation |
+| `date_range_normalize.py` | Interval equivalence for occurrence-date targets |
+| `collection_amount_extract.py` | Amount phrase extraction without trailing clauses |
+| `abstention_detection.py` | No-information answers; skip claims; honest stop |
+
+### Milestone frozen
+
+No new research architecture, LLM judges, UI redesign, or reasoning systems unless a blocking defect remains. See `docs/DECOMPOSED_ITERATIVE_KGC_DESIGN.md` and `results/stabilization_milestone_report.json`.
 
 ---
 

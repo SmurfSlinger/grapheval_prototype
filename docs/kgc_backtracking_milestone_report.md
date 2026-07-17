@@ -122,3 +122,92 @@ Developer pytest: `pytest tests/ -v --tb=short`
 - advanced entity resolution
 - multi-hop reasoning
 - full multi-iteration evaluation beyond the current scaffold
+
+## Next milestone: decomposed iterative KGc (experimental)
+
+Added alongside the stable monolithic demo:
+
+- `DecomposedBacktrackingRunner` — split compound questions, iterate per sub-question, combine
+- CSV structured extraction (JSON fallback) via `structured_output.py`
+- `QuestionSplitter` with strict JSON validation
+- Working KGc candidate-update scaffold (promotion disabled by default)
+- API: `POST /run-decomposed-kgc-backtracking`
+- UI tool mode: **Decomposed iterative KGc** (not default)
+- Design doc: `docs/DECOMPOSED_ITERATIVE_KGC_DESIGN.md`
+- Stress example: `apollo_complex`
+- Generalization example: `patient_d_314_complex` (partially correct Answer(0); composite claim slots; medication-status families)
+
+Stable regression fixture unchanged: `saturn_v_apollo_11_001` → 5 KGc facts, 4 claims, 1/3/0 labels.
+
+---
+
+## Final stabilization milestone (frozen)
+
+**Summary:** The prototype now supports decomposing a compound question, projecting an external flawed Answer(0) into atomic sub-answers, enriching a working KGc from trusted context per sub-question, deterministically evaluating claims, revising and re-evaluating each answer until resolved or honestly stopped, and comparing decomposed processing against the monolithic baseline.
+
+This does **not** claim hallucinations are prevented or KGc evolution is solved.
+
+### Verification (2026-07-06)
+
+| Check | Result |
+|-------|--------|
+| `pytest tests/` | **139 passed** |
+| `npm run build` | **success** |
+| Stable demo `saturn_v_apollo_11_001` | unchanged (mock regression) |
+| Real-model runs | `scripts/stabilization_milestone_report.py --provider ollama --model gemma4:e2b --runs 3` |
+
+### 3-run Ollama summary (`gemma4:e2b`, `preset_external_projected`)
+
+Full JSON: `results/stabilization_milestone_report.json`
+
+| Run | Projection | Retries | Resolved | Notes |
+|-----|------------|---------|----------|-------|
+| 1 | `deterministic_labeled_fields` | 0 | 3/5 | Q1 STALLED (NO_EVIDENCE on date); Q4 UNRESOLVED_NO_EVIDENCE |
+| 2 | `deterministic_labeled_fields` | 0 | **4/5** | Q1–Q3, Q5 RESOLVED; Q4 STALLED (honest abstention) |
+| 3 | `deterministic_labeled_fields` | 0 | **4/5** | Q1–Q3, Q5 RESOLVED; Q4 UNRESOLVED_NO_EVIDENCE |
+
+**Projection integrity (all 3 runs):** all five flawed preset values preserved before correction (`1985`, wrong crew, airport, Trump, `7 ounces`).
+
+### Monolithic vs decomposed (same example, same model)
+
+| Metric | Monolithic | Decomposed (runs 2–3) |
+|--------|------------|------------------------|
+| Path | compound Q + compound Answer(0) | 5 atomic sub-Q + projected Answer(0) |
+| Claims extracted | 5 | per sub-Q (1 each typical) |
+| Final S/C/NE | 0/0/5 | 4/5 targets RESOLVED |
+| Structured-output retries | 0 | 0 |
+| Q4 president | mixed abstention in revision | honestly UNRESOLVED/STALLED |
+| Combined answer | partial, many NO_EVIDENCE | Q1–Q3 + Q5 corrected; Q4 marked unresolved |
+
+Prototype observation only — not statistically significant.
+
+### Stabilization fixes
+
+1. **Preset Answer(0) projection** — deterministic labeled-field parsing preserves flawed source values; LLM fallback with faithfulness validation
+2. **Date-range normalization** — equivalent interval wording matches deterministically (`July 16-24` ≈ `July 16 to 24, 1969`)
+3. **Collection-amount extraction** — stops at amount + material phrase; no trailing mission clauses
+4. **Abstention detection** — no-information answers skip claim extraction; stop as `UNRESOLVED_NO_EVIDENCE`
+
+### Successful behaviors
+
+- Compound split → projected external Answer(0) → one sub-question at a time
+- Focused trusted-context extraction + working KGc enrichment per sub-question
+- Question-conditioned claim extraction + deterministic S/C/NE evaluation
+- Question-target adequacy gate + evaluation frames
+- Q2 subject canonicalization; Q3 clean correction loop
+- Q4 does not falsely resolve via `spoke_with` / `fulfilled_goal_set_by` equivalence
+
+### Observed failure modes / limitations
+
+- Q4 president may remain unresolved without explicit on-target facts
+- LLM structured-output still requires retries on some models
+- Sub-answer combination is deterministic concatenation
+- No LLM judge, embeddings, or temporal derivation in this milestone
+
+### Preliminary monolithic vs decomposed comparison
+
+See `results/stabilization_milestone_report.json` for per-run metrics. Prototype observation only — not statistically significant.
+
+### Milestone frozen
+
+Implementation stops here unless a true blocking defect remains.

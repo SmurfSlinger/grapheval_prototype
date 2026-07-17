@@ -33,7 +33,7 @@ At iteration 0: **Answer(n) = Answer(0)**.
 
 | UI section | Meaning |
 |------------|---------|
-| **Tool mode** | `kgc` (default), `baseline`, or `legacy` |
+| **Tool mode** | `kgc` (default), `decomposed_kgc` (experimental), `baseline`, or `legacy` |
 | **Provider / Model / Example** | LLM backend and dataset row |
 | **Answer(0) source** | `preset` = flawed `initial_answer`; `generated` = raw-context LLM answer |
 | **Run KGc backtracking** | Triggers full KGc path |
@@ -46,6 +46,23 @@ At iteration 0: **Answer(n) = Answer(0)**.
 | **Advanced details** | Trace, JSON, KGc reference answer, incompleteness note |
 
 **Baseline comparison** and **Legacy tools** modes: older GraphEval path; hidden unless selected.
+
+**Decomposed iterative KGc** (experimental): splits compound questions, iterates per sub-question, combines answers. Try `apollo_complex` or `patient_d_314_complex`. See `docs/DECOMPOSED_ITERATIVE_KGC_DESIGN.md`.
+
+## Decomposed milestone (frozen)
+
+The prototype now supports decomposing a compound question, projecting an external flawed Answer(0) into atomic sub-answers, enriching a working KGc from trusted context per sub-question, deterministically evaluating claims, revising and re-evaluating each answer until resolved or honestly stopped, and comparing decomposed processing against the monolithic baseline.
+
+| Item | Value |
+|------|-------|
+| Stress example | `apollo_complex` |
+| Generalization example | `patient_d_314_complex` (partially correct Answer(0); selective preserve/correct) |
+| Answer(0) mode | `preset_external_projected` (deterministic labeled-field projection when possible) |
+| Stable regression | `saturn_v_apollo_11_001` unchanged (5 KGc facts, 4 claims, 1/3/0) |
+| Expected decomposed result | **4/5 resolved** on Apollo (Q4 president may stay honestly unresolved); patient case aims for all targets resolved without status inversion |
+| Verification | `pytest tests/`, `npm run build`, `scripts/stabilization_milestone_report.py`, `scripts/patient_chart_acceptance.py` |
+
+Key modules: `labeled_field_projection.py`, `date_range_normalize.py`, `collection_amount_extract.py`, `abstention_detection.py`, `composite_claim_slots.py`, `trusted_context_bootstrap.py`, `kgc_matching.py` intent families.
 
 ## Output fields I must know
 

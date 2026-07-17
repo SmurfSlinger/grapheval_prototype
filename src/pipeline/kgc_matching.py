@@ -15,6 +15,14 @@ def normalize(text: str) -> str:
     return text.strip()
 
 
+def normalize_subject_for_dedupe(text: str) -> str:
+    """Conservative subject normalization for working-KGc dedupe."""
+    norm = normalize(text)
+    if norm.startswith("the "):
+        norm = norm[4:].strip()
+    return norm
+
+
 def normalize_relation(value: str) -> str:
     text = value.lower().strip()
     text = re.sub(r"[\s-]+", "_", text)
@@ -74,8 +82,271 @@ LAUNCH_SITE_RELATIONS = frozenset(
         "launched_at",
         "launch_site",
         "launch_location",
+        "was_launched_from",
     }
 )
+
+DATE_RELATIONS = frozenset(
+    {
+        "occurred_during",
+        "occurred_from",
+        "occurred_between",
+        "dates",
+        "date_range",
+        "mission_dates",
+        "dates_of_mission",
+    }
+)
+
+# Point-event dates kept separate from mission-interval family.
+DATE_POINT_RELATIONS = frozenset(
+    {
+        "occurred_on",
+        "launch_date",
+        "landing_date",
+        "return_date",
+    }
+)
+
+CREW_RELATIONS = frozenset(
+    {
+        "crewed_by",
+        "was_crewed_by",
+        "crew",
+        "crew_members",
+        "was_crewmember_on",
+    }
+)
+
+COLLECTION_RELATIONS = frozenset(
+    {
+        "collected",
+        "collected_lunar_material",
+        "lunar_material_collected",
+        "amount_collected",
+    }
+)
+
+PRESIDENT_AT_TIME_RELATIONS = frozenset(
+    {
+        "president_at_time",
+        "president_during",
+        "was_president_at_time",
+    }
+)
+
+EXCLUDED_PRESIDENT_PROXY_RELATIONS = frozenset(
+    {
+        "spoke_with",
+        "fulfilled_goal_set_by",
+        "goal_set_by",
+        "national_goal_set_by",
+        "held_title",
+    }
+)
+
+DIAGNOSIS_RELATIONS = frozenset(
+    {
+        "diagnosed_with",
+        "has_diagnosis",
+        "diagnosis",
+        "condition",
+        "has_condition",
+    }
+)
+
+LAB_VALUE_RELATIONS = frozenset(
+    {
+        "a1c",
+        "a1c_value",
+        "hemoglobin_a1c",
+        "has_a1c",
+        "lab_value",
+        "measured_value",
+    }
+)
+
+DISEASE_STAGE_RELATIONS = frozenset(
+    {
+        "disease_stage",
+        "ckd_stage",
+        "has_ckd_stage",
+        "renal_stage",
+        "stage",
+        "has_stage",
+    }
+)
+
+EGFR_RELATIONS = frozenset(
+    {
+        "egfr",
+        "egfr_value",
+        "has_egfr",
+        "kidney_function_measurement",
+        "renal_measurement",
+    }
+)
+
+DISCONTINUED_MED_RELATIONS = frozenset(
+    {
+        "discontinued",
+        "discontinued_medication",
+        "medication_discontinued",
+        "stopped",
+        "stopped_medication",
+    }
+)
+
+DISCONTINUATION_REASON_RELATIONS = frozenset(
+    {
+        "discontinued_because",
+        "stopped_because",
+        "intolerance_reason",
+        "adverse_effect",
+        "discontinuation_reason",
+    }
+)
+
+ACTIVE_MED_RELATIONS = frozenset(
+    {
+        "active_medication",
+        "currently_taking",
+        "tolerated",
+        "medication_tolerated",
+        "taking",
+    }
+)
+
+DOSE_RELATIONS = frozenset(
+    {
+        "dose",
+        "daily_dose",
+        "prescribed_dose",
+        "has_dose",
+    }
+)
+
+DISCUSSED_NOT_STARTED_RELATIONS = frozenset(
+    {
+        "discussed_not_started",
+        "planned_not_started",
+        "considered",
+        "future_option",
+        "discussed",
+    }
+)
+
+ALLERGY_RELATIONS = frozenset(
+    {
+        "allergic_to",
+        "allergy",
+        "medication_allergy",
+        "has_allergy",
+    }
+)
+
+ALLERGIC_REACTION_RELATIONS = frozenset(
+    {
+        "causes_reaction",
+        "allergy_reaction",
+        "reaction",
+        "allergic_reaction",
+    }
+)
+
+# Medication-status families must remain distinct (no unsafe collapse).
+MEDICATION_STATUS_EXCLUSIONS: dict[str, frozenset[str]] = {
+    "medication_discontinued": ACTIVE_MED_RELATIONS | DISCUSSED_NOT_STARTED_RELATIONS,
+    "active_medication": DISCONTINUED_MED_RELATIONS | DISCUSSED_NOT_STARTED_RELATIONS,
+    "discussed_not_started": DISCONTINUED_MED_RELATIONS | ACTIVE_MED_RELATIONS,
+    "discontinued_medication_with_reason": ACTIVE_MED_RELATIONS
+    | DISCUSSED_NOT_STARTED_RELATIONS,
+    "active_medication_with_dose": DISCONTINUED_MED_RELATIONS
+    | DISCUSSED_NOT_STARTED_RELATIONS,
+}
+
+INTENT_RELATION_FAMILIES: dict[str, frozenset[str]] = {
+    "occurrence_date": DATE_RELATIONS,
+    "crew_members": CREW_RELATIONS,
+    "launch_site": LAUNCH_SITE_RELATIONS,
+    "president_at_time": PRESIDENT_AT_TIME_RELATIONS,
+    "collection_amount": COLLECTION_RELATIONS,
+    "diagnosis": DIAGNOSIS_RELATIONS,
+    "lab_measurement": LAB_VALUE_RELATIONS,
+    "disease_stage": DISEASE_STAGE_RELATIONS,
+    "renal_measurement": EGFR_RELATIONS,
+    "medication_discontinued": DISCONTINUED_MED_RELATIONS,
+    "discontinuation_reason": DISCONTINUATION_REASON_RELATIONS,
+    "active_medication": ACTIVE_MED_RELATIONS,
+    "medication_dose": DOSE_RELATIONS,
+    "discussed_not_started": DISCUSSED_NOT_STARTED_RELATIONS,
+    "allergy": ALLERGY_RELATIONS,
+    "allergic_reaction": ALLERGIC_REACTION_RELATIONS,
+    # Composite intents use the union of their slot families.
+    "kidney_status": DISEASE_STAGE_RELATIONS | EGFR_RELATIONS,
+    "discontinued_medication_with_reason": DISCONTINUED_MED_RELATIONS
+    | DISCONTINUATION_REASON_RELATIONS,
+    "active_medication_with_dose": ACTIVE_MED_RELATIONS | DOSE_RELATIONS,
+    "allergy_with_reaction": ALLERGY_RELATIONS | ALLERGIC_REACTION_RELATIONS,
+}
+
+INTENT_CANONICAL_RELATIONS: dict[str, str] = {
+    "occurrence_date": "occurred_during",
+    "crew_members": "crewed_by",
+    "launch_site": "launched_from",
+    "president_at_time": "president_at_time",
+    "collection_amount": "collected",
+    "diagnosis": "diagnosed_with",
+    "lab_measurement": "has_a1c",
+    "disease_stage": "has_ckd_stage",
+    "renal_measurement": "has_egfr",
+    "medication_discontinued": "discontinued_medication",
+    "discontinuation_reason": "discontinued_because",
+    "active_medication": "active_medication",
+    "medication_dose": "daily_dose",
+    "discussed_not_started": "discussed_not_started",
+    "allergy": "allergic_to",
+    "allergic_reaction": "causes_reaction",
+    "kidney_status": "has_ckd_stage",
+    "discontinued_medication_with_reason": "discontinued_medication",
+    "active_medication_with_dose": "active_medication",
+    "allergy_with_reaction": "allergic_to",
+}
+
+# Slot-level families used for composite claim matching (prevents stage↔eGFR cross-match).
+SLOT_RELATION_FAMILIES: dict[str, frozenset[str]] = {
+    "disease_stage": DISEASE_STAGE_RELATIONS,
+    "renal_measurement": EGFR_RELATIONS,
+    "medication_discontinued": DISCONTINUED_MED_RELATIONS,
+    "discontinuation_reason": DISCONTINUATION_REASON_RELATIONS,
+    "active_medication": ACTIVE_MED_RELATIONS,
+    "medication_dose": DOSE_RELATIONS,
+    "allergy": ALLERGY_RELATIONS,
+    "allergic_reaction": ALLERGIC_REACTION_RELATIONS,
+}
+
+
+def slot_intent_for_relation(relation: str) -> str | None:
+    rel = normalize_relation(relation)
+    for slot_intent, family in SLOT_RELATION_FAMILIES.items():
+        if rel in family:
+            return slot_intent
+    return None
+
+
+def canonical_relation_for_intent(intent: str, kgc_facts: list["KgcFact"] | None = None) -> str | None:
+    """Return the canonical relation for a question intent."""
+    if intent not in INTENT_CANONICAL_RELATIONS:
+        return None
+    default = INTENT_CANONICAL_RELATIONS[intent]
+    if not kgc_facts:
+        return default
+    family = INTENT_RELATION_FAMILIES.get(intent, frozenset())
+    for fact in kgc_facts:
+        rel = normalize_relation(fact.relation)
+        if rel in family:
+            return fact.relation
+    return default
 
 
 def is_engine_object(obj: str) -> bool:
