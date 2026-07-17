@@ -155,12 +155,14 @@ RETURN s.name, type(r), r, o.name
 - Real smoke:
   `results/apollo_multihop_real_smoke.json` — hop-1 question exact match +
   pipeline resolved with `gemma4:e2b`, Neo4j clear/readback.
-- Real baseline checkpoint:
+- Real baseline checkpoint (stopped):
   `results/apollo_multihop_real_baseline.json` /
-  `results/apollo_multihop_real_baseline.md` — running with `--resume` /
-  `--continue-on-error` / `--clear-neo4j`. Early questions matched and
-  resolved; treat the file as authoritative only when `run_type=full_real`
-  and all 50 rows are present.
+  `results/apollo_multihop_real_baseline.md` — **partial_real**, 15/50
+  questions completed with `gemma4:e2b`, Neo4j clear/readback, resumable
+  checkpoints. Observed on the stopped run: contains-expected 93.3%,
+  exact-match 53.3%, pipeline-resolved 13/15. This is **not** a full
+  50-question baseline (`run_type` remains `partial_real`). Resume with the
+  command below when ready.
 
 Run or resume the full measurement:
 
@@ -190,5 +192,5 @@ isolated runs, and inspect both Research Trace and Neo4j Browser. The custom
 base KGc is genuinely read back from Neo4j; later focused/derived additions
 are an in-memory mirror that is persisted after success. The benchmark dataset,
 runner, scoring separation, and mock plumbing report are ready. The real-model
-50-question baseline is checkpointed and resumable; cite
-`results/apollo_multihop_real_baseline.md` only after it reaches `full_real`.
+baseline was intentionally stopped at 15/50 (`partial_real`); resume from the
+checkpoint before citing full-benchmark numbers.

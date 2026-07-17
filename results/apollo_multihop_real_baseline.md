@@ -51,3 +51,7 @@ This is a measurement report, not a tuned success criterion.
 ## Interpretation
 
 Textual answer matching and deterministic pipeline resolution are reported separately. An answer may contain the expected entity while the pipeline remains unresolved, or resolve without matching the benchmark answer. No expected answer is supplied to inference and no pipeline labels are overridden by this report.
+
+## Run status
+
+This real baseline was **intentionally stopped** at 15/50 questions (`partial_real`). Resume with `python scripts/run_multihop_benchmark.py --resume --rerun-errors --provider ollama --model gemma4:e2b --num-ctx 8192 --clear-neo4j --timeout-per-question 1200 --continue-on-error --output results/apollo_multihop_real_baseline.json --summary results/apollo_multihop_real_baseline.md`.

@@ -97,6 +97,9 @@ successful run.
 - Provider disables thinking mode (`think: false`) so Gemma 4 returns final
   answer text through `/api/generate`
 - Real hop-1 smoke: exact match and pipeline-resolved (~228s on CPU)
+- Real baseline stopped at **15/50** (`partial_real`): contains-expected
+  93.3%, exact-match 53.3%, pipeline-resolved 13/15. Resume from
+  `results/apollo_multihop_real_baseline.json` with `--resume`.
 
 Model quality and speed depend on local hardware.
 
