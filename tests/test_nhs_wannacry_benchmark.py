@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "data" / "test_sets" / "nhs_wannacry_multihop_50.json"
 AUDIT = ROOT / "data" / "test_sets" / "nhs_wannacry_multihop_50.audit.json"
 AUDIT_MD = ROOT / "docs" / "NHS_WANNACRY_HOP_AUDIT.md"
+HUMAN_REVIEW = ROOT / "data" / "test_sets" / "nhs_wannacry_human_review.json"
 APOLLO = ROOT / "data" / "test_sets" / "apollo_multihop_50.json"
 MANIFEST = ROOT / "data" / "sources" / "nhs_wannacry" / "source_manifest.json"
 WRAPPER = ROOT / "scripts" / "run_nhs_wannacry_real_baseline.sh"
@@ -51,6 +52,9 @@ def test_nhs_wannacry_validates_with_generalized_validator() -> None:
     assert result["hop_distribution"] == {hop: 5 for hop in range(1, 11)}
     assert result["graph_metrics"]["shortcut_audit"]["shortcut_path_count"] == 0
     assert result["graph_metrics"]["shortcut_audit"]["final_subject_mention_count"] == 0
+    assert result["graph_metrics"]["shortcut_audit"]["ambiguous_discourse_count"] == 0
+    assert result["graph_metrics"]["shortcut_audit"]["locality_warning_count"] == 3
+    assert result["graph_metrics"]["shortcut_audit"]["unreviewed_count"] == 50
     assert payload["root_entity"] == "WannaCry attack on the NHS"
 
 
@@ -80,8 +84,14 @@ def test_nhs_question_anchors_paths_and_shortest_distances() -> None:
 
     for question in questions:
         path = [tuple(edge) for edge in question["expected_path"]]
-        anchors = question["reasoning_anchor_entities"]
-        assert anchors == [payload["root_entity"]]
+        anchors = question["question_anchor_entities"]
+        assert anchors
+        assert question["reasoning_anchor_entities"] == anchors
+        assert question["graph_root_entity"] == payload["root_entity"]
+        assert question["anchor_detection"]["anchor_detected_from_question"] is True
+        assert question["anchor_detection"]["anchor_detection_method"] == "alias_match"
+        assert question["anchor_detection"]["matched_aliases"]
+        assert question["anchor_detection"]["detected_entities"] == anchors
         assert question["hop_semantics"] == "minimum_required_path"
         assert len(path) == question["hop_count"]
         assert path[0][0] in anchors
@@ -96,6 +106,86 @@ def test_nhs_question_anchors_paths_and_shortest_distances() -> None:
             )
             == question["hop_count"]
         )
+        assert (
+            question["shortcut_audit"]["shortest_distance_from_question_anchor"]
+            == question["hop_count"]
+        )
+        for anchor in anchors:
+            assert entity_string_mentioned(question["question"], anchor) or any(
+                entity_string_mentioned(question["question"], alias)
+                for alias in question["anchor_detection"]["matched_aliases"]
+            )
+
+
+def test_graph_root_may_differ_from_question_anchor_in_validation() -> None:
+    """Path may start at a non-root question anchor when hop semantics are enforced."""
+    from scripts.nhs_wannacry_hop_semantics import locality_audit
+
+    payload = copy.deepcopy(_payload())
+    source = next(item for item in payload["questions"] if item["id"] == "nhs_wannacry_h03_q01")
+    # Technical chain: root -> ransomware -> dropper -> exploit
+    ransomware = source["expected_path"][0][2]
+    dropper_edge = source["expected_path"][1]
+    exploit_edge = source["expected_path"][2]
+    answer = exploit_edge[2]
+    question = next(item for item in payload["questions"] if item["id"] == "nhs_wannacry_h02_q01")
+    question.update(
+        {
+            "hop_count": 2,
+            "question": (
+                "Starting from WannaCry ransomware in the NHS technical "
+                "malware-propagation chain, what exploit enabled network spread?"
+            ),
+            "expected_answer": answer,
+            "expected_path": [list(dropper_edge), list(exploit_edge)],
+            "graph_root_entity": payload["root_entity"],
+            "question_anchor_entities": [ransomware],
+            "reasoning_anchor_entities": [ransomware],
+            "required_entities": sorted({dropper_edge[0], dropper_edge[2], answer}),
+            "required_relations": sorted({dropper_edge[1], exploit_edge[1]}),
+            "anchor_detection": {
+                "anchor_detected_from_question": True,
+                "anchor_detection_method": "alias_match",
+                "matched_aliases": [ransomware],
+                "detected_entities": [ransomware],
+            },
+            "hop_semantics": "minimum_required_path",
+        }
+    )
+    question["shortcut_audit"] = {
+        "shortest_distance_from_question_anchor": 2,
+        "shortest_anchor_distance": 2,
+        "direct_final_subject_mentioned": False,
+        "final_edge_subject": exploit_edge[0],
+        "expected_answer_mentioned": False,
+        "late_chain_entity_mentioned": False,
+        "one_hop_parent_mentioned": False,
+        "mentioned_entities": [ransomware],
+        "shortcut_entities": [],
+        "ambiguous_discourse_markers": [],
+        "human_review_status": "not_reviewed",
+        "locality": locality_audit(
+            question["question"],
+            answer,
+            payload["trusted_context"],
+        ),
+        "unresolved_shortcut": False,
+        "review_notes": "Synthetic non-root anchor fixture.",
+    }
+    assert question["graph_root_entity"] != question["question_anchor_entities"][0]
+    result = validate_test_set(payload)
+    assert result["valid"], result["errors"]
+
+
+def test_anchor_detection_failure_raises_in_builder_and_validator() -> None:
+    payload = _payload()
+    question = payload["questions"][0]
+    question["question"] = "What malicious software drove the incident?"
+    question["question_anchor_entities"] = [payload["root_entity"]]
+    question["reasoning_anchor_entities"] = [payload["root_entity"]]
+    result = validate_test_set(payload)
+    assert result["valid"] is False
+    assert any("question anchors not detected" in error for error in result["errors"])
 
 
 def test_nhs_no_late_entity_or_answer_shortcuts_in_questions() -> None:
@@ -110,6 +200,10 @@ def test_nhs_no_late_entity_or_answer_shortcuts_in_questions() -> None:
             question["expected_answer"],
         )
         assert question["shortcut_audit"]["direct_final_subject_mentioned"] is False
+        assert question["shortcut_audit"]["expected_answer_mentioned"] is False
+        assert question["shortcut_audit"]["late_chain_entity_mentioned"] is False
+        assert question["shortcut_audit"]["one_hop_parent_mentioned"] is False
+        assert question["shortcut_audit"]["shortcut_entities"] == []
 
 
 def test_nhs_audit_has_zero_unresolved_shortcuts() -> None:
@@ -117,12 +211,32 @@ def test_nhs_audit_has_zero_unresolved_shortcuts() -> None:
     assert audit["preliminary_shortcuts_before_rewrite"] == 15
     assert audit["shortcut_count"] == 0
     assert audit["unresolved_shortcuts"] == 0
+    assert audit["ambiguous_discourse_count"] == 0
+    assert audit["locality_warning_count"] == 3
+    assert audit["unreviewed_count"] == 50
     assert len(audit["questions"]) == 50
     assert all(not row["unresolved_shortcut"] for row in audit["questions"])
-    assert all(row["manual_reviewed"] is True for row in audit["questions"])
+    assert all("manual_reviewed" not in row for row in audit["questions"])
+    assert all(row["human_review_status"] == "not_reviewed" for row in audit["questions"])
+    assert all(not row["ambiguous_discourse_markers"] for row in audit["questions"])
     hop8_10 = [row for row in audit["questions"] if row["hop_count"] >= 8]
     assert len(hop8_10) == 15
-    assert all(row["shortest_anchor_distance"] == row["hop_count"] for row in hop8_10)
+    assert all(
+        row["shortest_distance_from_question_anchor"] == row["hop_count"]
+        for row in hop8_10
+    )
+
+
+def test_nhs_human_review_manifest_is_pending() -> None:
+    manifest = json.loads(HUMAN_REVIEW.read_text(encoding="utf-8"))
+    assert manifest == {
+        "schema_version": 1,
+        "description": (
+            "External human review manifest for NHS WannaCry hop-semantics. "
+            "Entries are empty until a human reviews."
+        ),
+        "reviews": [],
+    }
 
 
 def test_nhs_paths_have_no_repeated_nodes_or_duplicate_edges() -> None:
@@ -145,6 +259,9 @@ def test_nhs_relation_reuse_and_graph_metrics() -> None:
     assert graph_quality["edge_count"] >= 55
     assert graph_quality["connected_components"] == 1
     assert graph_quality["isolate_count"] == 0
+    assert graph_quality["ambiguous_discourse_count"] == 0
+    assert graph_quality["locality_warning_count"] == 3
+    assert graph_quality["unreviewed_count"] == 50
 
 
 def test_nhs_fact_provenance_and_manifest() -> None:
@@ -170,6 +287,7 @@ def test_trusted_context_is_clean_prose_without_scoring_markers() -> None:
         "expected_answer",
         "shortcut_audit",
         "reasoning_anchor_entities",
+        "question_anchor_entities",
         "nw_f",
     ]
     for marker in forbidden:
@@ -191,6 +309,7 @@ def test_example_construction_excludes_scoring_fields() -> None:
     assert "expected_answer" not in blob
     assert "shortcut_audit" not in blob
     assert "reasoning_anchor_entities" not in blob
+    assert "question_anchor_entities" not in blob
 
 
 def test_malformed_provenance_fails_validation() -> None:
@@ -213,12 +332,37 @@ def test_noncontiguous_path_fails_validation() -> None:
 def test_malformed_shortcut_metadata_fails_validation() -> None:
     payload = _payload()
     question = next(item for item in payload["questions"] if item["hop_count"] == 8)
-    question["shortcut_audit"]["manual_reviewed"] = False
-    question["shortcut_audit"]["shortest_anchor_distance"] = 1
+    question["shortcut_audit"]["manual_reviewed"] = True
+    question["shortcut_audit"]["shortest_distance_from_question_anchor"] = 1
     result = validate_test_set(payload)
     assert result["valid"] is False
-    assert any("manual_reviewed must be true" in error for error in result["errors"])
-    assert any("shortest_anchor_distance mismatches" in error for error in result["errors"])
+    assert any("manual_reviewed must not be present" in error for error in result["errors"])
+    assert any(
+        "shortest_distance_from_question_anchor mismatches" in error
+        for error in result["errors"]
+    )
+
+
+def test_ambiguous_discourse_marker_fails_validation() -> None:
+    payload = _payload()
+    question = next(item for item in payload["questions"] if item["hop_count"] == 9)
+    question["question"] = f"{question['question']} those inspections"
+    result = validate_test_set(payload)
+    assert result["valid"] is False
+    assert any("ambiguous discourse markers remain" in error for error in result["errors"])
+
+
+def test_late_chain_entity_alias_shortcut_fails_validation() -> None:
+    payload = _payload()
+    question = next(
+        item
+        for item in payload["questions"]
+        if item["id"] == "nhs_wannacry_h10_q05"
+    )
+    question["question"] = f"{question['question']} CareCERT Assure"
+    result = validate_test_set(payload)
+    assert result["valid"] is False
+    assert any("shorter-path graph entities" in error for error in result["errors"])
 
 
 def test_shortened_anchor_distance_fails_validation() -> None:
@@ -241,7 +385,10 @@ def test_shortened_anchor_distance_fails_validation() -> None:
     )
     result = validate_test_set(payload)
     assert result["valid"] is False
-    assert any("shortest_anchor_distance 1 != hop_count 10" in error for error in result["errors"])
+    assert any(
+        "shortest distance from question anchor 1 != hop_count 10" in error
+        for error in result["errors"]
+    )
 
 
 def test_inserting_final_subject_into_high_hop_question_fails_validation() -> None:
@@ -257,17 +404,25 @@ def test_inserting_final_subject_into_high_hop_question_fails_validation() -> No
 
 
 def test_builder_output_matches_committed_dataset_and_audits() -> None:
-    built_dataset, built_audit, built_markdown, _inventory, _metrics = build_artifacts()
+    (
+        built_dataset,
+        built_audit,
+        built_markdown,
+        _inventory,
+        _metrics,
+        built_human_review,
+    ) = build_artifacts()
     assert built_dataset == _payload()
     assert built_audit == _audit()
     assert built_markdown == AUDIT_MD.read_text(encoding="utf-8")
+    assert built_human_review == json.loads(HUMAN_REVIEW.read_text(encoding="utf-8"))
 
 
 def test_validation_fixtures_do_not_mutate_original_payload() -> None:
     payload = _payload()
     clone = copy.deepcopy(payload)
-    clone["questions"][0]["shortcut_audit"]["manual_reviewed"] = False
-    assert payload["questions"][0]["shortcut_audit"]["manual_reviewed"] is True
+    clone["questions"][0]["shortcut_audit"]["human_review_status"] = "reviewed"
+    assert payload["questions"][0]["shortcut_audit"]["human_review_status"] == "not_reviewed"
 
 
 def _run_wrapper_dry(cli_args: list[str], *, expect_ok: bool = True):

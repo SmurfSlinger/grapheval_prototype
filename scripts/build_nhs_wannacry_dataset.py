@@ -4,16 +4,42 @@
 from __future__ import annotations
 
 import json
-from collections import Counter, defaultdict, deque
+from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 from datetime import date
 from pathlib import Path
 from typing import Any
 
+try:
+    from scripts.nhs_wannacry_hop_semantics import (
+        ENTITY_ALIASES,
+        detect_ambiguous_discourse,
+        detect_entities_in_text,
+        expanded_aliases,
+        locality_audit,
+        normalize_entity,
+        select_question_anchors,
+        shortest_directed_distance,
+        shortcut_flags,
+    )
+except ModuleNotFoundError:  # pragma: no cover - supports direct script execution.
+    from nhs_wannacry_hop_semantics import (
+        ENTITY_ALIASES,
+        detect_ambiguous_discourse,
+        detect_entities_in_text,
+        expanded_aliases,
+        locality_audit,
+        normalize_entity,
+        select_question_anchors,
+        shortest_directed_distance,
+        shortcut_flags,
+    )
+
 ROOT = Path(__file__).resolve().parents[1]
 DATASET_OUT = ROOT / "data" / "test_sets" / "nhs_wannacry_multihop_50.json"
 AUDIT_OUT = ROOT / "data" / "test_sets" / "nhs_wannacry_multihop_50.audit.json"
 AUDIT_MD_OUT = ROOT / "docs" / "NHS_WANNACRY_HOP_AUDIT.md"
+HUMAN_REVIEW_OUT = ROOT / "data" / "test_sets" / "nhs_wannacry_human_review.json"
 INVENTORY_OUT = ROOT / "data" / "sources" / "nhs_wannacry" / "fact_inventory.json"
 
 ROOT_ENTITY = "WannaCry attack on the NHS"
@@ -28,7 +54,7 @@ MS = "microsoft_ms17_010_2017"
 
 HOP_DEFINITION = (
     "hop_count = minimum number of trusted directed graph edges needed to derive "
-    "the expected answer from the question's reasoning_anchor_entities, under "
+    "the expected answer from the question's question_anchor_entities, under "
     "allowed alias normalization, without outside knowledge."
 )
 
@@ -892,76 +918,76 @@ def extra_fact_specs() -> list[EdgeSpec]:
 
 QUESTION_TEXT: dict[str, list[str]] = {
     "technical exploit and patch": [
-        "What malware caused the May 2017 NHS cyber attack?",
-        "In the NHS attack's malware chain, what component contained and ran the ransomware?",
-        "In the NHS attack's technical chain, what exploit did the malware component use to propagate?",
-        "In the incident's technical chain, what Microsoft network-service weakness did the propagation exploit target?",
-        "In that technical chain, which Microsoft server component was affected by the network-service weakness?",
-        "In the NHS incident's Microsoft vulnerability chain, what severe outcome could the affected server allow?",
-        "In that Microsoft vulnerability chain, what attacker input could trigger the severe outcome?",
-        "In the incident technical sequence, what handling path did the attacker input expose?",
-        "In that same technical sequence, what correction addressed the crafted-request handling problem?",
-        "Starting from WannaCry's propagation mechanism, which Microsoft security bulletin ultimately addressed the vulnerable Windows server behavior involved?",
+        "During the WannaCry attack on the NHS, what malicious software drove the incident?",
+        "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what dropper-style component contained and ran the ransomware?",
+        "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what exploit enabled network spread of the ransomware?",
+        "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what Microsoft network-service vulnerability was targeted?",
+        "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what Microsoft server component was exposed?",
+        "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what severe security consequence could result from the exposed service?",
+        "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what crafted attacker input could trigger remote code execution on the exposed service?",
+        "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what request-handling area did crafted attacker input expose?",
+        "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what correction fixed crafted-request handling?",
+        "In the May 2017 NHS WannaCry attack, along the technical malware-propagation chain, which Microsoft security bulletin supplied the final fix?",
     ],
     "supported Windows patching": [
-        "What operating-system pattern did NAO identify as the majority infection story?",
-        "For the incident's majority device pattern, what support status did those machines have?",
-        "In that operating-system explanation, what March Microsoft update would have protected supported systems?",
-        "What publication date sat before the NHS CareCERT warnings in the supported-systems chain?",
-        "Which first NHS Digital alert followed that Microsoft publication date?",
-        "Which later NHS Digital alert reinforced the same patch warning before the attack?",
-        "What action did the later NHS alert tell organisations to take?",
-        "Who had to carry out the warning from the NHS alert chain?",
-        "What implementation step did those organisations need to complete before infection risk was reduced?",
-        "What unresolved compliance state did the incident reveal at the end of the supported-systems branch?",
+        "During the WannaCry attack on the NHS, what operating-system pattern described most infected devices?",
+        "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what support category did the majority fall into?",
+        "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what March Microsoft update could have protected the estate?",
+        "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what date was attached to the protective update?",
+        "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what first NHS cyber alert followed the publication date?",
+        "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what second NHS cyber alert reinforced the warning before the incident?",
+        "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what patching action did the alert sequence urge?",
+        "During the WannaCry attack on the NHS, along the infected-device operating-system chain, which local bodies were responsible for carrying out the patch advice?",
+        "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what implementation state followed after local bodies received the patch advice?",
+        "In the May 2017 NHS WannaCry attack, along the infected-device operating-system chain, what unresolved compliance finding remained after local patch-advice implementation?",
     ],
     "trust impact and diversions": [
-        "How many NHS trusts did NAO report as affected by the incident?",
-        "Within the affected-trust count, how many were infected and locked out of devices?",
-        "Within the infected locked-out group, how many acute trusts were included?",
-        "What ambulance-service consequence followed for that acute-trust subset?",
-        "Which listed London trust appears in the diversion branch?",
-        "Which hospital was attached to the London trust in NAO's ambulance-diversion list?",
-        "What service line was disrupted at that hospital in the diversion branch?",
-        "What patient consequence followed from those diverted emergency services?",
-        "What diversion data did NHS England not collect?",
-        "What did the missing diversion data mean for national bodies?",
+        "During the WannaCry attack on the NHS, what was the documented minimum count of affected NHS trusts?",
+        "During the WannaCry attack on the NHS, along the trust-impact diversion chain, what infected-and-locked-out subset was counted?",
+        "During the WannaCry attack on the NHS, along the trust-impact diversion chain, what acute-trust subset came from the locked-out trust group?",
+        "During the WannaCry attack on the NHS, along the trust-impact diversion chain, what emergency-transport outcome was recorded among acute trusts?",
+        "During the WannaCry attack on the NHS, along the trust-impact diversion chain, which London trust appeared in the ambulance-diversion sequence?",
+        "During the WannaCry attack on the NHS, along the trust-impact diversion chain, which hospital was tied to the London trust in the ambulance-diversion sequence?",
+        "During the WannaCry attack on the NHS, along the trust-impact diversion chain, what service line was disrupted at the London hospital in the ambulance-diversion sequence?",
+        "During the WannaCry attack on the NHS, along the trust-impact diversion chain, what patient consequence followed from emergency-ambulance disruption?",
+        "During the WannaCry attack on the NHS, along the trust-impact diversion chain, what diversion-count data was missing from the national record after emergency-ambulance disruption?",
+        "In the May 2017 NHS WannaCry attack, along the trust-impact diversion chain, what did the missing national diversion-count data mean for national bodies?",
     ],
     "cancelled appointments": [
-        "How many cancelled appointments did NHS England identify during the incident collection?",
-        "What did that identified appointment count represent in NHS England's collection?",
-        "What overall cancellation estimate did NHS England derive from the identified count?",
-        "What normal appointment-rate assumption supported that estimate?",
-        "Which appointment category was outside the initial count that used the normal-rate assumption?",
-        "How was that appointment category treated in the initial collection?",
-        "What later-discovered cancellations were also outside the initial collection?",
-        "What incomplete national picture did those late cancellations leave?",
-        "What total remained beyond the initial collection after those omissions?",
-        "What status applied to the real total once those exclusions were considered?",
+        "During the WannaCry attack on the NHS, what initial cancelled-appointment count did NHS England identify?",
+        "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, how was the initial appointment count classified in the collection?",
+        "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, what total cancellation estimate came from the initial count?",
+        "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, what normal-rate assumption supported the cancellation estimate?",
+        "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, which appointment category was excluded from the initial collection?",
+        "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, how was the excluded appointment category treated in the initial collection?",
+        "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, what additional cancellations were omitted after the initial collection cutoff?",
+        "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, what national picture resulted from omitted cancellation records?",
+        "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, what actual total did the incomplete national collection leave unresolved?",
+        "In the May 2017 NHS WannaCry attack, along the appointment-disruption accounting chain, what was NHS England's position on identifying the actual cancellation total?",
     ],
     "primary-care recovery": [
-        "How many primary care and other NHS organisations were infected?",
-        "How many GP practices were included in that infected primary-care group?",
-        "What remediation prerequisite applied to those GP practices?",
-        "What IT partner work addressed that remediation prerequisite?",
-        "What completion status had that remediation work reached by 17 May?",
-        "What remaining recovery milestone followed the 17 May completion level?",
-        "What happened at 5:30 pm when primary-care recovery was complete?",
-        "Which organisation made the stand-down decision at the end of that recovery branch?",
-        "What period did that national decision close?",
-        "How did the DHSC review characterise that closed period?",
+        "During the WannaCry attack on the NHS, how many primary-care and other NHS organisations were infected?",
+        "During the WannaCry attack on the NHS, along the primary-care recovery chain, how many GP practices were part of the infected primary-care group?",
+        "During the WannaCry attack on the NHS, along the primary-care recovery chain, what remediation prerequisite applied before patching?",
+        "During the WannaCry attack on the NHS, along the primary-care recovery chain, what IT-partner work addressed the remediation prerequisite?",
+        "During the WannaCry attack on the NHS, along the primary-care recovery chain, what completion level had the recovery work reached at the recorded midweek checkpoint?",
+        "During the WannaCry attack on the NHS, along the primary-care recovery chain, what completion milestone followed for the remaining recovery work?",
+        "During the WannaCry attack on the NHS, along the primary-care recovery chain, what incident-status event occurred once primary-care recovery was complete?",
+        "During the WannaCry attack on the NHS, along the primary-care recovery chain, which national decision coordinated the stand-down event?",
+        "During the WannaCry attack on the NHS, along the primary-care recovery chain, what period did the national stand-down decision close?",
+        "During the WannaCry attack on the NHS, along the primary-care recovery chain, how did the lessons-learned review describe the closed incident period?",
     ],
     "preparedness and CareCERT": [
-        "Which national department sat at the start of the pre-attack preparedness gap?",
-        "What compliance-checking mechanism was absent before the attack?",
-        "What kind of assurance would that absent mechanism have provided?",
-        "Which March-April alerts were covered by that compliance-assurance gap?",
-        "Which digital body issued those March-April alerts?",
-        "What local remedial authority did that digital body lack?",
-        "Which on-site programme nevertheless assessed hospital cyber-security?",
-        "How many trusts had been inspected by the on-site programme?",
-        "What pass result came out of those inspections?",
-        "What timing framed that failed-inspection result?",
+        "During the WannaCry attack on the NHS, which central department began the preparedness-gap chain?",
+        "During the WannaCry attack on the NHS, along the preparedness-gap chain, what formal local cyber-compliance mechanism was missing before the incident?",
+        "During the WannaCry attack on the NHS, along the preparedness-gap chain, what assurance function would the missing compliance mechanism have provided?",
+        "During the WannaCry attack on the NHS, along the preparedness-gap chain, what March-April cyber-advice area was covered by the assurance gap?",
+        "During the WannaCry attack on the NHS, along the preparedness-gap chain, which digital body issued the relevant March-April cyber alerts?",
+        "During the WannaCry attack on the NHS, along the preparedness-gap chain, what remedial authority was unavailable in the local cyber-advice sequence?",
+        "During the WannaCry attack on the NHS, along the preparedness-gap chain, what on-site cyber-assessment programme existed despite the missing remedial authority?",
+        "During the WannaCry attack on the NHS, along the preparedness-gap chain, what inspection coverage had the on-site assessment programme reached before the incident?",
+        "During the WannaCry attack on the NHS, along the preparedness-gap chain, what pass outcome did the pre-incident on-site inspection coverage produce?",
+        "In the May 2017 NHS WannaCry attack, along the preparedness-gap chain, what timing qualified the pre-incident pass-outcome finding?",
     ],
 }
 
@@ -973,15 +999,6 @@ CHAIN_ORDER = [
     "cancelled appointments",
     "preparedness and CareCERT",
 ]
-
-
-def normalize_entity(value: Any) -> str:
-    return " ".join(str(value).casefold().split())
-
-
-def entity_mentioned(text: str, entity: str) -> bool:
-    normalized_entity = normalize_entity(entity)
-    return bool(normalized_entity and normalized_entity in normalize_entity(text))
 
 
 def build_facts() -> list[Fact]:
@@ -1008,62 +1025,95 @@ def build_facts() -> list[Fact]:
     ]
 
 
-def shortest_directed_distance(
-    triples: list[tuple[str, str, str]],
-    anchors: list[str],
-    answer: str,
-) -> int | None:
-    adjacency: dict[str, set[str]] = defaultdict(set)
-    nodes: set[str] = set()
-    for subject, _relation, obj in triples:
-        subject_key = normalize_entity(subject)
-        obj_key = normalize_entity(obj)
-        adjacency[subject_key].add(obj_key)
-        nodes.add(subject_key)
-        nodes.add(obj_key)
-    starts = [normalize_entity(anchor) for anchor in anchors if normalize_entity(anchor) in nodes]
-    target = normalize_entity(answer)
-    if not starts or target not in nodes:
-        return None
-    queue: deque[tuple[str, int]] = deque((start, 0) for start in starts)
-    seen = set(starts)
-    while queue:
-        node, distance = queue.popleft()
-        if node == target:
-            return distance
-        for neighbor in sorted(adjacency.get(node, set())):
-            if neighbor not in seen:
-                seen.add(neighbor)
-                queue.append((neighbor, distance + 1))
-    return None
-
-
 def path_nodes(path: list[list[str]]) -> list[str]:
     if not path:
         return []
     return [path[0][0], *[edge[2] for edge in path]]
 
 
-def build_questions(triples: list[tuple[str, str, str]]) -> list[dict[str, Any]]:
+def build_questions(
+    triples: list[tuple[str, str, str]],
+    trusted_context: str,
+) -> list[dict[str, Any]]:
     chains = chain_specs()
     questions: list[dict[str, Any]] = []
+    graph_entities = {node for subject, _relation, obj in triples for node in (subject, obj)}
+    aliases = expanded_aliases(graph_entities, ENTITY_ALIASES)
     for hop in range(1, 11):
         for question_index, chain_name in enumerate(CHAIN_ORDER, start=1):
             path = [list(edge.triple()) for edge in chains[chain_name][:hop]]
             question = QUESTION_TEXT[chain_name][hop - 1]
             answer = path[-1][2]
-            anchors = [ROOT_ENTITY]
+            anchor_info = select_question_anchors(
+                question,
+                triples,
+                answer,
+                hop,
+                graph_entities,
+                aliases,
+                prefer_root=True,
+            )
+            anchors = anchor_info["question_anchor_entities"]
+            question_id = f"nhs_wannacry_h{hop:02d}_q{question_index:02d}"
+            if not anchors:
+                raise ValueError(
+                    f"{question_id}: question does not express a valid graph anchor "
+                    f"(detected={anchor_info['detected_entities']})"
+                )
             distance = shortest_directed_distance(triples, anchors, answer)
             final_subject = path[-1][0]
-            final_subject_mentioned = entity_mentioned(question, final_subject)
-            answer_mentioned = entity_mentioned(question, answer)
-            question_id = f"nhs_wannacry_h{hop:02d}_q{question_index:02d}"
+            flags = shortcut_flags(
+                question,
+                path,
+                answer,
+                aliases,
+                triples=triples,
+                question_anchor_entities=anchors,
+                hop_count=hop,
+            )
+            detected_entities = anchor_info["detected_entities"]
+            all_shortcut_entities: list[str] = []
+            anchor_label_set = {normalize_entity(anchor) for anchor in anchors}
+            for entity in detected_entities:
+                if normalize_entity(entity) in anchor_label_set:
+                    continue
+                entity_distance = shortest_directed_distance(triples, [entity], answer)
+                if entity_distance is not None and entity_distance < hop:
+                    all_shortcut_entities.append(entity)
+            flags["shortcut_entities"] = sorted(set(all_shortcut_entities))
+            flags["mentioned_entities"] = detected_entities
+            flags["late_chain_entity_mentioned"] = any(
+                normalize_entity(entity) != normalize_entity(final_subject)
+                for entity in flags["shortcut_entities"]
+            )
+            flags["one_hop_parent_mentioned"] = any(
+                normalize_entity(entity) == normalize_entity(final_subject)
+                for entity in flags["shortcut_entities"]
+            ) or (
+                flags["direct_final_subject_mentioned"]
+                and normalize_entity(final_subject) not in anchor_label_set
+            )
+            ambiguous_discourse_markers = detect_ambiguous_discourse(question)
+            local_audit = locality_audit(question, answer, trusted_context)
             if distance != hop:
                 raise ValueError(f"{question_id}: shortest distance {distance} != hop {hop}")
-            if hop > 1 and final_subject_mentioned:
+            if normalize_entity(path[0][0]) not in anchor_label_set:
+                raise ValueError(
+                    f"{question_id}: expected_path does not start at a detected question anchor"
+                )
+            if ambiguous_discourse_markers:
+                raise ValueError(
+                    f"{question_id}: ambiguous discourse markers remain: {ambiguous_discourse_markers}"
+                )
+            if hop > 1 and flags["direct_final_subject_mentioned"]:
                 raise ValueError(f"{question_id}: question mentions final subject")
-            if hop > 1 and answer_mentioned:
+            if hop > 1 and flags["expected_answer_mentioned"]:
                 raise ValueError(f"{question_id}: question mentions expected answer")
+            if flags["shortcut_entities"]:
+                raise ValueError(
+                    f"{question_id}: question mentions shorter-path graph entities: "
+                    f"{flags['shortcut_entities']}"
+                )
             entities = sorted({node for edge in path for node in (edge[0], edge[2])})
             relations = sorted({edge[1] for edge in path})
             questions.append(
@@ -1073,18 +1123,36 @@ def build_questions(triples: list[tuple[str, str, str]]) -> list[dict[str, Any]]
                     "question": question,
                     "expected_answer": answer,
                     "expected_path": path,
+                    "graph_root_entity": ROOT_ENTITY,
+                    "question_anchor_entities": anchors,
                     "reasoning_anchor_entities": anchors,
+                    "anchor_detection": {
+                        "anchor_detected_from_question": True,
+                        "anchor_detection_method": "alias_match",
+                        "matched_aliases": anchor_info["matched_aliases"],
+                        "detected_entities": anchors,
+                    },
                     "hop_semantics": "minimum_required_path",
                     "shortcut_audit": {
+                        "shortest_distance_from_question_anchor": distance,
                         "shortest_anchor_distance": distance,
-                        "direct_final_subject_mentioned": final_subject_mentioned,
-                        "manual_reviewed": True,
+                        "direct_final_subject_mentioned": flags["direct_final_subject_mentioned"],
                         "final_edge_subject": final_subject,
-                        "expected_answer_mentioned": answer_mentioned,
+                        "expected_answer_mentioned": flags["expected_answer_mentioned"],
+                        "late_chain_entity_mentioned": flags["late_chain_entity_mentioned"],
+                        "one_hop_parent_mentioned": flags["one_hop_parent_mentioned"],
+                        "mentioned_entities": flags["mentioned_entities"],
+                        "shortcut_entities": flags["shortcut_entities"],
+                        "ambiguous_discourse_markers": ambiguous_discourse_markers,
+                        "human_review_status": "not_reviewed",
+                        "locality": local_audit,
                         "unresolved_shortcut": False,
                         "review_notes": (
-                            "Root-anchored shortest directed path equals declared hop count; "
-                            "question avoids exact final-edge subject and answer strings."
+                            "Generator notes only; not a human review. Question anchor was "
+                            "detected from question text; shortest directed distance from the "
+                            "detected anchor equals declared hop count; automated checks found "
+                            "no late-chain entity, final-edge subject, expected-answer, or "
+                            "ambiguous discourse shortcut."
                         ),
                     },
                     "required_entities": entities,
@@ -1220,6 +1288,11 @@ def graph_metrics(facts: list[Fact], questions: list[dict[str, Any]], trusted_co
         ),
         "shortcut_count": sum(1 for row in audit_rows if row["shortcut_detected"]),
         "unresolved_shortcuts": sum(1 for row in audit_rows if row["unresolved_shortcut"]),
+        "ambiguous_discourse_count": sum(1 for row in audit_rows if row["ambiguous_discourse_markers"]),
+        "locality_warning_count": sum(1 for row in audit_rows if row["locality"]["locality_warning"]),
+        "unreviewed_count": sum(
+            1 for row in audit_rows if row["human_review_status"] == "not_reviewed"
+        ),
         "trusted_context_contains_nw_f": "nw_f" in trusted_context,
         "trusted_context_contains_expected_path": "expected_path" in trusted_context.lower(),
         "trusted_context_contains_expected_answer": "expected_answer" in trusted_context.lower(),
@@ -1256,6 +1329,8 @@ def validate_artifacts(
         errors.append("expected no duplicate triples")
     if metrics["unresolved_shortcuts"]:
         errors.append("expected zero unresolved shortcuts")
+    if metrics["ambiguous_discourse_count"]:
+        errors.append("expected zero ambiguous discourse markers")
     if (
         metrics["trusted_context_contains_nw_f"]
         or metrics["trusted_context_contains_expected_path"]
@@ -1268,6 +1343,14 @@ def validate_artifacts(
             errors.append(f"{question['id']}: path length mismatch")
         if path[0][0] != ROOT_ENTITY:
             errors.append(f"{question['id']}: path does not start at root")
+        if question.get("graph_root_entity") != ROOT_ENTITY:
+            errors.append(f"{question['id']}: graph_root_entity mismatch")
+        if question.get("question_anchor_entities") != question.get("reasoning_anchor_entities"):
+            errors.append(f"{question['id']}: anchor alias fields diverge")
+        if not question.get("question_anchor_entities"):
+            errors.append(f"{question['id']}: missing question anchor")
+        if question.get("shortcut_audit", {}).get("human_review_status") != "not_reviewed":
+            errors.append(f"{question['id']}: human review status should be pending")
         if len(path_nodes(path)) != len(set(path_nodes(path))):
             errors.append(f"{question['id']}: repeated path node")
         if len({tuple(edge) for edge in path}) != len(path):
@@ -1294,41 +1377,64 @@ def audit_questions(
     for question in questions:
         path = question["expected_path"]
         final_subject = path[-1][0]
+        anchors = question["question_anchor_entities"]
         distance = shortest_directed_distance(
             triples,
-            question["reasoning_anchor_entities"],
+            anchors,
             question["expected_answer"],
         )
-        direct_final_subject_mentioned = entity_mentioned(question["question"], final_subject)
-        expected_answer_mentioned = entity_mentioned(question["question"], question["expected_answer"])
+        shortcut_audit = question["shortcut_audit"]
+        direct_final_subject_mentioned = shortcut_audit["direct_final_subject_mentioned"]
+        expected_answer_mentioned = shortcut_audit["expected_answer_mentioned"]
+        late_chain_entity_mentioned = shortcut_audit["late_chain_entity_mentioned"]
+        one_hop_parent_mentioned = shortcut_audit["one_hop_parent_mentioned"]
+        ambiguous_discourse_markers = shortcut_audit["ambiguous_discourse_markers"]
         shortcut_detected = bool(
             distance is not None
             and distance < question["hop_count"]
             or (question["hop_count"] > 1 and direct_final_subject_mentioned)
             or (question["hop_count"] > 1 and expected_answer_mentioned)
+            or late_chain_entity_mentioned
+            or one_hop_parent_mentioned
         )
         path_node_list = path_nodes(path)
         repeated_nodes = len(path_node_list) != len(set(path_node_list))
         duplicate_edges = len({tuple(edge) for edge in path}) != len(path)
-        unresolved = bool(shortcut_detected or repeated_nodes or duplicate_edges or distance != question["hop_count"])
+        unresolved = bool(
+            shortcut_detected
+            or repeated_nodes
+            or duplicate_edges
+            or distance != question["hop_count"]
+            or ambiguous_discourse_markers
+        )
         rows.append(
             {
                 "id": question["id"],
                 "hop_count": question["hop_count"],
                 "question": question["question"],
+                "graph_root_entity": question["graph_root_entity"],
+                "question_anchor_entities": anchors,
                 "reasoning_anchor_entities": question["reasoning_anchor_entities"],
+                "anchor_detection": question["anchor_detection"],
                 "expected_answer": question["expected_answer"],
                 "final_edge_subject": final_subject,
                 "expected_path_length": len(path),
+                "shortest_distance_from_question_anchor": distance,
                 "shortest_anchor_distance": distance,
                 "direct_final_subject_mentioned": direct_final_subject_mentioned,
                 "expected_answer_mentioned": expected_answer_mentioned,
+                "late_chain_entity_mentioned": late_chain_entity_mentioned,
+                "one_hop_parent_mentioned": one_hop_parent_mentioned,
+                "mentioned_entities": shortcut_audit["mentioned_entities"],
+                "shortcut_entities": shortcut_audit["shortcut_entities"],
+                "ambiguous_discourse_markers": ambiguous_discourse_markers,
+                "human_review_status": shortcut_audit["human_review_status"],
+                "locality": shortcut_audit["locality"],
                 "repeated_nodes": repeated_nodes,
                 "duplicate_edges": duplicate_edges,
                 "shortcut_detected": shortcut_detected,
                 "unresolved_shortcut": unresolved,
-                "manual_reviewed": question["shortcut_audit"]["manual_reviewed"],
-                "review_notes": question["shortcut_audit"]["review_notes"],
+                "review_notes": shortcut_audit["review_notes"],
             }
         )
     return rows
@@ -1342,7 +1448,7 @@ def build_dataset(facts: list[Fact], questions: list[dict[str, Any]], metrics: d
         "description": (
             "Source-grounded 50-question multihop set on the documented May 2017 WannaCry "
             "impact on the NHS in England, regenerated so declared hops equal the minimum "
-            "trusted directed path from question anchors to answers."
+            "trusted directed path from anchors explicitly detected in question text to answers."
         ),
         "source_manifest_path": "data/sources/nhs_wannacry/source_manifest.json",
         "requires_fact_provenance": True,
@@ -1350,14 +1456,16 @@ def build_dataset(facts: list[Fact], questions: list[dict[str, Any]], metrics: d
             "definition": HOP_DEFINITION,
             "traversal": "directed",
             "alias_normalization": (
-                "case-insensitive exact entity string match; ordinary linguistic coreference "
-                "to the incident root allowed when the question refers to WannaCry/the NHS attack"
+                "case-insensitive alias matching; questions must express an anchor entity and "
+                "validation must not silently fall back to the graph root"
             ),
             "relation_paraphrase": "questions may paraphrase relations but must not use raw relation labels as quiz keys",
             "shortcut": (
                 "any shorter directed path from an explicit question anchor entity to the answer, "
-                "or naming the final-edge subject in questions with hop_count>1"
+                "naming any non-anchor graph entity with a shorter answer distance, naming the "
+                "final-edge subject, or naming the expected answer in questions with hop_count>1"
             ),
+            "human_review": "pending; shortcut audits are generator notes only",
             "inflation": "paths that insert semantically empty intermediate noun phrases are invalid",
         },
         "trusted_context": trusted_context,
@@ -1379,6 +1487,9 @@ def build_dataset(facts: list[Fact], questions: list[dict[str, Any]], metrics: d
             "duplicate_triples": metrics["duplicate_triples"],
             "shortcut_count": metrics["shortcut_count"],
             "unresolved_shortcuts": metrics["unresolved_shortcuts"],
+            "ambiguous_discourse_count": metrics["ambiguous_discourse_count"],
+            "locality_warning_count": metrics["locality_warning_count"],
+            "unreviewed_count": metrics["unreviewed_count"],
         },
         "questions": questions,
     }
@@ -1399,6 +1510,11 @@ def build_audit(dataset: dict[str, Any]) -> dict[str, Any]:
         "question_count": len(rows),
         "shortcut_count": sum(1 for row in rows if row["shortcut_detected"]),
         "unresolved_shortcuts": sum(1 for row in rows if row["unresolved_shortcut"]),
+        "ambiguous_discourse_count": sum(1 for row in rows if row["ambiguous_discourse_markers"]),
+        "locality_warning_count": sum(1 for row in rows if row["locality"]["locality_warning"]),
+        "unreviewed_count": sum(
+            1 for row in rows if row["human_review_status"] == "not_reviewed"
+        ),
         "hop_distribution": {str(hop): hop_distribution[hop] for hop in sorted(hop_distribution)},
         "questions": rows,
     }
@@ -1411,42 +1527,81 @@ def build_audit_markdown(audit: dict[str, Any], dataset: dict[str, Any]) -> str:
         "",
         f"Definition: {audit['definition']}",
         "",
+        "## Graph depth vs question-required reasoning depth",
+        "",
+        "- **Graph depth** is shortest directed distance from the benchmark graph root.",
+        "- **Question-required reasoning depth** is shortest directed distance from",
+        "  anchors detected in the question wording itself.",
+        "- This audit measures the second quantity. Validation fails if a question does",
+        "  not express its anchors, if discourse anaphora remains, if a shorter-path",
+        "  entity/alias is exposed, or if `manual_reviewed` is auto-claimed.",
+        "",
         "## Summary",
         "",
         f"- Preliminary shortcuts before rewrite: {audit['preliminary_shortcuts_before_rewrite']}",
         f"- Shortcuts after rewrite: {audit['shortcut_count']}",
         f"- Unresolved shortcuts after rewrite: {audit['unresolved_shortcuts']}",
+        f"- Ambiguous discourse markers remaining: {audit['ambiguous_discourse_count']}",
+        f"- Locality warnings: {audit['locality_warning_count']}",
+        f"- Human review pending: {audit['unreviewed_count']} questions",
         f"- Entities: {metrics['entity_count']}",
         f"- Facts: {metrics['edge_count']}",
         f"- Relation types: {metrics['relation_count']}",
         f"- Root out-degree: {metrics['root_out_degree']}",
         "",
+        "Human review status: all rows are `not_reviewed`; automated checks are generator-side audits only.",
+        "",
         "## Hop 8-10 audit table",
         "",
-        "| id | hop | shortest distance | final subject mentioned | answer mentioned | unresolved | answer |",
-        "| --- | ---: | ---: | --- | --- | --- | --- |",
+        "| id | hop | anchor distance | final subject mentioned | answer mentioned | late-chain mention | locality | review | answer |",
+        "| --- | ---: | ---: | --- | --- | --- | --- | --- | --- |",
     ]
     for row in audit["questions"]:
         if row["hop_count"] < 8:
             continue
         lines.append(
-            "| {id} | {hop_count} | {shortest_anchor_distance} | {direct_final_subject_mentioned} | "
-            "{expected_answer_mentioned} | {unresolved_shortcut} | {expected_answer} |".format(**row)
+            "| {id} | {hop_count} | {shortest_distance_from_question_anchor} | "
+            "{direct_final_subject_mentioned} | {expected_answer_mentioned} | "
+            "{late_chain_entity_mentioned} | {locality_status} | {human_review_status} | "
+            "{expected_answer} |".format(
+                **row,
+                locality_status=row["locality"]["status"],
+            )
         )
     lines.extend(
         [
             "",
             "## Full per-question audit",
             "",
-            "| id | hop | path length | shortest distance | final subject mentioned | unresolved |",
-            "| --- | ---: | ---: | ---: | --- | --- |",
+            "| id | hop | path length | anchor distance | anchor | ambiguous refs | locality | unresolved |",
+            "| --- | ---: | ---: | ---: | --- | --- | --- | --- |",
         ]
     )
     for row in audit["questions"]:
         lines.append(
-            "| {id} | {hop_count} | {expected_path_length} | {shortest_anchor_distance} | "
-            "{direct_final_subject_mentioned} | {unresolved_shortcut} |".format(**row)
+            "| {id} | {hop_count} | {expected_path_length} | "
+            "{shortest_distance_from_question_anchor} | {anchor} | {ambiguous} | "
+            "{locality_status} | {unresolved_shortcut} |".format(
+                **row,
+                anchor=", ".join(row["question_anchor_entities"]),
+                ambiguous=", ".join(row["ambiguous_discourse_markers"]) or "none",
+                locality_status=row["locality"]["status"],
+            )
         )
+    warning_rows = [row for row in audit["questions"] if row["locality"]["locality_warning"]]
+    lines.extend(["", "## Locality warnings", ""])
+    if not warning_rows:
+        lines.append("No locality warnings.")
+    else:
+        lines.extend(
+            [
+                "| id | answer | closest context sentence |",
+                "| --- | --- | --- |",
+            ]
+        )
+        for row in warning_rows:
+            sentence = row["locality"]["closest_context_sentence"].replace("|", "\\|")
+            lines.append(f"| {row['id']} | {row['expected_answer']} | {sentence} |")
     lines.append("")
     return "\n".join(lines)
 
@@ -1480,12 +1635,30 @@ def build_inventory(facts: list[Fact], metrics: dict[str, Any]) -> dict[str, Any
     }
 
 
-def build_artifacts() -> tuple[dict[str, Any], dict[str, Any], str, dict[str, Any], dict[str, Any]]:
+def build_human_review_manifest() -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "description": (
+            "External human review manifest for NHS WannaCry hop-semantics. "
+            "Entries are empty until a human reviews."
+        ),
+        "reviews": [],
+    }
+
+
+def build_artifacts() -> tuple[
+    dict[str, Any],
+    dict[str, Any],
+    str,
+    dict[str, Any],
+    dict[str, Any],
+    dict[str, Any],
+]:
     facts = build_facts()
     triples = [(fact.subject, fact.relation, fact.object) for fact in facts]
-    questions = build_questions(triples)
-    validate_question_ids(questions)
     trusted_context = trusted_context_prose()
+    questions = build_questions(triples, trusted_context)
+    validate_question_ids(questions)
     metrics = graph_metrics(facts, questions, trusted_context)
     validation_errors = validate_artifacts(facts, questions, metrics)
     if validation_errors:
@@ -1494,9 +1667,10 @@ def build_artifacts() -> tuple[dict[str, Any], dict[str, Any], str, dict[str, An
     audit = build_audit(dataset)
     audit_markdown = build_audit_markdown(audit, dataset)
     inventory = build_inventory(facts, metrics)
+    human_review = build_human_review_manifest()
     if audit["unresolved_shortcuts"] != 0:
         raise ValueError("audit contains unresolved shortcuts")
-    return dataset, audit, audit_markdown, inventory, metrics
+    return dataset, audit, audit_markdown, inventory, metrics, human_review
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -1520,25 +1694,33 @@ def print_self_check(metrics: dict[str, Any], audit: dict[str, Any]) -> None:
     print(f"isolate_count: {metrics['isolate_count']}")
     print(f"shortcut_count: {audit['shortcut_count']}")
     print(f"unresolved_shortcuts: {audit['unresolved_shortcuts']}")
+    print(f"ambiguous_discourse_count: {audit['ambiguous_discourse_count']}")
+    print(f"locality_warning_count: {audit['locality_warning_count']}")
+    print(f"unreviewed_count: {audit['unreviewed_count']}")
     print("relation_multiplicity:")
     for relation, count in metrics["relation_counts"].items():
         print(f"  {relation}: {count}")
     print("hop8_10_audit:")
-    print("  id                         hop  shortest  final_subject  answer  unresolved")
+    print("  id                         hop  shortest  final_subject  answer  locality  unresolved")
     for row in audit["questions"]:
         if row["hop_count"] >= 8:
             print(
                 "  {id:<26} {hop_count:>2}   {shortest_anchor_distance:>2}       "
                 "{direct_final_subject_mentioned!s:<5}          "
-                "{expected_answer_mentioned!s:<5}   {unresolved_shortcut!s:<5}".format(**row)
+                "{expected_answer_mentioned!s:<5}   {locality_status:<7}   "
+                "{unresolved_shortcut!s:<5}".format(
+                    **row,
+                    locality_status=row["locality"]["status"],
+                )
             )
 
 
 def main() -> None:
-    dataset, audit, audit_markdown, inventory, metrics = build_artifacts()
+    dataset, audit, audit_markdown, inventory, metrics, human_review = build_artifacts()
     write_json(DATASET_OUT, dataset)
     write_json(AUDIT_OUT, audit)
     write_text(AUDIT_MD_OUT, audit_markdown)
+    write_json(HUMAN_REVIEW_OUT, human_review)
     write_json(INVENTORY_OUT, inventory)
     print_self_check(metrics, audit)
 

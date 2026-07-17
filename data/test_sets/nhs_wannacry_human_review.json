@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "description": "External human review manifest for NHS WannaCry hop-semantics. Entries are empty until a human reviews.",
+  "reviews": []
+}

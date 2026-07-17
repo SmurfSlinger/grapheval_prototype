@@ -22,6 +22,17 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.benchmark_lock import BenchmarkLock, BenchmarkLockError
+from scripts.nhs_wannacry_hop_semantics import (
+    ENTITY_ALIASES,
+    detect_ambiguous_discourse,
+    detect_entities_in_text,
+    expanded_aliases,
+    locality_audit,
+    matched_aliases_for_entity,
+    normalize_entity as normalize_hop_entity,
+    shortest_directed_distance as nhs_shortest_directed_distance,
+    shortcut_flags,
+)
 from src.config import DEFAULT_MODEL, NEO4J_ENABLED, OLLAMA_NUM_CTX, PROJECT_ROOT
 from src.main import get_provider
 from src.models import Example, SubQuestionStopReason
@@ -263,35 +274,7 @@ def compute_shortest_directed_distance(
     This helper is intentionally relation-agnostic so it can be reused by
     datasets beyond NHS without changing their existing validation contract.
     """
-    target = normalize_entity_label(answer)
-    if not target:
-        return None
-    adjacency: dict[str, set[str]] = defaultdict(set)
-    graph_nodes: set[str] = set()
-    for subject, _relation, obj in triples:
-        subject_key = normalize_entity_label(subject)
-        obj_key = normalize_entity_label(obj)
-        adjacency[subject_key].add(obj_key)
-        graph_nodes.add(subject_key)
-        graph_nodes.add(obj_key)
-    starts = [
-        normalize_entity_label(anchor)
-        for anchor in anchors
-        if normalize_entity_label(anchor) in graph_nodes
-    ]
-    if not starts or target not in graph_nodes:
-        return None
-    queue: list[tuple[str, int]] = [(start, 0) for start in starts]
-    seen = set(starts)
-    for node, distance in queue:
-        if node == target:
-            return distance
-        for neighbor in adjacency.get(node, set()):
-            if neighbor in seen:
-                continue
-            seen.add(neighbor)
-            queue.append((neighbor, distance + 1))
-    return None
+    return nhs_shortest_directed_distance(triples, anchors, answer)
 
 
 def entity_string_mentioned(text: Any, entity: Any) -> bool:
@@ -333,12 +316,18 @@ def shortcut_audit_metrics(
         "final_subject_mention_count": 0,
         "answer_mention_count": 0,
         "missing_shortcut_audit_count": 0,
+        "late_chain_entity_mention_count": 0,
+        "one_hop_parent_mention_count": 0,
+        "ambiguous_discourse_count": 0,
+        "locality_warning_count": 0,
+        "unreviewed_count": 0,
+        "missing_anchor_detection_count": 0,
     }
     for item in payload.get("questions", []):
         if not isinstance(item, dict) or not item.get("expected_path"):
             continue
         hop_count = item.get("hop_count")
-        anchors = item.get("reasoning_anchor_entities") or []
+        anchors = item.get("question_anchor_entities") or item.get("reasoning_anchor_entities") or []
         distance = compute_shortest_directed_distance(
             triples,
             anchors,
@@ -358,6 +347,21 @@ def shortcut_audit_metrics(
                 metrics["answer_mention_count"] += 1
         if "shortcut_audit" not in item:
             metrics["missing_shortcut_audit_count"] += 1
+            continue
+        shortcut_audit = item.get("shortcut_audit") or {}
+        if shortcut_audit.get("late_chain_entity_mentioned"):
+            metrics["late_chain_entity_mention_count"] += 1
+        if shortcut_audit.get("one_hop_parent_mentioned"):
+            metrics["one_hop_parent_mention_count"] += 1
+        if shortcut_audit.get("ambiguous_discourse_markers"):
+            metrics["ambiguous_discourse_count"] += 1
+        locality = shortcut_audit.get("locality") or {}
+        if locality.get("locality_warning"):
+            metrics["locality_warning_count"] += 1
+        if shortcut_audit.get("human_review_status") == "not_reviewed":
+            metrics["unreviewed_count"] += 1
+        if not item.get("anchor_detection"):
+            metrics["missing_anchor_detection_count"] += 1
     return metrics
 
 
@@ -552,6 +556,7 @@ def validate_test_set(payload: dict[str, Any]) -> dict[str, Any]:
     seen_ids: set[str] = set()
     ten_hop_branches: set[tuple[str, str, str]] = set()
     graph_nodes = {node for subject, _, obj in facts for node in (subject, obj)}
+    entity_aliases = expanded_aliases(graph_nodes, ENTITY_ALIASES)
     for index, item in enumerate(questions, start=1):
         missing = required_question_fields - set(item)
         if missing:
@@ -570,7 +575,12 @@ def validate_test_set(payload: dict[str, Any]) -> dict[str, Any]:
         if not path:
             errors.append(f"{question_id}: expected_path is empty")
             continue
-        if path[0][0] != root:
+        if enforce_hop_semantics:
+            # Question-required paths start at a question anchor. That anchor may
+            # equal the graph root, but the validator must not require root when
+            # a different early-chain question anchor is intentionally used.
+            pass
+        elif path[0][0] != root:
             errors.append(f"{question_id}: path does not start at root {root!r}")
         if any(tuple(edge) not in facts for edge in path):
             errors.append(f"{question_id}: path contains edge absent from graph")
@@ -592,18 +602,66 @@ def validate_test_set(payload: dict[str, Any]) -> dict[str, Any]:
             ten_hop_branches.add(tuple(path[0]))
 
         if enforce_hop_semantics:
-            anchors = item.get("reasoning_anchor_entities")
+            anchors = item.get("question_anchor_entities")
+            legacy_anchors = item.get("reasoning_anchor_entities")
             shortcut_audit = item.get("shortcut_audit")
             if not isinstance(anchors, list) or not anchors:
                 errors.append(
-                    f"{question_id}: reasoning_anchor_entities must be a non-empty list"
+                    f"{question_id}: question_anchor_entities must be a non-empty list"
                 )
                 anchors = []
             else:
                 anchor_labels = {normalize_entity_label(anchor) for anchor in anchors}
                 if normalize_entity_label(path[0][0]) not in anchor_labels:
                     errors.append(
-                        f"{question_id}: expected_path does not start at a reasoning anchor"
+                        f"{question_id}: expected_path does not start at a question anchor"
+                    )
+            if legacy_anchors is not None and legacy_anchors != anchors:
+                errors.append(
+                    f"{question_id}: reasoning_anchor_entities must alias question_anchor_entities"
+                )
+            if item.get("graph_root_entity") != root:
+                errors.append(f"{question_id}: graph_root_entity must match root_entity")
+            detected_entities = detect_entities_in_text(
+                str(item["question"]),
+                graph_nodes,
+                entity_aliases,
+            )
+            detected_labels = {normalize_entity_label(entity) for entity in detected_entities}
+            missing_detected_anchors = [
+                anchor
+                for anchor in anchors
+                if normalize_entity_label(anchor) not in detected_labels
+            ]
+            if missing_detected_anchors:
+                errors.append(
+                    f"{question_id}: question anchors not detected in question text: "
+                    f"{missing_detected_anchors}"
+                )
+            anchor_detection = item.get("anchor_detection")
+            if not isinstance(anchor_detection, dict):
+                errors.append(f"{question_id}: anchor_detection must be present")
+            else:
+                if anchor_detection.get("anchor_detected_from_question") is not True:
+                    errors.append(
+                        f"{question_id}: anchor_detection must report question-text detection"
+                    )
+                if anchor_detection.get("anchor_detection_method") != "alias_match":
+                    errors.append(
+                        f"{question_id}: anchor_detection_method must be alias_match"
+                    )
+                if anchor_detection.get("detected_entities") != anchors:
+                    errors.append(
+                        f"{question_id}: anchor_detection.detected_entities mismatches anchors"
+                    )
+                expected_aliases = []
+                for anchor in anchors:
+                    expected_aliases.extend(
+                        matched_aliases_for_entity(str(item["question"]), str(anchor), entity_aliases)
+                    )
+                if sorted(anchor_detection.get("matched_aliases") or []) != sorted(expected_aliases):
+                    errors.append(
+                        f"{question_id}: anchor_detection.matched_aliases mismatches question text"
                     )
             if item.get("hop_semantics") != "minimum_required_path":
                 errors.append(
@@ -620,38 +678,120 @@ def validate_test_set(payload: dict[str, Any]) -> dict[str, Any]:
             )
             if computed_distance != hop_count:
                 errors.append(
-                    f"{question_id}: shortest_anchor_distance {computed_distance} != hop_count {hop_count}"
+                    f"{question_id}: shortest distance from question anchor {computed_distance} != hop_count {hop_count}"
                 )
             final_subject = path[-1][0]
-            final_subject_mentioned = entity_string_mentioned(
-                item["question"],
-                final_subject,
+            recomputed_flags = shortcut_flags(
+                str(item["question"]),
+                path,
+                str(item["expected_answer"]),
+                entity_aliases,
+                triples=triples,
+                question_anchor_entities=[str(anchor) for anchor in anchors],
+                hop_count=hop_count if isinstance(hop_count, int) else None,
             )
+            final_subject_mentioned = recomputed_flags["direct_final_subject_mentioned"]
             if hop_count > 1 and final_subject_mentioned:
                 errors.append(
                     f"{question_id}: question mentions final-edge subject {final_subject!r}"
                 )
-            if hop_count > 1 and entity_string_mentioned(
-                item["question"],
-                item["expected_answer"],
-            ):
+            answer_mentioned = recomputed_flags["expected_answer_mentioned"]
+            if hop_count > 1 and answer_mentioned:
                 errors.append(
                     f"{question_id}: question mentions expected answer {item['expected_answer']!r}"
+                )
+            anchor_label_set = {normalize_hop_entity(anchor) for anchor in anchors}
+            shortcut_entities: list[str] = []
+            for entity in detected_entities:
+                if normalize_hop_entity(entity) in anchor_label_set:
+                    continue
+                entity_distance = compute_shortest_directed_distance(
+                    triples,
+                    [entity],
+                    item["expected_answer"],
+                )
+                if (
+                    isinstance(hop_count, int)
+                    and entity_distance is not None
+                    and entity_distance < hop_count
+                ):
+                    shortcut_entities.append(entity)
+            if shortcut_entities:
+                errors.append(
+                    f"{question_id}: question mentions shorter-path graph entities: "
+                    f"{sorted(shortcut_entities)}"
+                )
+            ambiguous_discourse_markers = detect_ambiguous_discourse(str(item["question"]))
+            if ambiguous_discourse_markers:
+                errors.append(
+                    f"{question_id}: ambiguous discourse markers remain: "
+                    f"{ambiguous_discourse_markers}"
                 )
             if not isinstance(shortcut_audit, dict):
                 errors.append(f"{question_id}: shortcut_audit must be present")
                 continue
-            if shortcut_audit.get("manual_reviewed") is not True:
+            if "manual_reviewed" in shortcut_audit:
                 errors.append(
-                    f"{question_id}: shortcut_audit.manual_reviewed must be true"
+                    f"{question_id}: shortcut_audit.manual_reviewed must not be present"
                 )
-            if shortcut_audit.get("shortest_anchor_distance") != computed_distance:
+            if shortcut_audit.get("human_review_status") not in {"not_reviewed", "reviewed"}:
+                errors.append(
+                    f"{question_id}: shortcut_audit.human_review_status is invalid"
+                )
+            if shortcut_audit.get("shortest_distance_from_question_anchor") != computed_distance:
+                errors.append(
+                    f"{question_id}: shortcut_audit.shortest_distance_from_question_anchor mismatches computed distance"
+                )
+            if (
+                "shortest_anchor_distance" in shortcut_audit
+                and shortcut_audit.get("shortest_anchor_distance") != computed_distance
+            ):
                 errors.append(
                     f"{question_id}: shortcut_audit.shortest_anchor_distance mismatches computed distance"
                 )
             if shortcut_audit.get("direct_final_subject_mentioned") != final_subject_mentioned:
                 errors.append(
                     f"{question_id}: shortcut_audit.direct_final_subject_mentioned mismatches question text"
+                )
+            if shortcut_audit.get("expected_answer_mentioned") != answer_mentioned:
+                errors.append(
+                    f"{question_id}: shortcut_audit.expected_answer_mentioned mismatches question text"
+                )
+            if shortcut_audit.get("late_chain_entity_mentioned") != bool(
+                recomputed_flags["late_chain_entity_mentioned"]
+                or [
+                    entity
+                    for entity in shortcut_entities
+                    if normalize_hop_entity(entity) != normalize_hop_entity(final_subject)
+                ]
+            ):
+                errors.append(
+                    f"{question_id}: shortcut_audit.late_chain_entity_mentioned mismatches question text"
+                )
+            final_subject_is_anchor = normalize_hop_entity(final_subject) in anchor_label_set
+            expected_one_hop_parent = final_subject_mentioned and not final_subject_is_anchor
+            if shortcut_audit.get("one_hop_parent_mentioned") != expected_one_hop_parent:
+                errors.append(
+                    f"{question_id}: shortcut_audit.one_hop_parent_mentioned mismatches question text"
+                )
+            if sorted(shortcut_audit.get("shortcut_entities") or []) != sorted(shortcut_entities):
+                errors.append(
+                    f"{question_id}: shortcut_audit.shortcut_entities mismatches question text"
+                )
+            if sorted(shortcut_audit.get("ambiguous_discourse_markers") or []) != sorted(
+                ambiguous_discourse_markers
+            ):
+                errors.append(
+                    f"{question_id}: shortcut_audit.ambiguous_discourse_markers mismatches question text"
+                )
+            expected_locality = locality_audit(
+                str(item["question"]),
+                str(item["expected_answer"]),
+                trusted_context,
+            )
+            if shortcut_audit.get("locality") != expected_locality:
+                errors.append(
+                    f"{question_id}: shortcut_audit.locality mismatches trusted_context audit"
                 )
             if hop_count > 1 and shortcut_audit.get("direct_final_subject_mentioned"):
                 errors.append(

@@ -1,11 +1,14 @@
 {
   "audit_id": "nhs_wannacry_hop_semantics_audit",
   "test_set_id": "nhs_wannacry_multihop_50",
-  "definition": "hop_count = minimum number of trusted directed graph edges needed to derive the expected answer from the question's reasoning_anchor_entities, under allowed alias normalization, without outside knowledge.",
+  "definition": "hop_count = minimum number of trusted directed graph edges needed to derive the expected answer from the question's question_anchor_entities, under allowed alias normalization, without outside knowledge.",
   "preliminary_shortcuts_before_rewrite": 15,
   "question_count": 50,
   "shortcut_count": 0,
   "unresolved_shortcuts": 0,
+  "ambiguous_discourse_count": 0,
+  "locality_warning_count": 3,
+  "unreviewed_count": 50,
   "hop_distribution": {
     "1": 5,
     "2": 5,
@@ -22,1002 +25,2457 @@
     {
       "id": "nhs_wannacry_h01_q01",
       "hop_count": 1,
-      "question": "What malware caused the May 2017 NHS cyber attack?",
+      "question": "During the WannaCry attack on the NHS, what malicious software drove the incident?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "WannaCry ransomware",
       "final_edge_subject": "WannaCry attack on the NHS",
       "expected_path_length": 1,
+      "shortest_distance_from_question_anchor": 1,
       "shortest_anchor_distance": 1,
-      "direct_final_subject_mentioned": false,
+      "direct_final_subject_mentioned": true,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "On Friday 12 May 2017, the WannaCry ransomware campaign affected the NHS in England.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h01_q02",
       "hop_count": 1,
-      "question": "What operating-system pattern did NAO identify as the majority infection story?",
+      "question": "During the WannaCry attack on the NHS, what operating-system pattern described most infected devices?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Majority unpatched Windows 7 devices",
       "final_edge_subject": "WannaCry attack on the NHS",
       "expected_path_length": 1,
+      "shortest_distance_from_question_anchor": 1,
       "shortest_anchor_distance": 1,
-      "direct_final_subject_mentioned": false,
+      "direct_final_subject_mentioned": true,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h01_q03",
       "hop_count": 1,
-      "question": "How many NHS trusts did NAO report as affected by the incident?",
+      "question": "During the WannaCry attack on the NHS, what was the documented minimum count of affected NHS trusts?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "At least 80 of 236 trusts",
       "final_edge_subject": "WannaCry attack on the NHS",
       "expected_path_length": 1,
+      "shortest_distance_from_question_anchor": 1,
       "shortest_anchor_distance": 1,
-      "direct_final_subject_mentioned": false,
+      "direct_final_subject_mentioned": true,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h01_q04",
       "hop_count": 1,
-      "question": "How many cancelled appointments did NHS England identify during the incident collection?",
+      "question": "During the WannaCry attack on the NHS, what initial cancelled-appointment count did NHS England identify?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "6912 identified cancelled appointments",
       "final_edge_subject": "WannaCry attack on the NHS",
       "expected_path_length": 1,
+      "shortest_distance_from_question_anchor": 1,
       "shortest_anchor_distance": 1,
-      "direct_final_subject_mentioned": false,
+      "direct_final_subject_mentioned": true,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h01_q05",
       "hop_count": 1,
-      "question": "Which national department sat at the start of the pre-attack preparedness gap?",
+      "question": "During the WannaCry attack on the NHS, which central department began the preparedness-gap chain?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Department of Health",
       "final_edge_subject": "WannaCry attack on the NHS",
       "expected_path_length": 1,
+      "shortest_distance_from_question_anchor": 1,
       "shortest_anchor_distance": 1,
-      "direct_final_subject_mentioned": false,
+      "direct_final_subject_mentioned": true,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "The Department of Health had no formal mechanism before 12 May to assess local compliance with cyber advice and guidance.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h02_q01",
       "hop_count": 2,
-      "question": "In the NHS attack's malware chain, what component contained and ran the ransomware?",
+      "question": "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what dropper-style component contained and ran the ransomware?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "WannaCry dropper",
       "final_edge_subject": "WannaCry ransomware",
       "expected_path_length": 2,
+      "shortest_distance_from_question_anchor": 2,
       "shortest_anchor_distance": 2,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "The technical route involved a WannaCry dropper and the MS17-010/EternalBlue SMBv1 exploit.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h02_q02",
       "hop_count": 2,
-      "question": "For the incident's majority device pattern, what support status did those machines have?",
+      "question": "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what support category did the majority fall into?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Supported Microsoft Windows",
       "final_edge_subject": "Majority unpatched Windows 7 devices",
       "expected_path_length": 2,
+      "shortest_distance_from_question_anchor": 2,
       "shortest_anchor_distance": 2,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "NHS Digital told NAO that the majority of infected NHS devices were unpatched but still on supported Microsoft Windows 7.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h02_q03",
       "hop_count": 2,
-      "question": "Within the affected-trust count, how many were infected and locked out of devices?",
+      "question": "During the WannaCry attack on the NHS, along the trust-impact diversion chain, what infected-and-locked-out subset was counted?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "34 infected and locked-out trusts",
       "final_edge_subject": "At least 80 of 236 trusts",
       "expected_path_length": 2,
+      "shortest_distance_from_question_anchor": 2,
       "shortest_anchor_distance": 2,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h02_q04",
       "hop_count": 2,
-      "question": "What did that identified appointment count represent in NHS England's collection?",
+      "question": "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, how was the initial appointment count classified in the collection?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "NHS England identified cancellations",
       "final_edge_subject": "6912 identified cancelled appointments",
       "expected_path_length": 2,
+      "shortest_distance_from_question_anchor": 2,
       "shortest_anchor_distance": 2,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h02_q05",
       "hop_count": 2,
-      "question": "What compliance-checking mechanism was absent before the attack?",
+      "question": "During the WannaCry attack on the NHS, along the preparedness-gap chain, what formal local cyber-compliance mechanism was missing before the incident?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Formal local cyber-compliance assessment mechanism",
       "final_edge_subject": "Department of Health",
       "expected_path_length": 2,
+      "shortest_distance_from_question_anchor": 2,
       "shortest_anchor_distance": 2,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h03_q01",
       "hop_count": 3,
-      "question": "In the NHS attack's technical chain, what exploit did the malware component use to propagate?",
+      "question": "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what exploit enabled network spread of the ransomware?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "MS17-010/EternalBlue SMBv1 exploit",
       "final_edge_subject": "WannaCry dropper",
       "expected_path_length": 3,
+      "shortest_distance_from_question_anchor": 3,
       "shortest_anchor_distance": 3,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "The technical route involved a WannaCry dropper and the MS17-010/EternalBlue SMBv1 exploit.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h03_q02",
       "hop_count": 3,
-      "question": "In that operating-system explanation, what March Microsoft update would have protected supported systems?",
+      "question": "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what March Microsoft update could have protected the estate?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "MS17-010 patch for supported Windows 7",
       "final_edge_subject": "Supported Microsoft Windows",
       "expected_path_length": 3,
+      "shortest_distance_from_question_anchor": 3,
       "shortest_anchor_distance": 3,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h03_q03",
       "hop_count": 3,
-      "question": "Within the infected locked-out group, how many acute trusts were included?",
+      "question": "During the WannaCry attack on the NHS, along the trust-impact diversion chain, what acute-trust subset came from the locked-out trust group?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "25 infected acute trusts",
       "final_edge_subject": "34 infected and locked-out trusts",
       "expected_path_length": 3,
+      "shortest_distance_from_question_anchor": 3,
       "shortest_anchor_distance": 3,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h03_q04",
       "hop_count": 3,
-      "question": "What overall cancellation estimate did NHS England derive from the identified count?",
+      "question": "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, what total cancellation estimate came from the initial count?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "About 19494 estimated cancellations",
       "final_edge_subject": "NHS England identified cancellations",
       "expected_path_length": 3,
+      "shortest_distance_from_question_anchor": 3,
       "shortest_anchor_distance": 3,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h03_q05",
       "hop_count": 3,
-      "question": "What kind of assurance would that absent mechanism have provided?",
+      "question": "During the WannaCry attack on the NHS, along the preparedness-gap chain, what assurance function would the missing compliance mechanism have provided?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "CareCERT alert compliance assurance",
       "final_edge_subject": "Formal local cyber-compliance assessment mechanism",
       "expected_path_length": 3,
+      "shortest_distance_from_question_anchor": 3,
       "shortest_anchor_distance": 3,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h04_q01",
       "hop_count": 4,
-      "question": "In the incident's technical chain, what Microsoft network-service weakness did the propagation exploit target?",
+      "question": "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what Microsoft network-service vulnerability was targeted?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Microsoft SMBv1 vulnerability",
       "final_edge_subject": "MS17-010/EternalBlue SMBv1 exploit",
       "expected_path_length": 4,
+      "shortest_distance_from_question_anchor": 4,
       "shortest_anchor_distance": 4,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h04_q02",
       "hop_count": 4,
-      "question": "What publication date sat before the NHS CareCERT warnings in the supported-systems chain?",
+      "question": "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what date was attached to the protective update?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "14 March 2017",
       "final_edge_subject": "MS17-010 patch for supported Windows 7",
       "expected_path_length": 4,
+      "shortest_distance_from_question_anchor": 4,
       "shortest_anchor_distance": 4,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "Microsoft published the bulletin on 14 March 2017.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h04_q03",
       "hop_count": 4,
-      "question": "What ambulance-service consequence followed for that acute-trust subset?",
+      "question": "During the WannaCry attack on the NHS, along the trust-impact diversion chain, what emergency-transport outcome was recorded among acute trusts?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Five acute trusts diverting emergency ambulances",
       "final_edge_subject": "25 infected acute trusts",
       "expected_path_length": 4,
+      "shortest_distance_from_question_anchor": 4,
       "shortest_anchor_distance": 4,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h04_q04",
       "hop_count": 4,
-      "question": "What normal appointment-rate assumption supported that estimate?",
+      "question": "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, what normal-rate assumption supported the cancellation estimate?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Normal follow-up-to-first appointment rate",
       "final_edge_subject": "About 19494 estimated cancellations",
       "expected_path_length": 4,
+      "shortest_distance_from_question_anchor": 4,
       "shortest_anchor_distance": 4,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h04_q05",
       "hop_count": 4,
-      "question": "Which March-April alerts were covered by that compliance-assurance gap?",
+      "question": "During the WannaCry attack on the NHS, along the preparedness-gap chain, what March-April cyber-advice area was covered by the assurance gap?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "CareCERT alerts of March and April 2017",
       "final_edge_subject": "CareCERT alert compliance assurance",
       "expected_path_length": 4,
+      "shortest_distance_from_question_anchor": 4,
       "shortest_anchor_distance": 4,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h05_q01",
       "hop_count": 5,
-      "question": "In that technical chain, which Microsoft server component was affected by the network-service weakness?",
+      "question": "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what Microsoft server component was exposed?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Microsoft Windows SMBv1 server",
       "final_edge_subject": "Microsoft SMBv1 vulnerability",
       "expected_path_length": 5,
+      "shortest_distance_from_question_anchor": 5,
       "shortest_anchor_distance": 5,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "Microsoft explained that the vulnerability affected the Microsoft Windows SMBv1 server and could allow remote code execution when specially crafted SMBv1 messages were sent.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h05_q02",
       "hop_count": 5,
-      "question": "Which first NHS Digital alert followed that Microsoft publication date?",
+      "question": "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what first NHS cyber alert followed the publication date?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "CareCERT alert on 17 March 2017",
       "final_edge_subject": "14 March 2017",
       "expected_path_length": 5,
+      "shortest_distance_from_question_anchor": 5,
       "shortest_anchor_distance": 5,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h05_q03",
       "hop_count": 5,
-      "question": "Which listed London trust appears in the diversion branch?",
+      "question": "During the WannaCry attack on the NHS, along the trust-impact diversion chain, which London trust appeared in the ambulance-diversion sequence?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Barts Health NHS Trust",
       "final_edge_subject": "Five acute trusts diverting emergency ambulances",
       "expected_path_length": 5,
+      "shortest_distance_from_question_anchor": 5,
       "shortest_anchor_distance": 5,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "NAO listed Barts Health NHS Trust with Royal London Hospital among those diversions.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h05_q04",
       "hop_count": 5,
-      "question": "Which appointment category was outside the initial count that used the normal-rate assumption?",
+      "question": "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, which appointment category was excluded from the initial collection?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Repeat outpatient appointments",
       "final_edge_subject": "Normal follow-up-to-first appointment rate",
       "expected_path_length": 5,
+      "shortest_distance_from_question_anchor": 5,
       "shortest_anchor_distance": 5,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "The initial count excluded repeat outpatient appointments and cancellations identified after 18 May.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h05_q05",
       "hop_count": 5,
-      "question": "Which digital body issued those March-April alerts?",
+      "question": "During the WannaCry attack on the NHS, along the preparedness-gap chain, which digital body issued the relevant March-April cyber alerts?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "NHS Digital",
       "final_edge_subject": "CareCERT alerts of March and April 2017",
       "expected_path_length": 5,
+      "shortest_distance_from_question_anchor": 5,
       "shortest_anchor_distance": 5,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "NHS Digital issued CareCERT alerts on 17 March and 28 April 2017 telling local NHS organisations to patch systems to prevent WannaCry, but the incident showed that not all organisations had implemented critical patch advice before the attack.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": true,
+        "status": "WARNING"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h06_q01",
       "hop_count": 6,
-      "question": "In the NHS incident's Microsoft vulnerability chain, what severe outcome could the affected server allow?",
+      "question": "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what severe security consequence could result from the exposed service?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Vulnerable to remote code execution",
       "final_edge_subject": "Microsoft Windows SMBv1 server",
       "expected_path_length": 6,
+      "shortest_distance_from_question_anchor": 6,
       "shortest_anchor_distance": 6,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h06_q02",
       "hop_count": 6,
-      "question": "Which later NHS Digital alert reinforced the same patch warning before the attack?",
+      "question": "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what second NHS cyber alert reinforced the warning before the incident?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "CareCERT alert on 28 April 2017",
       "final_edge_subject": "CareCERT alert on 17 March 2017",
       "expected_path_length": 6,
+      "shortest_distance_from_question_anchor": 6,
       "shortest_anchor_distance": 6,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h06_q03",
       "hop_count": 6,
-      "question": "Which hospital was attached to the London trust in NAO's ambulance-diversion list?",
+      "question": "During the WannaCry attack on the NHS, along the trust-impact diversion chain, which hospital was tied to the London trust in the ambulance-diversion sequence?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Royal London Hospital",
       "final_edge_subject": "Barts Health NHS Trust",
       "expected_path_length": 6,
+      "shortest_distance_from_question_anchor": 6,
       "shortest_anchor_distance": 6,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "NAO listed Barts Health NHS Trust with Royal London Hospital among those diversions.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h06_q04",
       "hop_count": 6,
-      "question": "How was that appointment category treated in the initial collection?",
+      "question": "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, how was the excluded appointment category treated in the initial collection?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Excluded from initial 6912 collection",
       "final_edge_subject": "Repeat outpatient appointments",
       "expected_path_length": 6,
+      "shortest_distance_from_question_anchor": 6,
       "shortest_anchor_distance": 6,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h06_q05",
       "hop_count": 6,
-      "question": "What local remedial authority did that digital body lack?",
+      "question": "During the WannaCry attack on the NHS, along the preparedness-gap chain, what remedial authority was unavailable in the local cyber-advice sequence?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Power to mandate local remedial action",
       "final_edge_subject": "NHS Digital",
       "expected_path_length": 6,
+      "shortest_distance_from_question_anchor": 6,
       "shortest_anchor_distance": 6,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h07_q01",
       "hop_count": 7,
-      "question": "In that Microsoft vulnerability chain, what attacker input could trigger the severe outcome?",
+      "question": "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what crafted attacker input could trigger remote code execution on the exposed service?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Specially crafted SMBv1 messages",
       "final_edge_subject": "Vulnerable to remote code execution",
       "expected_path_length": 7,
+      "shortest_distance_from_question_anchor": 7,
       "shortest_anchor_distance": 7,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "Microsoft explained that the vulnerability affected the Microsoft Windows SMBv1 server and could allow remote code execution when specially crafted SMBv1 messages were sent.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": true,
+        "status": "WARNING"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h07_q02",
       "hop_count": 7,
-      "question": "What action did the later NHS alert tell organisations to take?",
+      "question": "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what patching action did the alert sequence urge?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Patch systems to prevent WannaCry",
       "final_edge_subject": "CareCERT alert on 28 April 2017",
       "expected_path_length": 7,
+      "shortest_distance_from_question_anchor": 7,
       "shortest_anchor_distance": 7,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "NHS Digital issued CareCERT alerts on 17 March and 28 April 2017 telling local NHS organisations to patch systems to prevent WannaCry, but the incident showed that not all organisations had implemented critical patch advice before the attack.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h07_q03",
       "hop_count": 7,
-      "question": "What service line was disrupted at that hospital in the diversion branch?",
+      "question": "During the WannaCry attack on the NHS, along the trust-impact diversion chain, what service line was disrupted at the London hospital in the ambulance-diversion sequence?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Emergency ambulance services",
       "final_edge_subject": "Royal London Hospital",
       "expected_path_length": 7,
+      "shortest_distance_from_question_anchor": 7,
       "shortest_anchor_distance": 7,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "Five infected acute trusts diverted emergency ambulance services.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h07_q04",
       "hop_count": 7,
-      "question": "What later-discovered cancellations were also outside the initial collection?",
+      "question": "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, what additional cancellations were omitted after the initial collection cutoff?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Cancellations identified after 18 May",
       "final_edge_subject": "Excluded from initial 6912 collection",
       "expected_path_length": 7,
+      "shortest_distance_from_question_anchor": 7,
       "shortest_anchor_distance": 7,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "The initial count excluded repeat outpatient appointments and cancellations identified after 18 May.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h07_q05",
       "hop_count": 7,
-      "question": "Which on-site programme nevertheless assessed hospital cyber-security?",
+      "question": "During the WannaCry attack on the NHS, along the preparedness-gap chain, what on-site cyber-assessment programme existed despite the missing remedial authority?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "CareCERT Assure assessments",
       "final_edge_subject": "Power to mandate local remedial action",
       "expected_path_length": 7,
+      "shortest_distance_from_question_anchor": 7,
       "shortest_anchor_distance": 7,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "It had conducted CareCERT Assure assessments of hospital cyber-security before the attack; by 12 May, 88 of 236 trusts had been inspected and none had passed.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h08_q01",
       "hop_count": 8,
-      "question": "In the incident technical sequence, what handling path did the attacker input expose?",
+      "question": "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what request-handling area did crafted attacker input expose?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "SMBv1 crafted-request handling",
       "final_edge_subject": "Specially crafted SMBv1 messages",
       "expected_path_length": 8,
+      "shortest_distance_from_question_anchor": 8,
       "shortest_anchor_distance": 8,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h08_q02",
       "hop_count": 8,
-      "question": "Who had to carry out the warning from the NHS alert chain?",
+      "question": "During the WannaCry attack on the NHS, along the infected-device operating-system chain, which local bodies were responsible for carrying out the patch advice?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Local NHS organisations",
       "final_edge_subject": "Patch systems to prevent WannaCry",
       "expected_path_length": 8,
+      "shortest_distance_from_question_anchor": 8,
       "shortest_anchor_distance": 8,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "NHS Digital issued CareCERT alerts on 17 March and 28 April 2017 telling local NHS organisations to patch systems to prevent WannaCry, but the incident showed that not all organisations had implemented critical patch advice before the attack.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": true,
+        "status": "WARNING"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h08_q03",
       "hop_count": 8,
-      "question": "What patient consequence followed from those diverted emergency services?",
+      "question": "During the WannaCry attack on the NHS, along the trust-impact diversion chain, what patient consequence followed from emergency-ambulance disruption?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Patients travelling further for emergency care",
       "final_edge_subject": "Emergency ambulance services",
       "expected_path_length": 8,
+      "shortest_distance_from_question_anchor": 8,
       "shortest_anchor_distance": 8,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h08_q04",
       "hop_count": 8,
-      "question": "What incomplete national picture did those late cancellations leave?",
+      "question": "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, what national picture resulted from omitted cancellation records?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Incomplete national cancellation total",
       "final_edge_subject": "Cancellations identified after 18 May",
       "expected_path_length": 8,
+      "shortest_distance_from_question_anchor": 8,
       "shortest_anchor_distance": 8,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h08_q05",
       "hop_count": 8,
-      "question": "How many trusts had been inspected by the on-site programme?",
+      "question": "During the WannaCry attack on the NHS, along the preparedness-gap chain, what inspection coverage had the on-site assessment programme reached before the incident?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "88 of 236 trusts",
       "final_edge_subject": "CareCERT Assure assessments",
       "expected_path_length": 8,
+      "shortest_distance_from_question_anchor": 8,
       "shortest_anchor_distance": 8,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "It had conducted CareCERT Assure assessments of hospital cyber-security before the attack; by 12 May, 88 of 236 trusts had been inspected and none had passed.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h09_q01",
       "hop_count": 9,
-      "question": "In that same technical sequence, what correction addressed the crafted-request handling problem?",
+      "question": "During the WannaCry attack on the NHS, along the technical malware-propagation chain, what correction fixed crafted-request handling?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Corrected SMBv1 request handling",
       "final_edge_subject": "SMBv1 crafted-request handling",
       "expected_path_length": 9,
+      "shortest_distance_from_question_anchor": 9,
       "shortest_anchor_distance": 9,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h09_q02",
       "hop_count": 9,
-      "question": "What implementation step did those organisations need to complete before infection risk was reduced?",
+      "question": "During the WannaCry attack on the NHS, along the infected-device operating-system chain, what implementation state followed after local bodies received the patch advice?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Local implementation of CareCERT patch advice",
       "final_edge_subject": "Local NHS organisations",
       "expected_path_length": 9,
+      "shortest_distance_from_question_anchor": 9,
       "shortest_anchor_distance": 9,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h09_q03",
       "hop_count": 9,
-      "question": "What diversion data did NHS England not collect?",
+      "question": "During the WannaCry attack on the NHS, along the trust-impact diversion chain, what diversion-count data was missing from the national record after emergency-ambulance disruption?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Number of diverted ambulances and patients not collected",
       "final_edge_subject": "Patients travelling further for emergency care",
       "expected_path_length": 9,
+      "shortest_distance_from_question_anchor": 9,
       "shortest_anchor_distance": 9,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h09_q04",
       "hop_count": 9,
-      "question": "What total remained beyond the initial collection after those omissions?",
+      "question": "During the WannaCry attack on the NHS, along the appointment-disruption accounting chain, what actual total did the incomplete national collection leave unresolved?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Actual cancelled-appointment number",
       "final_edge_subject": "Incomplete national cancellation total",
       "expected_path_length": 9,
+      "shortest_distance_from_question_anchor": 9,
       "shortest_anchor_distance": 9,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h09_q05",
       "hop_count": 9,
-      "question": "What pass result came out of those inspections?",
+      "question": "During the WannaCry attack on the NHS, along the preparedness-gap chain, what pass outcome did the pre-incident on-site inspection coverage produce?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "WannaCry attack on the NHS",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "None passed",
       "final_edge_subject": "88 of 236 trusts",
       "expected_path_length": 9,
+      "shortest_distance_from_question_anchor": 9,
       "shortest_anchor_distance": 9,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h10_q01",
       "hop_count": 10,
-      "question": "Starting from WannaCry's propagation mechanism, which Microsoft security bulletin ultimately addressed the vulnerable Windows server behavior involved?",
+      "question": "In the May 2017 NHS WannaCry attack, along the technical malware-propagation chain, which Microsoft security bulletin supplied the final fix?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "May 2017 NHS WannaCry attack",
+          "May 2017 NHS WannaCry",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Microsoft Security Bulletin MS17-010",
       "final_edge_subject": "Corrected SMBv1 request handling",
       "expected_path_length": 10,
+      "shortest_distance_from_question_anchor": 10,
       "shortest_anchor_distance": 10,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "The security update corrected how SMBv1 handled crafted requests, and Microsoft Security Bulletin MS17-010 supplied that correction.",
+        "answer_present_in_single_sentence": true,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h10_q02",
       "hop_count": 10,
-      "question": "What unresolved compliance state did the incident reveal at the end of the supported-systems branch?",
+      "question": "In the May 2017 NHS WannaCry attack, along the infected-device operating-system chain, what unresolved compliance finding remained after local patch-advice implementation?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "May 2017 NHS WannaCry attack",
+          "May 2017 NHS WannaCry",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Not all organisations implemented critical patch advice before attack",
       "final_edge_subject": "Local implementation of CareCERT patch advice",
       "expected_path_length": 10,
+      "shortest_distance_from_question_anchor": 10,
       "shortest_anchor_distance": 10,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h10_q03",
       "hop_count": 10,
-      "question": "What did the missing diversion data mean for national bodies?",
+      "question": "In the May 2017 NHS WannaCry attack, along the trust-impact diversion chain, what did the missing national diversion-count data mean for national bodies?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "May 2017 NHS WannaCry attack",
+          "May 2017 NHS WannaCry",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Department and NHS England did not know full diversion count",
       "final_edge_subject": "Number of diverted ambulances and patients not collected",
       "expected_path_length": 10,
+      "shortest_distance_from_question_anchor": 10,
       "shortest_anchor_distance": 10,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h10_q04",
       "hop_count": 10,
-      "question": "What status applied to the real total once those exclusions were considered?",
+      "question": "In the May 2017 NHS WannaCry attack, along the appointment-disruption accounting chain, what was NHS England's position on identifying the actual cancellation total?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "May 2017 NHS WannaCry attack",
+          "May 2017 NHS WannaCry",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Not planned for identification by NHS England",
       "final_edge_subject": "Actual cancelled-appointment number",
       "expected_path_length": 10,
+      "shortest_distance_from_question_anchor": 10,
       "shortest_anchor_distance": 10,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     },
     {
       "id": "nhs_wannacry_h10_q05",
       "hop_count": 10,
-      "question": "What timing framed that failed-inspection result?",
+      "question": "In the May 2017 NHS WannaCry attack, along the preparedness-gap chain, what timing qualified the pre-incident pass-outcome finding?",
+      "graph_root_entity": "WannaCry attack on the NHS",
+      "question_anchor_entities": [
+        "WannaCry attack on the NHS"
+      ],
       "reasoning_anchor_entities": [
         "WannaCry attack on the NHS"
       ],
+      "anchor_detection": {
+        "anchor_detected_from_question": true,
+        "anchor_detection_method": "alias_match",
+        "matched_aliases": [
+          "May 2017 NHS WannaCry attack",
+          "May 2017 NHS WannaCry",
+          "WannaCry attack"
+        ],
+        "detected_entities": [
+          "WannaCry attack on the NHS"
+        ]
+      },
       "expected_answer": "Before 12 May 2017",
       "final_edge_subject": "None passed",
       "expected_path_length": 10,
+      "shortest_distance_from_question_anchor": 10,
       "shortest_anchor_distance": 10,
       "direct_final_subject_mentioned": false,
       "expected_answer_mentioned": false,
+      "late_chain_entity_mentioned": false,
+      "one_hop_parent_mentioned": false,
+      "mentioned_entities": [
+        "WannaCry attack on the NHS"
+      ],
+      "shortcut_entities": [],
+      "ambiguous_discourse_markers": [],
+      "human_review_status": "not_reviewed",
+      "locality": {
+        "closest_context_sentence": "",
+        "answer_present_in_single_sentence": false,
+        "locality_warning": false,
+        "status": "PASS"
+      },
       "repeated_nodes": false,
       "duplicate_edges": false,
       "shortcut_detected": false,
       "unresolved_shortcut": false,
-      "manual_reviewed": true,
-      "review_notes": "Root-anchored shortest directed path equals declared hop count; question avoids exact final-edge subject and answer strings."
+      "review_notes": "Generator notes only; not a human review. Question anchor was detected from question text; shortest directed distance from the detected anchor equals declared hop count; automated checks found no late-chain entity, final-edge subject, expected-answer, or ambiguous discourse shortcut."
     }
   ]
 }
