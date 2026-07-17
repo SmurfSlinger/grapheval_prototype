@@ -193,7 +193,7 @@ Canonical real-baseline outputs:
 - Locality warnings identify questions whose answer also appears in one
   relatively overlapping trusted-context sentence. They are audit warnings by
   default, not structural failures. Current warnings:
-  `nhs_wannacry_h05_q05`, `nhs_wannacry_h06_q03`, `nhs_wannacry_h08_q02`.
+  `nhs_wannacry_h05_q05`, `nhs_wannacry_h07_q01`, `nhs_wannacry_h08_q02`.
 - Branch-theme cues (“along the … chain”) disambiguate sibling root out-edges
   without naming late-chain entities; they are not raw relation labels, but they
   are still somewhat artificial natural-language scaffolding.
