@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import json
 import os
-import signal
+import subprocess
+import sys
 import time
 from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import patch
 
 import pytest
 
@@ -91,6 +90,67 @@ def test_stale_lock_is_cleaned_up(tmp_path: Path) -> None:
         lock.release()
 
 
+def test_malformed_lock_file_fails_safely_without_overwrite(tmp_path: Path) -> None:
+    lock_file = tmp_path / "test.lock"
+    lock_file.write_text("{not-json", encoding="utf-8")
+    lock = BenchmarkLock(lock_file)
+    with pytest.raises(BenchmarkLockError, match="malformed"):
+        lock.acquire()
+    assert lock_file.read_text(encoding="utf-8") == "{not-json"
+
+
+def test_unverifiable_pid_fails_safely_without_overwrite(tmp_path: Path) -> None:
+    lock_file = tmp_path / "test.lock"
+    original = json.dumps({"pid": "not-a-pid", "timestamp": "2020-01-01T00:00:00+00:00"})
+    lock_file.write_text(original, encoding="utf-8")
+    lock = BenchmarkLock(lock_file)
+    with pytest.raises(BenchmarkLockError, match="unverifiable"):
+        lock.acquire()
+    assert lock_file.read_text(encoding="utf-8") == original
+
+
+def test_lock_acquisition_is_atomic_across_separate_processes(tmp_path: Path) -> None:
+    lock_file = tmp_path / "atomic.lock"
+    result_a = tmp_path / "a.json"
+    result_b = tmp_path / "b.json"
+    script = f"""
+import json, sys, time
+from pathlib import Path
+sys.path.insert(0, {str(Path(__file__).resolve().parents[1])!r})
+from scripts.benchmark_lock import BenchmarkLock, BenchmarkLockError
+lock_file = Path({str(lock_file)!r})
+out = Path(sys.argv[1])
+hold = float(sys.argv[2])
+try:
+    lock = BenchmarkLock(lock_file)
+    lock.acquire()
+except BenchmarkLockError as exc:
+    out.write_text(json.dumps({{"ok": False, "error": str(exc)}}))
+    raise SystemExit(2)
+time.sleep(hold)
+lock.release()
+out.write_text(json.dumps({{"ok": True}}))
+"""
+    env = {**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[1])}
+    first = subprocess.Popen(
+        [sys.executable, "-c", script, str(result_a), "1.5"],
+        env=env,
+    )
+    time.sleep(0.3)
+    second = subprocess.run(
+        [sys.executable, "-c", script, str(result_b), "0.1"],
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    first_code = first.wait(timeout=10)
+    assert first_code == 0
+    assert second.returncode == 2
+    assert json.loads(result_a.read_text())["ok"] is True
+    assert json.loads(result_b.read_text())["ok"] is False
+    assert "active" in json.loads(result_b.read_text())["error"]
+
+
 def test_lock_release_after_keyboard_interrupt(tmp_path: Path) -> None:
     lock_file = tmp_path / "test.lock"
     lock = BenchmarkLock(lock_file)
@@ -158,6 +218,39 @@ def test_no_resume_never_skips() -> None:
     row = _make_completed_row()
     assert should_skip_prior_row(row, resume=False) is False
     assert should_skip_prior_row(None, resume=True) is False
+
+
+# --------------------------------------------------------------------------
+# attempt_number / resumed persistence across retries
+# --------------------------------------------------------------------------
+
+from scripts.run_multihop_benchmark import next_attempt_metadata
+
+
+def test_next_attempt_metadata_fresh_run() -> None:
+    assert next_attempt_metadata(None, resume=False) == (1, False)
+    assert next_attempt_metadata(None, resume=True) == (1, False)
+
+
+def test_next_attempt_metadata_increments_across_resume_retries() -> None:
+    first = {"id": "q1", "attempt_number": 1, "resumed": False}
+    second_number, second_resumed = next_attempt_metadata(first, resume=True)
+    assert second_number == 2
+    assert second_resumed is True
+    third_number, third_resumed = next_attempt_metadata(
+        {"attempt_number": second_number, "resumed": second_resumed},
+        resume=True,
+    )
+    assert third_number == 3
+    assert third_resumed is True
+
+
+def test_next_attempt_metadata_without_resume_flag_still_increments_prior() -> None:
+    # Re-running with a prior row present but resume=False still advances the
+    # attempt counter when the caller chooses to execute again.
+    number, resumed = next_attempt_metadata({"attempt_number": 4}, resume=False)
+    assert number == 5
+    assert resumed is False
 
 
 # --------------------------------------------------------------------------
@@ -238,6 +331,47 @@ def test_timeout_and_error_have_separate_terminal_states() -> None:
 
 
 # --------------------------------------------------------------------------
+# Owned child-process timeout cleanup
+# --------------------------------------------------------------------------
+
+from scripts.run_multihop_benchmark import (
+    run_subprocess_with_timeout,
+    terminate_process_group,
+)
+
+
+def test_timed_out_child_process_is_no_longer_alive() -> None:
+    proc = subprocess.Popen(
+        [sys.executable, "-c", "import time; time.sleep(30)"],
+        start_new_session=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    pid = proc.pid
+    time.sleep(0.2)
+    assert _pid_alive(pid)
+    terminate_process_group(pid, grace_seconds=0.3)
+    assert not _pid_alive(pid)
+
+    with pytest.raises(TimeoutError, match="exceeded"):
+        run_subprocess_with_timeout(
+            [sys.executable, "-c", "import time; time.sleep(30)"],
+            timeout_seconds=0.4,
+            grace_seconds=0.2,
+        )
+
+
+def _pid_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
+# --------------------------------------------------------------------------
 # Checkpoint atomic write: write_reports uses tmp + rename
 # --------------------------------------------------------------------------
 
@@ -309,3 +443,21 @@ def test_write_reports_creates_json_and_markdown(tmp_path: Path) -> None:
     assert md_path.exists()
     parsed = json.loads(json_path.read_text())
     assert parsed["test_set_id"] == "test"
+
+
+def test_mock_markdown_states_zero_successful_completions() -> None:
+    from scripts.run_multihop_benchmark import markdown_report
+
+    report = _minimal_report([])
+    report["summary"].update(
+        {
+            "attempted": 50,
+            "completed": 0,
+            "errored": 50,
+            "common_failure_types": {"projection_failure": 50},
+        }
+    )
+    text = markdown_report(report)
+    assert "50 terminal plumbing records" in text
+    assert "0 successful completions" in text
+    assert "50 projection/pipeline failures" in text

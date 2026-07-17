@@ -231,10 +231,11 @@ Run the full real benchmark using the convenience wrapper (recommended):
 ./scripts/run_apollo_real_baseline.sh
 ```
 
-This script verifies Ollama is reachable, confirms the model is installed,
-validates the dataset, and runs the benchmark with safe defaults. It does NOT
-download any model automatically. If the model is missing it prints the exact
-`ollama pull` command and exits.
+This script verifies Ollama is reachable, confirms the requested model tag is
+installed with an **exact** match (for example `gemma4:latest` does not satisfy
+`gemma4:e2b`), validates the dataset, and runs the benchmark with safe
+defaults. It does NOT download any model automatically. If the model is missing
+it prints the exact `ollama pull` command and exits.
 
 Or run the Python runner directly with full control:
 
@@ -297,3 +298,7 @@ backtracking, and inspect both the trace and graph.
 - No real Ollama smoke result should be inferred from mock-provider checks.
 - Model quality, runtime, and maximum practical context depend on local
   hardware and installed Ollama tags.
+- Benchmark per-question timeouts use in-process `SIGALRM`. The runner does
+  not spawn a child process per question, so timeout cannot kill/reap a
+  process group for that path. Owned-child helpers terminate process groups
+  when a subprocess architecture is used.

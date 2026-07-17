@@ -211,19 +211,22 @@ the user's home machine.)
 Evidence:
 - 50 questions validated: 5 per hop count, 1–10.
 - `--validate-only` exits 0.
-- Full mock run: all 50 questions received terminal records, no duplicates,
-  correct hop distribution, JSON parses, Markdown totals match.
-- Process locking: `BenchmarkLock` prevents concurrent runs.
+- Full mock run: 50 terminal plumbing records, **0 successful completions**,
+  **50 projection failures**. Records are unique, hop distribution is correct,
+  JSON parses, and Markdown totals match. This validates runner plumbing only.
+- Process locking: `BenchmarkLock` uses exclusive file creation (`O_CREAT|O_EXCL`)
+  and refuses to overwrite malformed/unreadable lock files.
 - All new runner flags functional: `--retry-errors`, `--rerun-completed`,
   `--cooldown-seconds`, `--max-consecutive-timeouts`, `--stop-after-minutes`,
   `--lock-file`.
 - Terminal states tracked: `completed`, `timeout`, `error`, `interrupted`.
 - Result schema includes: `terminal_state`, `error_type`, `error_message`,
-  `attempt_number`, `resumed`.
-- `scripts/run_apollo_real_baseline.sh` verifies Ollama, model, Neo4j, and
-  lock before running.
+  `attempt_number`, `resumed` (persisted across resume/retry attempts).
+- `scripts/run_apollo_real_baseline.sh` requires an **exact** Ollama model-tag
+  match (for example `gemma4:latest` does not satisfy `gemma4:e2b`).
 - Real baseline: `results/apollo_multihop_real_baseline.json` (partial; cite
-  as complete only when `run_type=full_real`).
+  as complete only when `run_type=full_real`). This cloud corrective pass did
+  **not** re-run the real local Ollama baseline.
 
 A COMPLETE real baseline requires terminal records for all 50 questions
 (completed, timeout, or error). Accuracy is not the readiness criterion;
@@ -245,6 +248,13 @@ reliable measurement is.
 - A full 50-question real-model benchmark on CPU is lengthy (~4 minutes per
   early hop observed). Partial checkpoints must not be described as full
   benchmark performance until `run_type=full_real`.
+- Per-question timeouts use in-process `SIGALRM` / `ITIMER_REAL`. The runner
+  does not spawn a child process per question, so there is no process group to
+  kill/reap on timeout. A timed-out HTTP call raises `TimeoutError` in the
+  runner process; work already accepted by the Ollama *server* may continue
+  until that server request ends. A separate helper
+  (`run_subprocess_with_timeout`) terminates and reaps owned child process
+  groups when a subprocess architecture is used.
 
 ## Next recommended work
 
@@ -260,6 +270,7 @@ Apollo multi-hop measurement path. Custom runs can clear Neo4j, extract a
 graph from pasted context, persist trusted FACTS, keep answer CLAIMS
 separate, and evaluate from Neo4j-read base facts. The 50-question benchmark
 validates cleanly, reports match and resolve separately, checkpoints every
-question, and resumes safely. A real `gemma4:e2b` baseline is running with
-honest metrics; cite the baseline report as complete only when it is marked
-`full_real`.
+question, and resumes safely. The mock plumbing run yields 50 terminal
+records with 0 successful completions and 50 projection failures. A partial
+real baseline checkpoint exists from an earlier local run; this pass did not
+re-run the real Ollama baseline.

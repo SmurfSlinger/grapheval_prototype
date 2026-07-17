@@ -86,14 +86,15 @@ echo "[check] Verifying model '$MODEL' is installed in Ollama ..."
 if ! curl -sf "$OLLAMA_BASE_URL/api/tags" | python3 -c "
 import json, sys
 tags = json.load(sys.stdin)
-names = [m['name'] for m in tags.get('models', [])]
+names = {m.get('name', '') for m in tags.get('models', [])}
 model = '$MODEL'
-# Accept exact match or match without the ':latest' suffix.
-ok = any(n == model or n.split(':')[0] == model.split(':')[0] for n in names)
-sys.exit(0 if ok else 1)
+# Require an exact installed tag match (gemma4:latest must not satisfy gemma4:e2b).
+sys.exit(0 if model in names else 1)
 " 2>/dev/null; then
   echo ""
   echo "WARNING: Model '$MODEL' does not appear to be installed in Ollama."
+  echo "         An exact tag match is required (for example gemma4:latest does"
+  echo "         NOT satisfy a request for gemma4:e2b)."
   echo "         To install it, run the following command (this may download several GB):"
   echo ""
   echo "             ollama pull $MODEL"
@@ -102,7 +103,7 @@ sys.exit(0 if ok else 1)
   echo "         Once the model is installed, re-run this script."
   exit 1
 fi
-echo "[check] Model '$MODEL' is available."
+echo "[check] Model '$MODEL' is available (exact tag match)."
 
 # ---------------------------------------------------------------------------
 # 7. Verify no active benchmark lock

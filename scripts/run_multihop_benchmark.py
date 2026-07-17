@@ -350,6 +350,20 @@ def validate_test_set(payload: dict[str, Any]) -> dict[str, Any]:
 
 @contextmanager
 def question_timeout(seconds: float):
+    """Raise TimeoutError when the wall-clock budget for one question expires.
+
+    Implementation note (in-process SIGALRM):
+        This context manager arms ``ITIMER_REAL`` / ``SIGALRM`` in the *current*
+        process. The Apollo benchmark runner does **not** spawn a child process
+        per question, so there is no process group to terminate or reap here.
+        When a timeout fires during a blocking Ollama HTTP call, Python raises
+        ``TimeoutError`` in this process; any generation already accepted by the
+        Ollama *server* may continue server-side until that request ends.
+
+        For owned child processes elsewhere, use
+        :func:`terminate_process_group` / :func:`run_subprocess_with_timeout`,
+        which send signals to the whole process group and wait/reap.
+    """
     if seconds <= 0:
         yield
         return
@@ -364,6 +378,105 @@ def question_timeout(seconds: float):
     finally:
         signal.setitimer(signal.ITIMER_REAL, 0)
         signal.signal(signal.SIGALRM, previous_handler)
+
+
+def terminate_process_group(pid: int, *, grace_seconds: float = 1.0) -> None:
+    """Terminate an owned process group and reap the leader.
+
+    Sends SIGTERM to the group, waits briefly, then SIGKILL if still alive,
+    and finally ``waitpid`` so the child does not remain a zombie.
+    """
+    if pid <= 0:
+        return
+    try:
+        os.killpg(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+    except PermissionError:
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except ProcessLookupError:
+            return
+    deadline = time.monotonic() + max(grace_seconds, 0.0)
+    while time.monotonic() < deadline:
+        try:
+            waited_pid, _status = os.waitpid(pid, os.WNOHANG)
+        except ChildProcessError:
+            return
+        if waited_pid == pid:
+            return
+        time.sleep(0.05)
+    try:
+        os.killpg(pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    except PermissionError:
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    try:
+        os.waitpid(pid, 0)
+    except ChildProcessError:
+        pass
+
+
+def run_subprocess_with_timeout(
+    args: list[str],
+    *,
+    timeout_seconds: float,
+    grace_seconds: float = 1.0,
+) -> subprocess.CompletedProcess[str]:
+    """Run a command in a new process group with hard timeout cleanup.
+
+    On timeout the entire process group is terminated and reaped. This helper
+    is for owned children; the main benchmark path still uses in-process
+    :func:`question_timeout` (see its docstring).
+    """
+    if timeout_seconds <= 0:
+        raise ValueError("timeout_seconds must be positive")
+    proc = subprocess.Popen(
+        args,
+        start_new_session=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired as exc:
+        terminate_process_group(proc.pid, grace_seconds=grace_seconds)
+        raise TimeoutError(
+            f"subprocess exceeded {timeout_seconds:g} seconds: {' '.join(args)}"
+        ) from exc
+    return subprocess.CompletedProcess(
+        args=args,
+        returncode=proc.returncode,
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+
+def next_attempt_metadata(
+    prior_row: dict[str, Any] | None,
+    *,
+    resume: bool,
+) -> tuple[int, bool]:
+    """Return ``(attempt_number, resumed)`` for a question about to execute.
+
+    - Fresh run (no prior row): attempt 1, resumed False
+    - Resume/retry of a prior row: attempt = prior attempt_number + 1 (min 2),
+      resumed True when ``resume`` is enabled
+    """
+    if prior_row is None:
+        return 1, False
+    prior_attempt = prior_row.get("attempt_number")
+    try:
+        base = int(prior_attempt) if prior_attempt is not None else 1
+    except (TypeError, ValueError):
+        base = 1
+    attempt_number = max(base, 1) + 1
+    return attempt_number, bool(resume)
 
 
 def telemetry_from_calls(
@@ -531,6 +644,8 @@ def run_one(
     clear_neo4j: bool,
     neo4j_enabled: bool,
     timeout_seconds: float,
+    attempt_number: int = 1,
+    resumed: bool = False,
 ) -> dict[str, Any]:
     started = time.monotonic()
     call_start = len(getattr(provider, "call_telemetry", []))
@@ -539,6 +654,8 @@ def run_one(
         provider_name=provider_name,
         model=model,
         num_ctx=num_ctx,
+        attempt_number=attempt_number,
+        resumed=resumed,
     )
     runner = DecomposedBacktrackingRunner(
         provider,
@@ -823,13 +940,19 @@ def markdown_report(report: dict[str, Any]) -> str:
         ]
     )
     if report["provider"] == "mock":
+        summary = report["summary"]
         lines.extend(
             [
                 "",
                 "## Mock-provider limitation",
                 "",
-                "The deterministic mock has no profile for this new context. Projection "
-                "failures validate report plumbing only and are not model-performance results.",
+                "This mock run produced "
+                f"{summary['attempted']} terminal plumbing records with "
+                f"{summary['completed']} successful completions and "
+                f"{summary['errored']} projection/pipeline failures. "
+                "Those terminal records validate runner checkpointing and "
+                "reporting only; they are not model-performance results. "
+                "The deterministic mock has no profile for this Apollo context.",
             ]
         )
     return "\n".join(lines) + "\n"
@@ -1107,6 +1230,10 @@ def main() -> None:
                 )
             else:
                 executed_now = True
+                attempt_number, resumed = next_attempt_metadata(
+                    prior_row,
+                    resume=args.resume,
+                )
                 row = run_one(
                     provider=provider,
                     provider_name=args.provider,
@@ -1118,10 +1245,13 @@ def main() -> None:
                     clear_neo4j=args.clear_neo4j,
                     neo4j_enabled=neo4j_enabled,
                     timeout_seconds=args.timeout_per_question,
+                    attempt_number=attempt_number,
+                    resumed=resumed,
                 )
                 print(
                     f"{row['id']}: match={row['contains_expected_answer']} "
                     f"resolved={row['resolved_by_pipeline']} "
+                    f"attempt={row['attempt_number']} resumed={row['resumed']} "
                     f"error={row['error'] or 'none'}"
                 )
                 # Track consecutive timeouts.
