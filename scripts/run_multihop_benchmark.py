@@ -42,7 +42,7 @@ from src.storage.neo4j_store import query_relationship_counts_if_enabled
 
 DEFAULT_TEST_SET = PROJECT_ROOT / "data" / "test_sets" / "apollo_multihop_50.json"
 DEFAULT_JSON_REPORT = PROJECT_ROOT / "results" / "apollo_multihop_report.json"
-DEFAULT_MD_REPORT = PROJECT_ROOT / "results" / "apollo_multihop_summary.md"
+DEFAULT_MD_REPORT = PROJECT_ROOT / "results" / "apollo_multihop_mock_summary.md"
 
 # Terminal states recorded in each result row.
 TERMINAL_COMPLETED = "completed"

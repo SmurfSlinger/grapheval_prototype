@@ -150,8 +150,9 @@ currently uses the unchanged, validated prompts.
 
 Reports:
 
-- `results/apollo_multihop_report.json` — mock plumbing only
+- `results/apollo_multihop_report.json` + `results/apollo_multihop_mock_summary.md` — mock plumbing only
 - `results/apollo_multihop_real_smoke.json` — single real hop-1 smoke
+- `results/apollo_multihop_partial_real.json` — early 5-question real sample
 - `results/apollo_multihop_real_baseline.json` — real baseline (cite as full
   only when `run_type` is `full_real`)
 
@@ -254,6 +255,11 @@ Evidence (re-verified on this commit):
 - Real baseline artifact: `results/apollo_multihop_real_baseline.json`
   (partial; cite as complete only when `run_type=full_real`). This pass did
   **not** re-run the full real Ollama baseline.
+- Historical note (not a separate artifact): an earlier local sample with
+  `num_ctx=32768` and a 120s per-question budget recorded three
+  `model_timeout` outcomes at hops 1, 3, and 5. Prefer the committed
+  partial/smoke/baseline reports for measurement; use longer timeouts when
+  resuming.
 
 A COMPLETE real baseline requires terminal records for all 50 questions
 (completed, timeout, or error). Accuracy is not the readiness criterion;

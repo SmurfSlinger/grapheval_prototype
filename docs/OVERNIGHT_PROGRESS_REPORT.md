@@ -150,7 +150,7 @@ RETURN s.name, type(r), r, o.name
   keeps earlier checkpointed rows in the report.
 - Full mock plumbing report:
   `results/apollo_multihop_report.json` /
-  `results/apollo_multihop_summary.md` — 50/50 projection failures on the
+  `results/apollo_multihop_mock_summary.md` — 50/50 projection failures on the
   deterministic mock (no Apollo profile). Plumbing only, not accuracy.
 - Real smoke:
   `results/apollo_multihop_real_smoke.json` — hop-1 question exact match +
