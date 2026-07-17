@@ -241,18 +241,42 @@ Model selection precedence in the wrapper (highest to lowest):
 4. Default `gemma4:e2b`
 
 The wrapper resolves that effective model **before** checking Ollama, then
-passes the same model to `run_multihop_benchmark.py`. It verifies Ollama is
-reachable, confirms the requested model tag is installed with an **exact**
-match (for example `gemma4:latest` does not satisfy `gemma4:e2b`), validates
-the dataset, and runs the benchmark with safe defaults. It does NOT download
-any model automatically. If the model is missing it prints the exact
-`ollama pull` command and exits.
+passes the same model to `run_multihop_benchmark.py`. Checkpoint/resume uses
+these canonical paths (do not point the wrapper elsewhere):
+
+- `results/apollo_multihop_real_baseline.json`
+- `results/apollo_multihop_real_baseline.md`
+
+Protected wrapper arguments (rejected; the wrapper owns them):
+
+- `--provider`
+- `--test-set`
+- `--output`
+- `--summary`
+
+Safe forwardable tuning arguments include:
+
+- `--limit`, `--ids`, `--start-at`, `--stop-after-minutes`
+- `--retry-errors`, `--rerun-completed`
+- `--timeout-per-question`, `--cooldown-seconds`, `--max-consecutive-timeouts`
+- `--num-ctx`, `--lock-file`
+
+`--model` is handled by the wrapper’s model-resolution logic and is not
+forwarded as a duplicate. Resume only continues the documented partial
+checkpoint when the wrapper writes to the canonical JSON path above.
+
+The wrapper verifies Ollama is reachable, confirms the requested model tag is
+installed with an **exact** match (for example `gemma4:latest` does not satisfy
+`gemma4:e2b`), validates the dataset, and runs the benchmark with safe
+defaults. It does NOT download any model automatically. If the model is missing
+it prints the exact `ollama pull` command and exits.
 
 Note: a mock-provider 50-question run tests runner plumbing only. Fifty
 terminal failure records with zero completions are **not** evidence of answer
 accuracy.
 
-Or run the Python runner directly with full control:
+Or run the Python runner directly with full control (use the same checkpoint
+paths if you intend to resume the partial baseline):
 
 ```bash
 python scripts/run_multihop_benchmark.py \
@@ -266,8 +290,8 @@ python scripts/run_multihop_benchmark.py \
   --resume \
   --cooldown-seconds 3 \
   --max-consecutive-timeouts 5 \
-  --output results/apollo_multihop_real_report.json \
-  --summary results/apollo_multihop_real_summary.md
+  --output results/apollo_multihop_real_baseline.json \
+  --summary results/apollo_multihop_real_baseline.md
 ```
 
 Key flags:

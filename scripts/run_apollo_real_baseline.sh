@@ -15,6 +15,14 @@
 #   3. MODEL from .env (applied only when MODEL was not already set)
 #   4. Default: gemma4:e2b
 #
+# Canonical checkpoint paths (resume requires these exact files):
+#   results/apollo_multihop_real_baseline.json
+#   results/apollo_multihop_real_baseline.md
+#
+# Protected (rejected): --provider, --test-set, --output, --summary
+# Forwardable tuning examples: --limit, --ids, --start-at, --stop-after-minutes,
+#   --retry-errors, --rerun-completed, timeout/cooldown/num-ctx controls
+#
 # The model validated against Ollama is exactly the model passed to the runner.
 # Example:
 #   ./scripts/run_apollo_real_baseline.sh --model llama3:8b
@@ -59,9 +67,9 @@ COOLDOWN_SECONDS="${COOLDOWN_SECONDS:-3}"
 MAX_CONSECUTIVE_TIMEOUTS="${MAX_CONSECUTIVE_TIMEOUTS:-5}"
 OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://localhost:11434}"
 
-OUTPUT_JSON="$ROOT/results/apollo_multihop_real_report.json"
-OUTPUT_MD="$ROOT/results/apollo_multihop_real_summary.md"
-TEST_SET="$ROOT/data/test_sets/apollo_multihop_50.json"
+OUTPUT_JSON="$ROOT/$APOLLO_BASELINE_OUTPUT_JSON_REL"
+OUTPUT_MD="$ROOT/$APOLLO_BASELINE_OUTPUT_MD_REL"
+TEST_SET="$ROOT/$APOLLO_BASELINE_TEST_SET_REL"
 
 # ---------------------------------------------------------------------------
 # 5. Locate Python
@@ -86,6 +94,10 @@ echo "[model] Effective model: $MODEL"
 # The validated model and the runner --model value are the same resolved MODEL.
 if [[ "${APOLLO_BASELINE_DRY_RUN:-0}" == "1" ]]; then
   export MODEL
+  export OUTPUT_JSON OUTPUT_MD TEST_SET
+  export OUTPUT_JSON_REL="$APOLLO_BASELINE_OUTPUT_JSON_REL"
+  export OUTPUT_MD_REL="$APOLLO_BASELINE_OUTPUT_MD_REL"
+  export TEST_SET_REL="$APOLLO_BASELINE_TEST_SET_REL"
   if ((${#FORWARD_ARGS[@]})); then
     FORWARD_JSON="$(printf '%s\n' "${FORWARD_ARGS[@]}" | python3 -c 'import json,sys; print(json.dumps([line.rstrip("\n") for line in sys.stdin]))')"
   else
@@ -95,11 +107,20 @@ if [[ "${APOLLO_BASELINE_DRY_RUN:-0}" == "1" ]]; then
   python3 - <<'PY'
 import json, os
 model = os.environ["MODEL"]
+forward = json.loads(os.environ["FORWARD_JSON"])
 print(json.dumps({
     "model": model,
     "checked_model": model,
     "executed_model": model,
-    "forward_args": json.loads(os.environ["FORWARD_JSON"]),
+    "forward_args": forward,
+    "provider": "ollama",
+    "resume": True,
+    "output_json": os.environ["OUTPUT_JSON"],
+    "output_md": os.environ["OUTPUT_MD"],
+    "test_set": os.environ["TEST_SET"],
+    "output_json_rel": os.environ["OUTPUT_JSON_REL"],
+    "output_md_rel": os.environ["OUTPUT_MD_REL"],
+    "test_set_rel": os.environ["TEST_SET_REL"],
 }))
 PY
   exit 0

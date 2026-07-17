@@ -171,10 +171,10 @@ cd ..
 pytest tests/
 ```
 
-Task 1 re-verification passed, including the frontend build, 228 backend
+Task 1 re-verification passed, including the frontend build, 236 backend
 tests, custom endpoint/UI controls, FACT readback, separate CLAIMS, raw
 trace availability, benchmark runner tests, and Apollo baseline wrapper
-model-resolution tests.
+path/override tests.
 
 ---
 
@@ -184,7 +184,7 @@ model-resolution tests.
 
 Evidence (verified on this branch):
 - Frontend `npm run build` passes.
-- `pytest tests/` passes (**228 tests**).
+- `pytest tests/` passes (**236 tests**).
 - Custom route tests in `tests/test_local_neo4j_custom_run.py`.
 - FACT persistence and readback tested.
 - CLAIM separation tested.
@@ -232,6 +232,15 @@ Evidence (re-verified on this commit):
   1) CLI `--model VALUE` / `--model=VALUE`, 2) pre-existing `MODEL` env var,
   3) `MODEL` from `.env` only when unset, 4) default `gemma4:e2b`. Exact
   Ollama tag match is required (`gemma4:latest` does not satisfy `gemma4:e2b`).
+- Canonical real-baseline checkpoint paths (wrapper + docs agree; resume
+  depends on these exact files):
+  - `results/apollo_multihop_real_baseline.json`
+  - `results/apollo_multihop_real_baseline.md`
+- Wrapper protected args (rejected): `--provider`, `--test-set`, `--output`,
+  `--summary`. Safe forwardable tuning includes `--limit`, `--ids`,
+  `--start-at`, `--stop-after-minutes`, `--retry-errors`, `--rerun-completed`,
+  and timeout/cooldown/`--num-ctx` controls. `--model` is resolved by the
+  wrapper and not duplicated in forward-args.
 - Real baseline command (local machine with Ollama + Neo4j):
   `./scripts/run_apollo_real_baseline.sh`
   or with an explicit model: `./scripts/run_apollo_real_baseline.sh --model llama3:8b`
@@ -279,10 +288,12 @@ deterministic labels merely to raise benchmark scores.
 I finished the local custom-context Neo4j-backed workflow and hardened the
 Apollo multi-hop measurement path. Custom runs can clear Neo4j, extract a
 graph from pasted context, persist trusted FACTS, keep answer CLAIMS
-separate, and evaluate from Neo4j-read base facts. Backend tests: 228 passed.
+separate, and evaluate from Neo4j-read base facts. Backend tests: 236 passed.
 Frontend production build passes. The 50-question dataset validates cleanly.
 The mock plumbing run yields 50 terminal failure records (0 completions,
 50 projection failures) and is not accuracy evidence. The Apollo baseline
-wrapper now validates and executes the same resolved model. A partial real
-baseline checkpoint exists from an earlier local run; this pass did not
-re-run the real Ollama baseline.
+wrapper now validates and executes the same resolved model, writes/resumes
+the canonical `results/apollo_multihop_real_baseline.{json,md}` checkpoint,
+and rejects protected identity/output overrides. A partial real baseline
+checkpoint exists from an earlier local run; this pass did not re-run the
+real Ollama baseline.

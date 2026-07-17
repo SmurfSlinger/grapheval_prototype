@@ -1,8 +1,7 @@
-"""Focused tests for scripts/run_apollo_real_baseline.sh model resolution.
+"""Focused tests for scripts/run_apollo_real_baseline.sh.
 
-These tests exercise scripts/apollo_baseline_args.sh and the wrapper dry-run
-path without requiring a real Ollama installation. They verify that the model
-validated against Ollama is exactly the model passed to the benchmark runner.
+Covers model resolution, canonical checkpoint paths, and protected CLI
+overrides without requiring real Ollama or Neo4j.
 """
 
 from __future__ import annotations
@@ -16,6 +15,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ARGS_LIB = ROOT / "scripts" / "apollo_baseline_args.sh"
 WRAPPER = ROOT / "scripts" / "run_apollo_real_baseline.sh"
+
+CANONICAL_JSON = "results/apollo_multihop_real_baseline.json"
+CANONICAL_MD = "results/apollo_multihop_real_baseline.md"
+CANONICAL_TEST_SET = "data/test_sets/apollo_multihop_50.json"
 
 
 def _run_resolve(
@@ -91,7 +94,8 @@ def _run_wrapper_dry(
     cli_args: list[str],
     *,
     env: dict[str, str] | None = None,
-) -> dict:
+    expect_ok: bool = True,
+) -> tuple[subprocess.CompletedProcess[str], dict | None]:
     run_env = os.environ.copy()
     run_env.pop("MODEL", None)
     run_env["APOLLO_BASELINE_DRY_RUN"] = "1"
@@ -105,8 +109,10 @@ def _run_wrapper_dry(
         cwd=str(ROOT),
         check=False,
     )
+    if not expect_ok:
+        return proc, None
     assert proc.returncode == 0, f"stdout={proc.stdout!r}\nstderr={proc.stderr!r}"
-    return json.loads(proc.stdout.strip().splitlines()[-1])
+    return proc, json.loads(proc.stdout.strip().splitlines()[-1])
 
 
 def test_default_model_when_unset() -> None:
@@ -175,14 +181,47 @@ def test_cli_overrides_dotenv_and_default() -> None:
     assert data["model"] == "cli:tag"
 
 
-def test_forward_args_preserve_non_model_flags() -> None:
+def test_forward_args_preserve_safe_tuning_flags() -> None:
     data = _payload(
         _run_resolve(
-            cli_args=["--limit", "3", "--model", "llama3:8b", "--ids", "Q1"],
+            cli_args=[
+                "--limit",
+                "3",
+                "--model",
+                "llama3:8b",
+                "--ids",
+                "Q1",
+                "--start-at",
+                "apollo_hop_010",
+                "--stop-after-minutes",
+                "30",
+                "--retry-errors",
+                "--rerun-completed",
+                "--timeout-per-question",
+                "600",
+                "--cooldown-seconds",
+                "5",
+            ],
         )
     )
     assert data["model"] == "llama3:8b"
-    assert data["forward_args"] == ["--limit", "3", "--ids", "Q1"]
+    assert data["forward_args"] == [
+        "--limit",
+        "3",
+        "--ids",
+        "Q1",
+        "--start-at",
+        "apollo_hop_010",
+        "--stop-after-minutes",
+        "30",
+        "--retry-errors",
+        "--rerun-completed",
+        "--timeout-per-question",
+        "600",
+        "--cooldown-seconds",
+        "5",
+    ]
+    assert "--model" not in data["forward_args"]
 
 
 def test_malformed_model_missing_value() -> None:
@@ -203,22 +242,84 @@ def test_malformed_model_value_looks_like_flag() -> None:
     assert "requires a non-empty value" in proc.stderr
 
 
+def test_protected_provider_rejected() -> None:
+    proc = _run_resolve(cli_args=["--provider", "mock"])
+    assert proc.returncode == 2
+    assert "protected wrapper argument" in proc.stderr
+
+
+def test_protected_test_set_rejected() -> None:
+    proc = _run_resolve(cli_args=["--test-set", "other.json"])
+    assert proc.returncode == 2
+    assert "protected wrapper argument" in proc.stderr
+
+
+def test_protected_output_rejected_space_and_equals() -> None:
+    proc = _run_resolve(cli_args=["--output", "/tmp/other.json"])
+    assert proc.returncode == 2
+    assert "protected wrapper argument" in proc.stderr
+    proc = _run_resolve(cli_args=["--output=/tmp/other.json"])
+    assert proc.returncode == 2
+    assert "protected wrapper argument" in proc.stderr
+
+
+def test_protected_summary_rejected() -> None:
+    proc = _run_resolve(cli_args=["--summary=other.md"])
+    assert proc.returncode == 2
+    assert "protected wrapper argument" in proc.stderr
+
+
 def test_checked_model_matches_executed_model() -> None:
     """Resolved MODEL is used for both the Ollama check and the runner --model."""
-    data = _run_wrapper_dry(["--model", "llama3:8b", "--limit", "1"])
+    _, data = _run_wrapper_dry(["--model", "llama3:8b", "--limit", "1"])
+    assert data is not None
     assert data["model"] == "llama3:8b"
     assert data["checked_model"] == data["executed_model"] == "llama3:8b"
     assert data["forward_args"] == ["--limit", "1"]
     assert "--model" not in data["forward_args"]
 
 
+def test_wrapper_dry_run_canonical_paths() -> None:
+    _, data = _run_wrapper_dry([])
+    assert data is not None
+    assert data["output_json_rel"] == CANONICAL_JSON
+    assert data["output_md_rel"] == CANONICAL_MD
+    assert data["test_set_rel"] == CANONICAL_TEST_SET
+    assert data["output_json"].endswith("/" + CANONICAL_JSON)
+    assert data["output_md"].endswith("/" + CANONICAL_MD)
+    assert data["provider"] == "ollama"
+    assert data["resume"] is True
+    # Absolute paths point at the repo checkpoint files used for resume.
+    assert Path(data["output_json"]) == ROOT / CANONICAL_JSON
+    assert Path(data["output_md"]) == ROOT / CANONICAL_MD
+
+
 def test_wrapper_dry_run_equals_form_and_env_precedence() -> None:
-    data = _run_wrapper_dry(
-        ["--model=llama3:8b"],
+    _, data = _run_wrapper_dry(
+        ["--model=llama3:8b", "--ids", "apollo_hop_001"],
         env={"MODEL": "gemma4:e2b"},
     )
+    assert data is not None
     assert data["model"] == "llama3:8b"
     assert data["checked_model"] == data["executed_model"]
+    assert data["forward_args"] == ["--ids", "apollo_hop_001"]
+    assert data["output_json_rel"] == CANONICAL_JSON
+
+
+def test_wrapper_rejects_protected_output_override() -> None:
+    proc, _ = _run_wrapper_dry(
+        ["--output", "/tmp/wrong.json"],
+        expect_ok=False,
+    )
+    assert proc.returncode == 2
+    assert "protected wrapper argument" in proc.stderr
+    assert "Verifying Ollama" not in proc.stdout
+
+
+def test_wrapper_rejects_protected_provider_override() -> None:
+    proc, _ = _run_wrapper_dry(["--provider=mock"], expect_ok=False)
+    assert proc.returncode == 2
+    assert "protected wrapper argument" in proc.stderr
 
 
 def test_wrapper_rejects_missing_model_before_ollama() -> None:
@@ -236,3 +337,12 @@ def test_wrapper_rejects_missing_model_before_ollama() -> None:
     assert proc.returncode == 2
     assert "requires a non-empty value" in proc.stderr
     assert "Verifying Ollama" not in proc.stdout
+
+
+def test_existing_partial_checkpoint_not_deleted_by_path_change() -> None:
+    """Canonical path must keep pointing at the existing partial checkpoint file."""
+    checkpoint = ROOT / CANONICAL_JSON
+    assert checkpoint.is_file()
+    payload = json.loads(checkpoint.read_text(encoding="utf-8"))
+    assert payload.get("is_partial") is True
+    assert len(payload.get("results", [])) == 15

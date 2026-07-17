@@ -7,13 +7,27 @@
 #   3. MODEL from .env (only applied when MODEL was not already set)
 #   4. Default: gemma4:e2b
 #
+# Protected identity/output flags are rejected (the wrapper owns them):
+#   --provider, --test-set, --output, --summary
+#
+# Safe tuning flags may be forwarded to the Python runner, for example:
+#   --limit, --ids, --start-at, --stop-after-minutes,
+#   --retry-errors, --rerun-completed,
+#   --timeout-per-question, --cooldown-seconds, --max-consecutive-timeouts,
+#   --num-ctx, --lock-file
+#
 # This file is safe to source from tests. It does not talk to Ollama or run
 # the benchmark.
 
+# Canonical real-baseline checkpoint paths (relative to repo root).
+APOLLO_BASELINE_OUTPUT_JSON_REL="results/apollo_multihop_real_baseline.json"
+APOLLO_BASELINE_OUTPUT_MD_REL="results/apollo_multihop_real_baseline.md"
+APOLLO_BASELINE_TEST_SET_REL="data/test_sets/apollo_multihop_50.json"
+
 # Parse wrapper argv. Sets:
 #   CLI_MODEL          - model from --model / --model=... (empty if absent)
-#   FORWARD_ARGS       - remaining args to pass through to the Python runner
-# Exits 2 on malformed --model usage.
+#   FORWARD_ARGS       - remaining safe args to pass through to the runner
+# Exits 2 on malformed --model usage or protected-flag overrides.
 apollo_baseline_parse_args() {
   CLI_MODEL=""
   FORWARD_ARGS=()
@@ -35,6 +49,17 @@ apollo_baseline_parse_args() {
           return 2
         fi
         shift
+        ;;
+      --provider|--provider=*|\
+      --test-set|--test-set=*|\
+      --output|--output=*|\
+      --summary|--summary=*)
+        echo "ERROR: refusing to override protected wrapper argument: $1" >&2
+        echo "       run_apollo_real_baseline.sh owns provider/test-set/output/summary." >&2
+        echo "       Use the wrapper defaults so resume uses the canonical checkpoint:" >&2
+        echo "         ${APOLLO_BASELINE_OUTPUT_JSON_REL}" >&2
+        echo "         ${APOLLO_BASELINE_OUTPUT_MD_REL}" >&2
+        return 2
         ;;
       *)
         FORWARD_ARGS+=("$1")
