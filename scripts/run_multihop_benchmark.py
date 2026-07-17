@@ -208,15 +208,13 @@ def should_skip_prior_row(
     *,
     resume: bool,
     retry_errors: bool = False,
-    rerun_errors: bool = False,
     rerun_completed: bool = False,
 ) -> bool:
     if not resume or prior_row is None:
         return False
-    rerun_err = retry_errors or rerun_errors
     if rerun_completed:
         return False
-    if rerun_err and prior_row.get("error"):
+    if retry_errors and prior_row.get("error"):
         return False
     return True
 

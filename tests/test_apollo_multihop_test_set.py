@@ -186,19 +186,19 @@ def test_resume_loads_prior_rows_and_skips_completed(tmp_path: Path):
     assert should_skip_prior_row(
         prior["apollo_hop_001"],
         resume=True,
-        rerun_errors=True,
+        retry_errors=True,
     )
     assert not should_skip_prior_row(
         prior["apollo_hop_002"],
         resume=True,
-        rerun_errors=True,
+        retry_errors=True,
     )
     assert should_skip_prior_row(
         prior["apollo_hop_002"],
         resume=True,
-        rerun_errors=False,
+        retry_errors=False,
     )
-    assert not should_skip_prior_row(None, resume=True, rerun_errors=False)
+    assert not should_skip_prior_row(None, resume=True, retry_errors=False)
 
 
 def test_resume_with_start_at_keeps_earlier_ids_in_report_selection():

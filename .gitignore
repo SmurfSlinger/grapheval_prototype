@@ -27,4 +27,5 @@ frontend/out/
 frontend/.env*.local
 build-prompts.local.md
 scripts/.pids/
-HOW_IT_WORKS.md.runtime/
+HOW_IT_WORKS.md
+.runtime/
