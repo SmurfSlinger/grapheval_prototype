@@ -11,6 +11,7 @@ from src.config import (
     DEFAULT_MODEL,
     OLLAMA_BASE_URL,
     OLLAMA_NUM_CTX,
+    OLLAMA_NUM_PREDICT,
     OLLAMA_REQUEST_TIMEOUT,
 )
 from src.llm.base import LLMProvider
@@ -45,6 +46,7 @@ class OllamaProvider(LLMProvider):
         base_url: str = OLLAMA_BASE_URL,
         timeout: float = OLLAMA_REQUEST_TIMEOUT,
         num_ctx: int | None = OLLAMA_NUM_CTX,
+        num_predict: int | None = OLLAMA_NUM_PREDICT,
         *,
         verify_on_init: bool = True,
     ) -> None:
@@ -53,6 +55,7 @@ class OllamaProvider(LLMProvider):
         self.generate_url = f"{self.base_url}/api/generate"
         self.timeout = timeout
         self.num_ctx = num_ctx
+        self.num_predict = num_predict
         self.call_telemetry: list[dict[str, int | str | None]] = []
         if verify_on_init:
             self.check_server(self.base_url, timeout=min(timeout, 10))
@@ -119,13 +122,21 @@ class OllamaProvider(LLMProvider):
             )
 
     def complete(self, prompt: str) -> str:
-        payload = {
+        payload: dict[str, Any] = {
             "model": self.model,
             "prompt": prompt,
             "stream": False,
+            # Thinking-capable models (e.g. Gemma 4) may emit only "thinking"
+            # tokens unless thinking mode is disabled for the final text reply.
+            "think": False,
         }
+        options: dict[str, int] = {}
         if self.num_ctx is not None:
-            payload["options"] = {"num_ctx": self.num_ctx}
+            options["num_ctx"] = self.num_ctx
+        if self.num_predict is not None:
+            options["num_predict"] = self.num_predict
+        if options:
+            payload["options"] = options
         body = json.dumps(payload).encode("utf-8")
         request = urllib.request.Request(
             self.generate_url,
@@ -172,6 +183,11 @@ class OllamaProvider(LLMProvider):
             )
 
         result = str(data["response"]).strip()
+        if not result:
+            # Fallback when a thinking-capable model still leaves response empty.
+            thinking = str(data.get("thinking") or "").strip()
+            if thinking:
+                result = thinking
         self.call_telemetry.append(
             {
                 "call_index": len(self.call_telemetry) + 1,

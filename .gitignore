@@ -16,6 +16,11 @@ results/*.json
 !results/apollo_multihop_report.json
 !results/apollo_multihop_real_smoke.json
 !results/apollo_multihop_partial_real.json
+!results/apollo_multihop_real_baseline.json
+!results/apollo_multihop_summary.md
+!results/apollo_multihop_real_smoke.md
+!results/apollo_multihop_partial_real.md
+!results/apollo_multihop_real_baseline.md
 frontend/node_modules/
 frontend/.next/
 frontend/out/

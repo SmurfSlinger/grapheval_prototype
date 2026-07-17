@@ -115,6 +115,19 @@ def parse_args() -> argparse.Namespace:
         help="Recorded for comparison; compact currently uses unchanged prompts.",
     )
     parser.add_argument(
+        "--resume",
+        action="store_true",
+        help=(
+            "Load existing results from --output and skip completed question IDs. "
+            "Preserves prior rows when resuming with --start-at or after interruption."
+        ),
+    )
+    parser.add_argument(
+        "--rerun-errors",
+        action="store_true",
+        help="With --resume, re-run question IDs whose prior row has an error.",
+    )
+    parser.add_argument(
         "--output",
         "--output-json",
         dest="output_json",
@@ -129,6 +142,37 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_MD_REPORT,
     )
     return parser.parse_args()
+
+
+def load_prior_results(path: Path) -> dict[str, dict[str, Any]]:
+    """Load prior per-question rows keyed by ID for resumable execution."""
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    rows = payload.get("results")
+    if not isinstance(rows, list):
+        return {}
+    prior: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        if isinstance(row, dict) and row.get("id"):
+            prior[str(row["id"])] = row
+    return prior
+
+
+def should_skip_prior_row(
+    prior_row: dict[str, Any] | None,
+    *,
+    resume: bool,
+    rerun_errors: bool,
+) -> bool:
+    if not resume or prior_row is None:
+        return False
+    if rerun_errors and prior_row.get("error"):
+        return False
+    return True
 
 
 def graph_metrics(payload: dict[str, Any]) -> dict[str, Any]:
@@ -876,6 +920,37 @@ def select_questions(
     return selected
 
 
+def partition_resume_selection(
+    questions: list[dict[str, Any]],
+    *,
+    ids: str | None,
+    start_at: str | None,
+    limit: int | None,
+    resume: bool,
+) -> tuple[list[dict[str, Any]], set[str]]:
+    """Return report selection and the subset of IDs eligible to execute.
+
+    With ``--resume`` and ``--start-at``, earlier IDs remain in the report when
+    prior checkpoint rows exist, while execution starts at ``start_at``.
+    """
+    report_selection = select_questions(
+        questions,
+        ids=ids,
+        start_at=None if resume else start_at,
+        limit=limit,
+    )
+    if resume and start_at:
+        run_selection = select_questions(
+            report_selection,
+            ids=None,
+            start_at=start_at,
+            limit=None,
+        )
+    else:
+        run_selection = report_selection
+    return report_selection, {str(item["id"]) for item in run_selection}
+
+
 def main() -> None:
     args = parse_args()
     if args.num_ctx is not None and args.num_ctx <= 0:
@@ -893,11 +968,12 @@ def main() -> None:
         return
 
     try:
-        questions = select_questions(
+        questions, runnable_ids = partition_resume_selection(
             list(payload["questions"]),
             ids=args.ids,
             start_at=args.start_at,
             limit=args.limit,
+            resume=args.resume,
         )
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
@@ -909,27 +985,66 @@ def main() -> None:
     provider = get_provider(args.provider, model=args.model, fallback_to_mock=False)
     if hasattr(provider, "num_ctx"):
         provider.num_ctx = args.num_ctx
+    # Keep per-call HTTP timeout independent of the whole-question wall clock.
+    # Cap only when the question budget is tighter than the provider default.
     if (
         args.timeout_per_question > 0
         and hasattr(provider, "timeout")
-        and provider.timeout > args.timeout_per_question
+        and 0 < args.timeout_per_question < provider.timeout
     ):
         provider.timeout = args.timeout_per_question
+    elif hasattr(provider, "timeout") and provider.timeout < 600:
+        # CPU local runs need headroom for large structured extractions.
+        provider.timeout = max(provider.timeout, 600.0)
 
+    prior_by_id = load_prior_results(args.output_json) if args.resume else {}
     rows: list[dict[str, Any]] = []
     for question in questions:
-        row = run_one(
-            provider=provider,
-            provider_name=args.provider,
-            model=args.model,
-            num_ctx=args.num_ctx,
-            context=payload["trusted_context"],
-            question=question,
-            max_iterations=args.max_iterations,
-            clear_neo4j=args.clear_neo4j,
-            neo4j_enabled=neo4j_enabled,
-            timeout_seconds=args.timeout_per_question,
-        )
+        question_id = str(question["id"])
+        prior_row = prior_by_id.get(question_id)
+        executed_now = False
+        if question_id not in runnable_ids:
+            if prior_row is None:
+                continue
+            row = prior_row
+            print(
+                f"{row['id']}: kept_prior_before_start_at "
+                f"match={row.get('contains_expected_answer')} "
+                f"resolved={row.get('resolved_by_pipeline')} "
+                f"error={row.get('error') or 'none'}"
+            )
+        elif should_skip_prior_row(
+            prior_row,
+            resume=args.resume,
+            rerun_errors=args.rerun_errors,
+        ):
+            assert prior_row is not None
+            row = prior_row
+            print(
+                f"{row['id']}: skipped_resume "
+                f"match={row.get('contains_expected_answer')} "
+                f"resolved={row.get('resolved_by_pipeline')} "
+                f"error={row.get('error') or 'none'}"
+            )
+        else:
+            executed_now = True
+            row = run_one(
+                provider=provider,
+                provider_name=args.provider,
+                model=args.model,
+                num_ctx=args.num_ctx,
+                context=payload["trusted_context"],
+                question=question,
+                max_iterations=args.max_iterations,
+                clear_neo4j=args.clear_neo4j,
+                neo4j_enabled=neo4j_enabled,
+                timeout_seconds=args.timeout_per_question,
+            )
+            print(
+                f"{row['id']}: match={row['contains_expected_answer']} "
+                f"resolved={row['resolved_by_pipeline']} "
+                f"error={row['error'] or 'none'}"
+            )
         rows.append(row)
         report = build_report(
             payload=payload,
@@ -944,12 +1059,7 @@ def main() -> None:
             output_json=args.output_json,
             output_markdown=args.output_markdown,
         )
-        print(
-            f"{row['id']}: match={row['contains_expected_answer']} "
-            f"resolved={row['resolved_by_pipeline']} "
-            f"error={row['error'] or 'none'}"
-        )
-        if row["error"] and not args.continue_on_error:
+        if executed_now and row.get("error") and not args.continue_on_error:
             break
 
     report = build_report(

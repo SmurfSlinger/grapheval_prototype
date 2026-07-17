@@ -2,10 +2,10 @@
 
 This is a measurement report, not a tuned success criterion.
 
-- Date/time: `2026-07-17T13:20:39.594399+00:00`
-- Branch: `feature/local-neo4j-custom-runs`
+- Date/time: `2026-07-17T13:39:39.724072+00:00`
+- Branch: `cursor/cloud-agent-1784294800421-ztfpf`
 - Provider/model: `mock` / `gemma4:12b`
-- Configured num_ctx: `32768`
+- Configured num_ctx: `None`
 - Run type: **mock_plumbing**
 - Attempted/completed/errored: 50 / 0 / 50
 - Exact-match accuracy: 0.0%
@@ -44,7 +44,7 @@ This is a measurement report, not a tuned success criterion.
 
 ## Prompt/context size
 
-- Configured num_ctx: `32768`
+- Configured num_ctx: `None`
 - Max prompt characters: 0
 - Approximate max prompt tokens: 0
 - Largest prompt stage: `None`

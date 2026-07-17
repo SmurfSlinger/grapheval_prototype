@@ -12,9 +12,12 @@ from scripts.run_multihop_benchmark import (
     base_result_row,
     contains_expected_answer,
     failure_category,
+    load_prior_results,
     normalize_answer,
     normalized_match,
+    partition_resume_selection,
     select_questions,
+    should_skip_prior_row,
     sub_questions_resolved,
     summarize,
     validate_test_set,
@@ -153,3 +156,62 @@ def test_pipeline_resolved_uses_stop_reason_enum_not_string_casing():
 
     assert sub_questions_resolved([resolved]) is True
     assert sub_questions_resolved([resolved, stalled]) is False
+
+
+def test_resume_loads_prior_rows_and_skips_completed(tmp_path: Path):
+    report_path = tmp_path / "partial.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "results": [
+                    {
+                        "id": "apollo_hop_001",
+                        "contains_expected_answer": True,
+                        "resolved_by_pipeline": True,
+                        "error": None,
+                    },
+                    {
+                        "id": "apollo_hop_002",
+                        "contains_expected_answer": False,
+                        "resolved_by_pipeline": False,
+                        "error": "TimeoutError: exceeded",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    prior = load_prior_results(report_path)
+    assert set(prior) == {"apollo_hop_001", "apollo_hop_002"}
+    assert should_skip_prior_row(
+        prior["apollo_hop_001"],
+        resume=True,
+        rerun_errors=True,
+    )
+    assert not should_skip_prior_row(
+        prior["apollo_hop_002"],
+        resume=True,
+        rerun_errors=True,
+    )
+    assert should_skip_prior_row(
+        prior["apollo_hop_002"],
+        resume=True,
+        rerun_errors=False,
+    )
+    assert not should_skip_prior_row(None, resume=True, rerun_errors=False)
+
+
+def test_resume_with_start_at_keeps_earlier_ids_in_report_selection():
+    payload = json.loads(PATH.read_text(encoding="utf-8"))
+    report_selection, runnable_ids = partition_resume_selection(
+        payload["questions"],
+        ids=None,
+        start_at="apollo_hop_011",
+        limit=None,
+        resume=True,
+    )
+    assert report_selection[0]["id"] == "apollo_hop_001"
+    assert "apollo_hop_001" not in runnable_ids
+    assert "apollo_hop_011" in runnable_ids
+    assert len(report_selection) == 50
+    assert len(runnable_ids) == 40

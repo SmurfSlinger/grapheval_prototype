@@ -73,7 +73,14 @@ Configure `.env`:
 OLLAMA_BASE_URL=http://127.0.0.1:11434
 DEFAULT_MODEL=gemma4:12b
 OLLAMA_NUM_CTX=32768
+OLLAMA_NUM_PREDICT=4096
+OLLAMA_REQUEST_TIMEOUT=600
 ```
+
+`OLLAMA_NUM_PREDICT` caps generation length so large context-triple JSON is not
+truncated mid-object and so replies cannot run unbounded. The Ollama provider
+also sends `think: false` so thinking-capable tags such as Gemma 4 return
+final answer text through `/api/generate`.
 
 Install a locally available tag only when needed:
 

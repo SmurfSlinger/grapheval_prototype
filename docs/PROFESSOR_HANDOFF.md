@@ -2,33 +2,34 @@
 
 ## What is ready
 
-`feature/local-neo4j-custom-runs` supports local custom trusted context and
-compound-question runs through Decomposed Backtracking. A custom run can
-optionally start from a flawed answer, intentionally clear the local Neo4j
-database, persist trusted FACT relationships, read the base KGc back from
-Neo4j, keep evaluated answer CLAIM relationships separate, and expose both
-Research Trace and Advanced / Raw Trace.
+This branch continues the local custom-context Neo4j-backed GraphEval
+workstream. Decomposed Backtracking supports custom trusted context and
+compound questions: optional flawed initial answer, intentional local Neo4j
+clear, trusted FACT persistence, base KGc readback from Neo4j, separate
+evaluated CLAIM relationships, and both Research Trace and Advanced / Raw
+Trace.
 
 The branch also contains a validated 50-question Apollo/NASA measurement set
 with five questions at each designed path length from 1 through 10, plus a
-checkpointing benchmark runner and JSON/Markdown reports.
+checkpointing/resumable benchmark runner and JSON/Markdown reports.
 
 ## Exact local startup
 
 ```bash
-git switch feature/local-neo4j-custom-runs
 cp .env.example .env
 ```
 
-The locally observed tags are `gemma4:e2b` and `gemma4:latest`.
-`gemma4:12b` was not installed. Either set:
+Use an installed Ollama tag. Template default is `gemma4:12b`. For the
+verified cloud baseline tag:
 
 ```dotenv
 DEFAULT_MODEL=gemma4:e2b
-OLLAMA_NUM_CTX=32768
+OLLAMA_NUM_CTX=8192
+OLLAMA_NUM_PREDICT=4096
+OLLAMA_REQUEST_TIMEOUT=600
 ```
 
-or pull the configured 12b tag before selecting it:
+Or pull the configured 12b tag:
 
 ```bash
 ollama pull gemma4:12b
@@ -48,6 +49,11 @@ Start Neo4j, FastAPI, and Next.js in another:
 ```
 
 Open `http://localhost:3000`.
+
+If Ollama segfaults on load with `libggml-cpu-sapphirerapids.so` (some CPU
+VMs advertise AMX incorrectly), move that library out of Ollama's `lib/ollama`
+directory so it falls back to a compatible CPU backend, then restart
+`ollama serve`.
 
 ## Run a custom context and question
 
@@ -84,14 +90,15 @@ successful run.
 
 ## Model and context tested
 
-- Ollama: `0.30.6`
-- Real smoke model: `gemma4:e2b`
-- Context setting: `OLLAMA_NUM_CTX=32768`
-- Real custom smoke: returned `Rack R7` from the synthetic service/database/
-  host/rack context with Neo4j persistence and readback.
+- Real baseline / smoke model: `gemma4:e2b`
+- Context setting used for the cloud baseline: `OLLAMA_NUM_CTX=8192`
+- Generation cap: `OLLAMA_NUM_PREDICT=4096` (prevents truncation of large
+  context-triple JSON and unbounded multi-thousand-token replies)
+- Provider disables thinking mode (`think: false`) so Gemma 4 returns final
+  answer text through `/api/generate`
+- Real hop-1 smoke: exact match and pipeline-resolved (~228s on CPU)
 
-Model quality and speed depend on local hardware. The 12b tag remains a
-configuration target, not a locally verified installed model.
+Model quality and speed depend on local hardware.
 
 ## Benchmark
 
@@ -109,31 +116,34 @@ python scripts/run_multihop_benchmark.py \
   --validate-only
 ```
 
-Run the complete real benchmark:
+Run or resume the complete real benchmark:
 
 ```bash
 python scripts/run_multihop_benchmark.py \
   --test-set data/test_sets/apollo_multihop_50.json \
   --provider ollama \
   --model gemma4:e2b \
-  --num-ctx 32768 \
+  --num-ctx 8192 \
   --clear-neo4j \
-  --limit 50 \
-  --timeout-per-question 180 \
+  --timeout-per-question 1200 \
   --continue-on-error \
-  --output results/apollo_multihop_report.json \
-  --summary results/apollo_multihop_summary.md
+  --resume \
+  --rerun-errors \
+  --output results/apollo_multihop_real_baseline.json \
+  --summary results/apollo_multihop_real_baseline.md
 ```
 
 The runner writes a checkpoint after every question. Use `--ids` for selected
-questions or `--start-at` to resume from a particular ID. `--prompt-profile
-compact` is accepted for experiment labeling but currently uses the unchanged,
-validated prompts.
+questions or `--start-at` with `--resume` to continue while keeping earlier
+rows. `--prompt-profile compact` is accepted for experiment labeling but
+currently uses the unchanged, validated prompts.
 
-Reports are written under `results/`. The full mock report is plumbing-only:
-the deterministic mock has no profile for this new context and its projection
-failures are not model-accuracy evidence. Real results are explicitly labeled
-partial or full.
+Reports:
+
+- `results/apollo_multihop_report.json` — mock plumbing only
+- `results/apollo_multihop_real_smoke.json` — single real hop-1 smoke
+- `results/apollo_multihop_real_baseline.json` — real baseline (cite as full
+  only when `run_type` is `full_real`)
 
 ## Benchmark interpretation
 
@@ -158,13 +168,13 @@ cd ..
 pytest tests/
 ```
 
-Task 1 re-verification passed, including the frontend build, 178 backend tests,
-bounded model audit, custom endpoint/UI controls, FACT readback, separate
-CLAIMS, and raw trace availability.
+Task 1 re-verification passed, including the frontend build, 184 backend
+tests, custom endpoint/UI controls, FACT readback, separate CLAIMS, and raw
+trace availability.
 
 ## Known limitations
 
-- `gemma4:12b` was not installed locally; select `gemma4:e2b` or pull 12b.
+- `gemma4:12b` may not be installed; select `gemma4:e2b` or pull 12b.
 - Prompt token telemetry is approximate and the provider boundary does not yet
   attach a stage name.
 - The comparator receives Python `KgcFact` objects reconstructed from Neo4j;
@@ -173,22 +183,24 @@ CLAIMS, and raw trace availability.
   and persisted after success.
 - Entity nodes are globally named, so safe isolation currently uses a full
   local-database clear rather than scope-only deletion.
-- A full 50-question real-model benchmark is lengthy. Partial results must not
-  be described as full benchmark performance.
+- A full 50-question real-model benchmark on CPU is lengthy (~4 minutes per
+  early hop observed). Partial checkpoints must not be described as full
+  benchmark performance until `run_type=full_real`.
 
 ## Next recommended work
 
-Run the full real benchmark with checkpointing, inspect the first hop groups
-where pipeline resolution or textual matching degrades, and investigate
-general target/schema failures. Do not tune against expected answers or alter
+Let the resumable real baseline finish, inspect hop groups where pipeline
+resolution or textual matching degrades, and investigate general
+target/schema failures. Do not tune against expected answers or alter
 deterministic labels merely to raise benchmark scores.
 
 ## Spoken update
 
-I implemented the local custom-context Neo4j-backed branch. It can clear
-Neo4j, extract a graph from a pasted context, persist trusted FACTS, keep
-answer CLAIMS separate, and run decomposed backtracking over the custom input.
-I also added a 50-question Apollo multi-hop benchmark from 1 to 10 hops and a
-runner/report so we can measure where the process starts failing. Current
-benchmark results should be treated as measurement infrastructure unless the
-full real-model run has completed.
+I finished the local custom-context Neo4j-backed workflow and hardened the
+Apollo multi-hop measurement path. Custom runs can clear Neo4j, extract a
+graph from pasted context, persist trusted FACTS, keep answer CLAIMS
+separate, and evaluate from Neo4j-read base facts. The 50-question benchmark
+validates cleanly, reports match and resolve separately, checkpoints every
+question, and resumes safely. A real `gemma4:e2b` baseline is running with
+honest metrics; cite the baseline report as complete only when it is marked
+`full_real`.

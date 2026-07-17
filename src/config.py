@@ -32,7 +32,7 @@ DEFAULT_LLM_PROVIDER = os.getenv("DEFAULT_LLM_PROVIDER", "mock")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gemma4:12b")
 TEST_MODELS = ["gemma4:e2b", "gemma4:e4b", "gemma4:12b"]
-OLLAMA_REQUEST_TIMEOUT = float(os.getenv("OLLAMA_REQUEST_TIMEOUT", "120"))
+OLLAMA_REQUEST_TIMEOUT = float(os.getenv("OLLAMA_REQUEST_TIMEOUT", "600"))
 _ollama_num_ctx = os.getenv("OLLAMA_NUM_CTX", "").strip()
 try:
     OLLAMA_NUM_CTX = int(_ollama_num_ctx) if _ollama_num_ctx else None
@@ -40,6 +40,13 @@ except ValueError as exc:
     raise ValueError("OLLAMA_NUM_CTX must be a positive integer") from exc
 if OLLAMA_NUM_CTX is not None and OLLAMA_NUM_CTX <= 0:
     raise ValueError("OLLAMA_NUM_CTX must be a positive integer")
+_ollama_num_predict = os.getenv("OLLAMA_NUM_PREDICT", "4096").strip()
+try:
+    OLLAMA_NUM_PREDICT = int(_ollama_num_predict) if _ollama_num_predict else None
+except ValueError as exc:
+    raise ValueError("OLLAMA_NUM_PREDICT must be a positive integer") from exc
+if OLLAMA_NUM_PREDICT is not None and OLLAMA_NUM_PREDICT <= 0:
+    raise ValueError("OLLAMA_NUM_PREDICT must be a positive integer")
 
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
