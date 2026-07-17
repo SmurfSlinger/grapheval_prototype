@@ -1,6 +1,6 @@
 {
   "test_set_id": "apollo_multihop_50",
-  "generated_at": "2026-07-17T14:43:15.165924+00:00",
+  "generated_at": "2026-07-17T14:52:08.450445+00:00",
   "branch": "cursor/cloud-agent-1784294800421-ztfpf",
   "run_type": "partial_real",
   "is_partial": true,
@@ -70,18 +70,18 @@
     "recommendation": "The configured window covered observed prompts; increase it only if later questions show cutoff evidence and hardware permits."
   },
   "summary": {
-    "attempted": 14,
-    "completed": 14,
+    "attempted": 15,
+    "completed": 15,
     "errored": 0,
     "exact_match_count": 8,
-    "exact_match_accuracy": 0.5714285714285714,
+    "exact_match_accuracy": 0.5333333333333333,
     "contains_expected_count": 14,
-    "contains_expected_accuracy": 1.0,
-    "pipeline_resolved_count": 12,
+    "contains_expected_accuracy": 0.9333333333333333,
+    "pipeline_resolved_count": 13,
     "resolved_and_matched_count": 12,
     "unresolved_but_answer_contained_expected_count": 2,
-    "average_iterations": 1.1428571428571428,
-    "average_runtime_seconds": 236.73814285714283,
+    "average_iterations": 1.1333333333333333,
+    "average_runtime_seconds": 256.5077333333333,
     "by_hop": {
       "1": {
         "questions": 5,
@@ -104,13 +104,13 @@
         "common_failures": {}
       },
       "3": {
-        "questions": 4,
-        "completed": 4,
+        "questions": 5,
+        "completed": 5,
         "exact_match": 2,
         "contains_expected": 4,
-        "pipeline_resolved": 2,
-        "average_iterations": 1.5,
-        "average_runtime_seconds": 259.044,
+        "pipeline_resolved": 3,
+        "average_iterations": 1.4,
+        "average_runtime_seconds": 313.89160000000004,
         "common_failures": {
           "answer_matched_textually_but_pipeline_unresolved": 2
         }
@@ -914,6 +914,63 @@
         "unique_entities_needed": 4,
         "unique_relations_needed": 3,
         "requires_alias_resolution": true,
+        "requires_avoiding_sibling_branches": true,
+        "requires_composed_answer": false,
+        "requires_carry_forward": true
+      }
+    },
+    {
+      "id": "apollo_hop_015",
+      "hop_count": 3,
+      "question": "Which mission was included in the program that preceded Apollo 11's program?",
+      "expected_answer": "Gemini 8",
+      "normalized_expected": "gemini 8",
+      "predicted_answer": "The Gemini Program preceded the Apollo Program, which included Apollo 11.",
+      "normalized_predicted": "the gemini program preceded the apollo program which included apollo 11",
+      "exact_match": false,
+      "contains_expected_answer": false,
+      "answer_match": false,
+      "resolved_by_pipeline": true,
+      "final_stop_reason": "RESOLVED",
+      "all_stop_reasons": [
+        "RESOLVED"
+      ],
+      "final_answer": "The Gemini Program preceded the Apollo Program, which included Apollo 11.",
+      "combined_answer": "1. Which mission was included in the program that preceded Apollo 11's program?\nThe Gemini Program preceded the Apollo Program, which included Apollo 11.",
+      "iterations": 1,
+      "revisions": 0,
+      "retries": 0,
+      "final_supported_count": 2,
+      "final_contradicted_count": 0,
+      "final_no_evidence_count": 0,
+      "focused_extraction_occurred": false,
+      "derived_facts_used": false,
+      "neo4j_cleared_before_run": true,
+      "fact_edges_written": 49,
+      "claim_edges_written": 2,
+      "kgc_evaluation_source": "neo4j_readback",
+      "provider": "ollama",
+      "model": "gemma4:e2b",
+      "configured_num_ctx": 8192,
+      "prompt_telemetry": {
+        "llm_call_count": 6,
+        "max_prompt_characters": 6049,
+        "approx_max_prompt_tokens": 1513,
+        "largest_prompt_stage": null,
+        "configured_num_ctx": 8192,
+        "approached_context_limit": false
+      },
+      "max_prompt_characters": 6049,
+      "approx_max_prompt_tokens": 1513,
+      "largest_prompt_stage": null,
+      "runtime_seconds": 533.282,
+      "error": null,
+      "failure_category": null,
+      "graph_difficulty": {
+        "path_length": 3,
+        "unique_entities_needed": 4,
+        "unique_relations_needed": 3,
+        "requires_alias_resolution": false,
         "requires_avoiding_sibling_branches": true,
         "requires_composed_answer": false,
         "requires_carry_forward": true

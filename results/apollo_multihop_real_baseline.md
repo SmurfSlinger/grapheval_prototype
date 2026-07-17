@@ -2,19 +2,19 @@
 
 This is a measurement report, not a tuned success criterion.
 
-- Date/time: `2026-07-17T14:43:15.165924+00:00`
+- Date/time: `2026-07-17T14:52:08.450445+00:00`
 - Branch: `cursor/cloud-agent-1784294800421-ztfpf`
 - Provider/model: `ollama` / `gemma4:e2b`
 - Configured num_ctx: `8192`
 - Run type: **partial_real**
-- Attempted/completed/errored: 14 / 14 / 0
-- Exact-match accuracy: 57.1%
-- Contains-expected accuracy: 100.0%
-- Pipeline-resolved count: 12
+- Attempted/completed/errored: 15 / 15 / 0
+- Exact-match accuracy: 53.3%
+- Contains-expected accuracy: 93.3%
+- Pipeline-resolved count: 13
 - Resolved and matched: 12
 - Unresolved but answer contained expected: 2
-- Average iterations: 1.14
-- Average runtime: 236.74s
+- Average iterations: 1.13
+- Average runtime: 256.51s
 
 ## Accuracy by hop count
 
@@ -22,7 +22,7 @@ This is a measurement report, not a tuned success criterion.
 |---:|---:|---:|---:|---:|---:|---:|---:|---|
 | 1 | 5 | 5 | 4 | 5 | 5 | 1.00 | 236.74s | — |
 | 2 | 5 | 5 | 2 | 5 | 5 | 1.00 | 218.90s | — |
-| 3 | 4 | 4 | 2 | 4 | 2 | 1.50 | 259.04s | answer_matched_textually_but_pipeline_unresolved (2) |
+| 3 | 5 | 5 | 2 | 4 | 3 | 1.40 | 313.89s | answer_matched_textually_but_pipeline_unresolved (2) |
 
 ## Graph properties
 
