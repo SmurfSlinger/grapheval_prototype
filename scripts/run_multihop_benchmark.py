@@ -247,6 +247,120 @@ def iter_fact_triples(
     return triples
 
 
+def normalize_entity_label(value: Any) -> str:
+    """Normalize an entity label for benchmark graph alias matching."""
+    return re.sub(r"\s+", " ", str(value).casefold()).strip()
+
+
+def compute_shortest_directed_distance(
+    triples: list[tuple[str, str, str]],
+    anchors: list[Any],
+    answer: Any,
+) -> int | None:
+    """Return the shortest directed edge count from any anchor to ``answer``.
+
+    The benchmark graph treats aliases as case-insensitive exact entity strings.
+    This helper is intentionally relation-agnostic so it can be reused by
+    datasets beyond NHS without changing their existing validation contract.
+    """
+    target = normalize_entity_label(answer)
+    if not target:
+        return None
+    adjacency: dict[str, set[str]] = defaultdict(set)
+    graph_nodes: set[str] = set()
+    for subject, _relation, obj in triples:
+        subject_key = normalize_entity_label(subject)
+        obj_key = normalize_entity_label(obj)
+        adjacency[subject_key].add(obj_key)
+        graph_nodes.add(subject_key)
+        graph_nodes.add(obj_key)
+    starts = [
+        normalize_entity_label(anchor)
+        for anchor in anchors
+        if normalize_entity_label(anchor) in graph_nodes
+    ]
+    if not starts or target not in graph_nodes:
+        return None
+    queue: list[tuple[str, int]] = [(start, 0) for start in starts]
+    seen = set(starts)
+    for node, distance in queue:
+        if node == target:
+            return distance
+        for neighbor in adjacency.get(node, set()):
+            if neighbor in seen:
+                continue
+            seen.add(neighbor)
+            queue.append((neighbor, distance + 1))
+    return None
+
+
+def entity_string_mentioned(text: Any, entity: Any) -> bool:
+    """Detect a case-insensitive exact entity-string mention in prose."""
+    normalized_entity = normalize_entity_label(entity)
+    if not normalized_entity:
+        return False
+    normalized_text = normalize_entity_label(text)
+    return normalized_entity in normalized_text
+
+
+def expected_path_repeated_nodes(path: list[Any]) -> bool:
+    nodes: list[str] = []
+    for edge in path:
+        if not isinstance(edge, (list, tuple)) or len(edge) != 3:
+            continue
+        if not nodes:
+            nodes.append(normalize_entity_label(edge[0]))
+        nodes.append(normalize_entity_label(edge[2]))
+    return len(nodes) != len(set(nodes))
+
+
+def expected_path_duplicate_edges(path: list[Any]) -> bool:
+    normalized_edges = [
+        tuple(normalize_entity_label(part) for part in edge)
+        for edge in path
+        if isinstance(edge, (list, tuple)) and len(edge) == 3
+    ]
+    return len(normalized_edges) != len(set(normalized_edges))
+
+
+def shortcut_audit_metrics(
+    payload: dict[str, Any],
+    triples: list[tuple[str, str, str]],
+) -> dict[str, int]:
+    """Compute optional shortcut metadata for datasets that provide anchors."""
+    metrics = {
+        "shortcut_path_count": 0,
+        "final_subject_mention_count": 0,
+        "answer_mention_count": 0,
+        "missing_shortcut_audit_count": 0,
+    }
+    for item in payload.get("questions", []):
+        if not isinstance(item, dict) or not item.get("expected_path"):
+            continue
+        hop_count = item.get("hop_count")
+        anchors = item.get("reasoning_anchor_entities") or []
+        distance = compute_shortest_directed_distance(
+            triples,
+            anchors,
+            item.get("expected_answer"),
+        )
+        if isinstance(hop_count, int) and distance is not None and distance < hop_count:
+            metrics["shortcut_path_count"] += 1
+        path = item.get("expected_path") or []
+        final_subject = path[-1][0] if path else ""
+        if isinstance(hop_count, int) and hop_count > 1:
+            if entity_string_mentioned(item.get("question", ""), final_subject):
+                metrics["final_subject_mention_count"] += 1
+            if entity_string_mentioned(
+                item.get("question", ""),
+                item.get("expected_answer", ""),
+            ):
+                metrics["answer_mention_count"] += 1
+        if "shortcut_audit" not in item:
+            metrics["missing_shortcut_audit_count"] += 1
+    return metrics
+
+
 def graph_metrics(payload: dict[str, Any]) -> dict[str, Any]:
     facts_list = payload["expected_graph_facts"]
     triples = iter_fact_triples(facts_list)
@@ -290,6 +404,9 @@ def graph_metrics(payload: dict[str, Any]) -> dict[str, Any]:
                 if item["hop_count"] == 10 and item.get("expected_path")
             }
         ),
+        "shortcut_audit": shortcut_audit_metrics(payload, triples)
+        if payload.get("hop_semantics")
+        else {},
     }
 
 
@@ -389,6 +506,7 @@ def validate_test_set(payload: dict[str, Any]) -> dict[str, Any]:
     facts = set(triples)
     root = payload.get("root_entity")
     trusted_context = str(payload.get("trusted_context", ""))
+    enforce_hop_semantics = bool(payload.get("hop_semantics"))
     require_provenance = bool(
         payload.get("requires_fact_provenance")
         or payload.get("source_manifest_path")
@@ -472,6 +590,73 @@ def validate_test_set(payload: dict[str, Any]) -> dict[str, Any]:
             errors.append(f"{question_id}: expected answer is absent from graph")
         if hop_count == 10:
             ten_hop_branches.add(tuple(path[0]))
+
+        if enforce_hop_semantics:
+            anchors = item.get("reasoning_anchor_entities")
+            shortcut_audit = item.get("shortcut_audit")
+            if not isinstance(anchors, list) or not anchors:
+                errors.append(
+                    f"{question_id}: reasoning_anchor_entities must be a non-empty list"
+                )
+                anchors = []
+            else:
+                anchor_labels = {normalize_entity_label(anchor) for anchor in anchors}
+                if normalize_entity_label(path[0][0]) not in anchor_labels:
+                    errors.append(
+                        f"{question_id}: expected_path does not start at a reasoning anchor"
+                    )
+            if item.get("hop_semantics") != "minimum_required_path":
+                errors.append(
+                    f"{question_id}: hop_semantics must be minimum_required_path"
+                )
+            if expected_path_repeated_nodes(path):
+                errors.append(f"{question_id}: expected_path has repeated nodes")
+            if expected_path_duplicate_edges(path):
+                errors.append(f"{question_id}: expected_path has duplicate edges")
+            computed_distance = compute_shortest_directed_distance(
+                triples,
+                anchors,
+                item["expected_answer"],
+            )
+            if computed_distance != hop_count:
+                errors.append(
+                    f"{question_id}: shortest_anchor_distance {computed_distance} != hop_count {hop_count}"
+                )
+            final_subject = path[-1][0]
+            final_subject_mentioned = entity_string_mentioned(
+                item["question"],
+                final_subject,
+            )
+            if hop_count > 1 and final_subject_mentioned:
+                errors.append(
+                    f"{question_id}: question mentions final-edge subject {final_subject!r}"
+                )
+            if hop_count > 1 and entity_string_mentioned(
+                item["question"],
+                item["expected_answer"],
+            ):
+                errors.append(
+                    f"{question_id}: question mentions expected answer {item['expected_answer']!r}"
+                )
+            if not isinstance(shortcut_audit, dict):
+                errors.append(f"{question_id}: shortcut_audit must be present")
+                continue
+            if shortcut_audit.get("manual_reviewed") is not True:
+                errors.append(
+                    f"{question_id}: shortcut_audit.manual_reviewed must be true"
+                )
+            if shortcut_audit.get("shortest_anchor_distance") != computed_distance:
+                errors.append(
+                    f"{question_id}: shortcut_audit.shortest_anchor_distance mismatches computed distance"
+                )
+            if shortcut_audit.get("direct_final_subject_mentioned") != final_subject_mentioned:
+                errors.append(
+                    f"{question_id}: shortcut_audit.direct_final_subject_mentioned mismatches question text"
+                )
+            if hop_count > 1 and shortcut_audit.get("direct_final_subject_mentioned"):
+                errors.append(
+                    f"{question_id}: shortcut_audit reports final-edge subject mention for hop>1"
+                )
 
     if len(ten_hop_branches) < 2:
         errors.append("fewer than two distinct branches reach 10 hops")
