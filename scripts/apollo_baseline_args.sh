@@ -1,152 +1,36 @@
 #!/usr/bin/env bash
-# Shared argument/model resolution for run_apollo_real_baseline.sh.
-#
-# Precedence for MODEL (highest to lowest):
-#   1. CLI: --model VALUE or --model=VALUE
-#   2. Pre-existing environment variable MODEL (set before the wrapper runs)
-#   3. MODEL from .env (only applied when MODEL was not already set)
-#   4. Default: gemma4:e2b
-#
-# Protected identity/output flags are rejected (the wrapper owns them):
-#   --provider, --test-set, --output, --summary
-#
-# Safe tuning flags may be forwarded to the Python runner, for example:
-#   --limit, --ids, --start-at, --stop-after-minutes,
-#   --retry-errors, --rerun-completed,
-#   --timeout-per-question, --cooldown-seconds, --max-consecutive-timeouts,
-#   --num-ctx, --lock-file
-#
-# This file is safe to source from tests. It does not talk to Ollama or run
-# the benchmark.
+# Apollo-compatible aliases over the shared baseline helpers.
 
-# Canonical real-baseline checkpoint paths (relative to repo root).
-APOLLO_BASELINE_OUTPUT_JSON_REL="results/apollo_multihop_real_baseline.json"
-APOLLO_BASELINE_OUTPUT_MD_REL="results/apollo_multihop_real_baseline.md"
-APOLLO_BASELINE_TEST_SET_REL="data/test_sets/apollo_multihop_50.json"
+BASELINE_NAME="${BASELINE_NAME:-Apollo}"
+BASELINE_OUTPUT_JSON_REL="${BASELINE_OUTPUT_JSON_REL:-results/apollo_multihop_real_baseline.json}"
+BASELINE_OUTPUT_MD_REL="${BASELINE_OUTPUT_MD_REL:-results/apollo_multihop_real_baseline.md}"
+BASELINE_TEST_SET_REL="${BASELINE_TEST_SET_REL:-data/test_sets/apollo_multihop_50.json}"
+BASELINE_WRAPPER_NAME="${BASELINE_WRAPPER_NAME:-run_apollo_real_baseline.sh}"
+BASELINE_DEFAULT_MODEL="${BASELINE_DEFAULT_MODEL:-${APOLLO_DEFAULT_MODEL:-gemma4:e2b}}"
 
-# Parse wrapper argv. Sets:
-#   CLI_MODEL          - model from --model / --model=... (empty if absent)
-#   FORWARD_ARGS       - remaining safe args to pass through to the runner
-# Exits 2 on malformed --model usage or protected-flag overrides.
-apollo_baseline_parse_args() {
-  CLI_MODEL=""
-  FORWARD_ARGS=()
+APOLLO_BASELINE_OUTPUT_JSON_REL="$BASELINE_OUTPUT_JSON_REL"
+APOLLO_BASELINE_OUTPUT_MD_REL="$BASELINE_OUTPUT_MD_REL"
+APOLLO_BASELINE_TEST_SET_REL="$BASELINE_TEST_SET_REL"
 
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      --model)
-        if [[ $# -lt 2 || -z "${2}" || "${2}" == --* ]]; then
-          echo "ERROR: --model requires a non-empty value (got: ${2:-<missing>})" >&2
-          return 2
-        fi
-        CLI_MODEL="$2"
-        shift 2
-        ;;
-      --model=*)
-        CLI_MODEL="${1#--model=}"
-        if [[ -z "$CLI_MODEL" ]]; then
-          echo "ERROR: --model= requires a non-empty value" >&2
-          return 2
-        fi
-        shift
-        ;;
-      --provider|--provider=*|\
-      --test-set|--test-set=*|\
-      --output|--output=*|\
-      --summary|--summary=*)
-        echo "ERROR: refusing to override protected wrapper argument: $1" >&2
-        echo "       run_apollo_real_baseline.sh owns provider/test-set/output/summary." >&2
-        echo "       Use the wrapper defaults so resume uses the canonical checkpoint:" >&2
-        echo "         ${APOLLO_BASELINE_OUTPUT_JSON_REL}" >&2
-        echo "         ${APOLLO_BASELINE_OUTPUT_MD_REL}" >&2
-        return 2
-        ;;
-      *)
-        FORWARD_ARGS+=("$1")
-        shift
-        ;;
-    esac
-  done
-  return 0
-}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=benchmark_baseline_args.sh
+source "$SCRIPT_DIR/benchmark_baseline_args.sh"
 
-# Resolve MODEL after optional .env load.
-#
-# Inputs:
-#   CLI_MODEL                  - from apollo_baseline_parse_args (may be empty)
-#   APOLLO_ENV_MODEL_SET       - "1" if MODEL was set in the environment before .env
-#   APOLLO_ENV_MODEL           - that pre-existing MODEL value (may be empty string)
-#   MODEL                      - current MODEL after optional .env sourcing
-#   APOLLO_DEFAULT_MODEL       - optional override of the default (tests)
-#
-# Output:
-#   MODEL - the effective model tag that must be both validated and executed
-apollo_baseline_resolve_model() {
-  local default_model="${APOLLO_DEFAULT_MODEL:-gemma4:e2b}"
+apollo_baseline_parse_args() { benchmark_baseline_parse_args "$@"; }
 
-  if [[ -n "${CLI_MODEL}" ]]; then
-    MODEL="$CLI_MODEL"
-  elif [[ "${APOLLO_ENV_MODEL_SET:-0}" == "1" ]]; then
-    MODEL="$APOLLO_ENV_MODEL"
-  else
-    MODEL="${MODEL:-$default_model}"
-  fi
-
-  if [[ -z "$MODEL" ]]; then
-    echo "ERROR: resolved MODEL is empty" >&2
-    return 2
-  fi
-  return 0
-}
-
-# Capture whether MODEL is already set in the environment (before sourcing .env).
-# Sets APOLLO_ENV_MODEL_SET and APOLLO_ENV_MODEL.
 apollo_baseline_capture_preexisting_model() {
-  if [[ -n "${MODEL+x}" ]]; then
-    APOLLO_ENV_MODEL_SET=1
-    APOLLO_ENV_MODEL="$MODEL"
-  else
-    APOLLO_ENV_MODEL_SET=0
-    APOLLO_ENV_MODEL=""
+  benchmark_baseline_capture_preexisting_model
+  APOLLO_ENV_MODEL_SET="${BASELINE_ENV_MODEL_SET}"
+  APOLLO_ENV_MODEL="${BASELINE_ENV_MODEL}"
+}
+
+apollo_baseline_resolve_model() {
+  BASELINE_DEFAULT_MODEL="${APOLLO_DEFAULT_MODEL:-${BASELINE_DEFAULT_MODEL:-gemma4:e2b}}"
+  if [[ "${APOLLO_ENV_MODEL_SET:-0}" == "1" ]]; then
+    BASELINE_ENV_MODEL_SET=1
+    BASELINE_ENV_MODEL="${APOLLO_ENV_MODEL:-}"
   fi
+  benchmark_baseline_resolve_model
 }
 
-# Source a .env file without clobbering variables that are already set.
-# Only assigns KEY=VALUE lines for keys that are currently unset.
-# Normal unguarded `source .env` WOULD overwrite existing shell variables;
-# this helper intentionally does not.
-apollo_baseline_source_env_file() {
-  local env_file="$1"
-  local line key value
-
-  [[ -f "$env_file" ]] || return 0
-
-  while IFS= read -r line || [[ -n "$line" ]]; do
-    # Trim leading whitespace.
-    line="${line#"${line%%[![:space:]]*}"}"
-    [[ -z "$line" || "$line" == \#* ]] && continue
-
-    # Support optional leading "export ".
-    if [[ "$line" == export[[:space:]]* ]]; then
-      line="${line#export}"
-      line="${line#"${line%%[![:space:]]*}"}"
-    fi
-
-    [[ "$line" == *=* ]] || continue
-    key="${line%%=*}"
-    value="${line#*=}"
-
-    # Strip optional surrounding single/double quotes.
-    if [[ "$value" =~ ^\"(.*)\"$ ]]; then
-      value="${BASH_REMATCH[1]}"
-    elif [[ "$value" =~ ^\'(.*)\'$ ]]; then
-      value="${BASH_REMATCH[1]}"
-    fi
-
-    # Only assign when the variable is currently unset.
-    if [[ -z "${!key+x}" ]]; then
-      printf -v "$key" '%s' "$value"
-      export "$key"
-    fi
-  done < "$env_file"
-}
+apollo_baseline_source_env_file() { benchmark_baseline_source_env_file "$@"; }
