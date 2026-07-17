@@ -9,9 +9,16 @@ clear, trusted FACT persistence, base KGc readback from Neo4j, separate
 evaluated CLAIM relationships, and both Research Trace and Advanced / Raw
 Trace.
 
-The branch also contains a validated 50-question Apollo/NASA measurement set
-with five questions at each designed path length from 1 through 10, plus a
-checkpointing/resumable benchmark runner and JSON/Markdown reports.
+The branch also contains:
+
+- a validated 50-question Apollo/NASA measurement set
+- a second validated 50-question **NHS WannaCry** measurement set grounded in
+  authoritative public sources (NAO, DHSC/NHS CIO lessons learned, CISA/US-CERT,
+  Microsoft MS17-010)
+- checkpointing/resumable benchmark runners and JSON/Markdown reports for both
+
+See `docs/NHS_WANNACRY_BENCHMARK.md` for WannaCry source policy, graph metrics,
+and commands.
 
 ## Exact local startup
 
@@ -171,10 +178,10 @@ cd ..
 pytest tests/
 ```
 
-Task 1 re-verification passed, including the frontend build, 236 backend
+Task 1 re-verification passed, including the frontend build, 246 backend
 tests, custom endpoint/UI controls, FACT readback, separate CLAIMS, raw
-trace availability, benchmark runner tests, and Apollo baseline wrapper
-path/override tests.
+trace availability, Apollo benchmark tests, and NHS WannaCry provenance /
+wrapper tests.
 
 ---
 
@@ -184,7 +191,7 @@ path/override tests.
 
 Evidence (verified on this branch):
 - Frontend `npm run build` passes.
-- `pytest tests/` passes (**236 tests**).
+- `pytest tests/` passes (**246 tests**).
 - Custom route tests in `tests/test_local_neo4j_custom_run.py`.
 - FACT persistence and readback tested.
 - CLAIM separation tested.
@@ -254,6 +261,38 @@ reliable measurement is.
 
 ---
 
+## Task 3 — NHS WannaCry multi-hop benchmark
+
+**Repository implementation status: READY**
+
+**Real local baseline status: NOT RUN IN THIS ENVIRONMENT**
+(Ollama is not reachable here; Neo4j/Ollama real execution must be done on a
+machine with those services. Leave PR draft until that run completes.)
+
+Evidence (verified on this commit):
+- Dataset: `data/test_sets/nhs_wannacry_multihop_50.json`
+- Source manifest: `data/sources/nhs_wannacry/source_manifest.json`
+- Authoritative sources: NAO HC 414; DHSC/NHS CIO lessons learned; CISA
+  TA17-132A; Microsoft MS17-010
+- `--validate-only` exits 0 for NHS WannaCry
+- Apollo `--validate-only` still exits 0 (no regression)
+- Mock plumbing: 50 terminal `error` records, 0 completions, 50 projection
+  failures (plumbing only; not accuracy evidence)
+- Wrapper: `./scripts/run_nhs_wannacry_real_baseline.sh`
+- Canonical outputs:
+  - `results/nhs_wannacry_multihop_real_baseline.json`
+  - `results/nhs_wannacry_multihop_real_baseline.md`
+- Backend tests: **246 passed**
+- Frontend `npm run build` passes
+
+Exact Fedora/local command when Ollama + Neo4j are available:
+
+```bash
+./scripts/run_nhs_wannacry_real_baseline.sh
+```
+
+---
+
 ## Known limitations
 
 - `gemma4:12b` may not be installed; select `gemma4:e2b` or pull 12b.
@@ -286,14 +325,10 @@ deterministic labels merely to raise benchmark scores.
 ## Spoken update
 
 I finished the local custom-context Neo4j-backed workflow and hardened the
-Apollo multi-hop measurement path. Custom runs can clear Neo4j, extract a
-graph from pasted context, persist trusted FACTS, keep answer CLAIMS
-separate, and evaluate from Neo4j-read base facts. Backend tests: 236 passed.
-Frontend production build passes. The 50-question dataset validates cleanly.
-The mock plumbing run yields 50 terminal failure records (0 completions,
-50 projection failures) and is not accuracy evidence. The Apollo baseline
-wrapper now validates and executes the same resolved model, writes/resumes
-the canonical `results/apollo_multihop_real_baseline.{json,md}` checkpoint,
-and rejects protected identity/output overrides. A partial real baseline
-checkpoint exists from an earlier local run; this pass did not re-run the
-real Ollama baseline.
+Apollo multi-hop measurement path, then added a second source-grounded
+benchmark for the NHS WannaCry incident. Backend tests: 246 passed.
+Frontend production build passes. Apollo and NHS WannaCry datasets both
+validate. NHS mock plumbing yields 50 terminal failure records and is not
+accuracy evidence. Real Ollama baselines were not rerun here because Ollama
+is unavailable in this environment; the NHS real wrapper is ready for a
+local machine with Ollama and Neo4j.

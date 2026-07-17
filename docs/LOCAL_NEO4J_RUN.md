@@ -318,6 +318,27 @@ cleaned up automatically.
 Reports are written to `results/` and checkpointed after every question.
 Mock reports test runner plumbing only and are not model-accuracy evidence.
 
+## NHS WannaCry benchmark
+
+A second source-grounded 50-question set covers the May 2017 WannaCry impact
+on the NHS in England. Details: `docs/NHS_WANNACRY_BENCHMARK.md`.
+
+```bash
+python scripts/run_multihop_benchmark.py \
+  --test-set data/test_sets/nhs_wannacry_multihop_50.json \
+  --validate-only
+
+./scripts/run_nhs_wannacry_real_baseline.sh
+```
+
+Canonical NHS real-baseline paths:
+
+- `results/nhs_wannacry_multihop_real_baseline.json`
+- `results/nhs_wannacry_multihop_real_baseline.md`
+
+The NHS wrapper uses the same model-resolution precedence and protected
+argument policy as the Apollo wrapper.
+
 ## What is safe for professor to try
 
 This branch lets you paste a trusted context and compound question, clear
