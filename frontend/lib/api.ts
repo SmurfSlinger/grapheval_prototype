@@ -392,6 +392,8 @@ export interface DecomposedBacktrackingResult {
   metrics?: DecomposedExperimentMetrics | null;
   carry_forward_context?: string;
   max_iterations_per_sub_question: number;
+  debug_log_path?: string | null;
+  structured_triple_anomalies?: Array<Record<string, unknown>>;
 }
 
 export interface KgcRunOptions extends RunOptions {

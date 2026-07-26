@@ -46,8 +46,8 @@ function defaultSelectedExampleId(examples: ExampleSummary[]): string | null {
 }
 
 export default function HomePage() {
-  const [toolMode, setToolMode] = useState<ToolMode>("kgc");
-  const [provider, setProvider] = useState<Provider>("mock");
+  const [toolMode, setToolMode] = useState<ToolMode>("decomposed_kgc");
+  const [provider, setProvider] = useState<Provider>("ollama");
   const [model, setModel] = useState("gemma4:e4b");
   const [examples, setExamples] = useState<ExampleSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -74,7 +74,7 @@ export default function HomePage() {
   const [customContext, setCustomContext] = useState("");
   const [customAnswer, setCustomAnswer] = useState("");
   const [inputSource, setInputSource] =
-    useState<DecomposedInputSource>("built_in");
+    useState<DecomposedInputSource>("benchmark");
   const [customRunId, setCustomRunId] = useState("");
   const [clearNeo4jBeforeRun, setClearNeo4jBeforeRun] = useState(true);
 
@@ -121,7 +121,7 @@ export default function HomePage() {
   }, [refreshNeo4jStatus]);
 
   useEffect(() => {
-    if (toolMode !== "decomposed_kgc" || inputSource !== "benchmark") {
+    if (inputSource !== "benchmark") {
       return;
     }
     let cancelled = false;
@@ -153,14 +153,10 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [toolMode, inputSource]);
+  }, [inputSource]);
 
   useEffect(() => {
-    if (
-      toolMode !== "decomposed_kgc" ||
-      inputSource !== "benchmark" ||
-      !selectedBenchmarkId
-    ) {
+    if (inputSource !== "benchmark" || !selectedBenchmarkId) {
       return;
     }
     let cancelled = false;
@@ -184,7 +180,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [toolMode, inputSource, selectedBenchmarkId, hopFilter]);
+  }, [inputSource, selectedBenchmarkId, hopFilter]);
 
   const clearError = () => {
     setError(null);
@@ -387,37 +383,23 @@ export default function HomePage() {
   };
 
   return (
-    <main className={toolMode === "kgc" || toolMode === "decomposed_kgc" ? "main-wide" : undefined}>
-      <header className="page-header">
-        <div>
-          <h1>GraphEval</h1>
-          <p className="subtitle">
-            {toolMode === "kgc"
-              ? "Method: Backtracking"
-              : toolMode === "decomposed_kgc"
-                ? "Method: Decomposed Backtracking"
-                : toolMode === "baseline"
-                  ? "Method: Baseline"
-                  : "Method: Legacy Tools"}
-          </p>
-        </div>
-        <div className="status-row">
-          <span
-            className={`api-badge ${apiStatus === "ok" ? "ok" : apiStatus === "down" ? "down" : ""}`}
-          >
-            {apiStatus === "checking" && "API…"}
-            {apiStatus === "ok" && "API connected"}
-            {apiStatus === "down" && "API disconnected"}
-          </span>
-          <span
-            className={`api-badge ${neo4jStatus === "enabled" ? "ok" : neo4jStatus === "disabled" ? "down" : ""}`}
-          >
-            {neo4jStatus === "checking" && "Neo4j…"}
-            {neo4jStatus === "enabled" && "Neo4j connected"}
-            {neo4jStatus === "disabled" && "Neo4j disabled"}
-          </span>
-        </div>
-      </header>
+    <main className="main-wide simple-main">
+      <div className="simple-status-row status-row">
+        <span
+          className={`api-badge ${apiStatus === "ok" ? "ok" : apiStatus === "down" ? "down" : ""}`}
+        >
+          {apiStatus === "checking" && "API…"}
+          {apiStatus === "ok" && "API connected"}
+          {apiStatus === "down" && "API disconnected"}
+        </span>
+        <span
+          className={`api-badge ${neo4jStatus === "enabled" ? "ok" : neo4jStatus === "disabled" ? "down" : ""}`}
+        >
+          {neo4jStatus === "checking" && "Neo4j…"}
+          {neo4jStatus === "enabled" && "Neo4j connected"}
+          {neo4jStatus === "disabled" && "Neo4j disabled"}
+        </span>
+      </div>
 
       {error && (
         <div className="error">

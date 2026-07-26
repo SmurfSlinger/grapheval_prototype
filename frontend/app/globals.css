@@ -2734,3 +2734,172 @@ h4 {
   font-size: 1.05rem;
   font-weight: 700;
 }
+
+/* ---- Simple research UI ---- */
+.simple-main {
+  max-width: min(960px, 98vw);
+}
+
+.simple-status-row {
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.simple-controls {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.15rem 1.15rem;
+  margin-bottom: 1rem;
+}
+
+.simple-brand {
+  margin: 0;
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+}
+
+.simple-workflow-label {
+  margin: 0.15rem 0 0.85rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.simple-source-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+}
+
+.simple-source-tab {
+  border: 1px solid var(--border);
+  background: var(--surface-inset);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.simple-source-tab-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.simple-run-row {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  gap: 0.65rem;
+  align-items: end;
+  margin-bottom: 0.85rem;
+}
+
+.simple-run-button {
+  min-width: 6.5rem;
+}
+
+.simple-source-body {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.simple-benchmark-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.7fr 1.4fr;
+  gap: 0.65rem;
+}
+
+.simple-question-preview {
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  background: var(--surface-inset);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1.02rem;
+}
+
+.simple-advanced {
+  margin-top: 0.55rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.55rem;
+}
+
+.simple-advanced-body {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.55rem;
+}
+
+.simple-final-answer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 0.85rem;
+}
+
+.simple-final-answer h2 {
+  margin: 0 0 0.45rem;
+  font-size: 1.05rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.simple-final-answer-text {
+  margin: 0 0 0.65rem;
+  font-size: 1.35rem;
+  line-height: 1.4;
+  font-weight: 650;
+}
+
+.simple-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.simple-steps {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 0.85rem;
+}
+
+.simple-steps h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+}
+
+.simple-steps ol {
+  margin: 0;
+  padding-left: 1.15rem;
+}
+
+.simple-steps li {
+  margin-bottom: 0.55rem;
+}
+
+.simple-steps li p {
+  margin: 0.2rem 0 0;
+  color: var(--text);
+}
+
+.simple-research-details {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+}
+
+@media (max-width: 720px) {
+  .simple-run-row,
+  .simple-benchmark-grid {
+    grid-template-columns: 1fr;
+  }
+}
