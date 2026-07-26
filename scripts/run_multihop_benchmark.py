@@ -51,6 +51,20 @@ TERMINAL_ERROR = "error"
 TERMINAL_INTERRUPTED = "interrupted"
 
 
+def mark_interrupted_rows(
+    rows: list[dict[str, Any]],
+    executed_question_ids: set[str],
+) -> None:
+    """Mark only current-run rows missing terminal_state as interrupted.
+
+    Historical checkpoint rows that were kept/skipped must not be rewritten.
+    """
+    for row in rows:
+        row_id = str(row.get("id", ""))
+        if row_id in executed_question_ids and row.get("terminal_state") is None:
+            row["terminal_state"] = TERMINAL_INTERRUPTED
+
+
 def normalize_answer(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", value.casefold()).strip()
 
@@ -1185,6 +1199,11 @@ def run_one(
                 )
             )
     except Exception as exc:
+        from src.pipeline.debug_log import (
+            debug_log_relative_path,
+            debug_logs_enabled,
+        )
+
         error = f"{type(exc).__name__}: {exc}"
         is_timeout = isinstance(exc, TimeoutError)
         error_calls = list(getattr(provider, "call_telemetry", []))[call_start:]
@@ -1210,6 +1229,14 @@ def run_one(
                     contains_expected=False,
                     final_stop_reason=None,
                 ),
+                "debug_log_path": (
+                    debug_log_relative_path(str(question["id"]))
+                    if debug_logs_enabled()
+                    else None
+                ),
+                "structured_triple_anomaly_count": 0,
+                "fact_count": 0,
+                "claim_count": 0,
             }
         )
         return row
@@ -1282,6 +1309,20 @@ def run_one(
                 resolved_by_pipeline=resolved,
                 contains_expected=contains,
                 final_stop_reason=final_stop_reason,
+            ),
+            "debug_log_path": result.debug_log_path,
+            "structured_triple_anomaly_count": len(
+                result.structured_triple_anomalies or []
+            ),
+            "fact_count": len(result.base_kgc_facts),
+            "working_fact_count": len(result.working_kgc_facts),
+            "claim_count": (
+                metrics.total_claims_evaluated
+                if metrics
+                else sum(
+                    len(item.evaluated_claims)
+                    for item in histories
+                )
             ),
         }
     )
@@ -1705,6 +1746,7 @@ def main() -> None:
         raise SystemExit(str(exc)) from exc
 
     interrupted = False
+    executed_question_ids: set[str] = set()
     try:
         for question in questions:
             # Check wall-clock stop limit.
@@ -1741,6 +1783,7 @@ def main() -> None:
                 )
             else:
                 executed_now = True
+                executed_question_ids.add(question_id)
                 attempt_number, resumed = next_attempt_metadata(
                     prior_row,
                     resume=args.resume,
@@ -1804,11 +1847,10 @@ def main() -> None:
     finally:
         lock.release()
 
-    # Mark any executed rows that were not completed as interrupted.
+    # Mark only rows executed in this run that never received a terminal state.
+    # Do not rewrite historical checkpoint rows kept/skipped from prior runs.
     if interrupted:
-        for row in rows:
-            if row.get("terminal_state") is None:
-                row["terminal_state"] = TERMINAL_INTERRUPTED
+        mark_interrupted_rows(rows, executed_question_ids)
 
     report = build_report(
         payload=payload,
