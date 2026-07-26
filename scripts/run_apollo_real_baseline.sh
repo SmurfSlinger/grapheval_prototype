@@ -141,11 +141,11 @@ echo "[check] Ollama is reachable."
 # 7. Verify the resolved model is installed (exact tag match)
 # ---------------------------------------------------------------------------
 echo "[check] Verifying model '$MODEL' is installed in Ollama ..."
-if ! curl -sf "$OLLAMA_BASE_URL/api/tags" | python3 -c "
-import json, sys
+if ! curl -sf "$OLLAMA_BASE_URL/api/tags" | MODEL="$MODEL" python3 -c "
+import json, os, sys
 tags = json.load(sys.stdin)
 names = {m.get('name', '') for m in tags.get('models', [])}
-model = '$MODEL'
+model = os.environ['MODEL']
 # Require an exact installed tag match (gemma4:latest must not satisfy gemma4:e2b).
 sys.exit(0 if model in names else 1)
 " 2>/dev/null; then
@@ -168,7 +168,7 @@ echo "[check] Model '$MODEL' is available (exact tag match)."
 # ---------------------------------------------------------------------------
 LOCK_FILE="$ROOT/.runtime/benchmark.lock"
 if [[ -f "$LOCK_FILE" ]]; then
-  LOCKED_PID=$(python3 -c "import json; d=json.load(open('$LOCK_FILE')); print(d.get('pid','?'))" 2>/dev/null || echo "?")
+  LOCKED_PID=$(LOCK_FILE="$LOCK_FILE" python3 -c "import json, os; d=json.load(open(os.environ['LOCK_FILE'])); print(d.get('pid','?'))" 2>/dev/null || echo "?")
   if [[ "$LOCKED_PID" != "?" ]] && kill -0 "$LOCKED_PID" 2>/dev/null; then
     echo "ERROR: Another benchmark run is active (pid $LOCKED_PID, lock file: $LOCK_FILE)."
     echo "       Stop that process or remove the lock file if it is stale."

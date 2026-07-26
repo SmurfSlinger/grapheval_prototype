@@ -330,6 +330,20 @@ def test_timeout_and_error_have_separate_terminal_states() -> None:
     assert TERMINAL_COMPLETED != TERMINAL_INTERRUPTED
 
 
+def test_mark_interrupted_rows_only_touches_current_run_rows() -> None:
+    from scripts.run_multihop_benchmark import mark_interrupted_rows
+
+    rows = [
+        {"id": "legacy_missing_terminal", "terminal_state": None},
+        {"id": "current_incomplete", "terminal_state": None},
+        {"id": "current_completed", "terminal_state": TERMINAL_COMPLETED},
+    ]
+    mark_interrupted_rows(rows, {"current_incomplete", "current_completed"})
+    assert rows[0]["terminal_state"] is None
+    assert rows[1]["terminal_state"] == TERMINAL_INTERRUPTED
+    assert rows[2]["terminal_state"] == TERMINAL_COMPLETED
+
+
 # --------------------------------------------------------------------------
 # Owned child-process timeout cleanup
 # --------------------------------------------------------------------------
