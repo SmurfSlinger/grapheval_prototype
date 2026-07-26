@@ -1,0 +1,1 @@
+{"triples":[{"subject":"Host C","relation":"located_in","object":null,"evidence":"Host C is located in Rack R7."},{"subject":"Database B","relation":"runs_on","object":{"name":"Host C"},"evidence":"Database B runs on Host C."}]}

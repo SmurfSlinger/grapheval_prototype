@@ -224,10 +224,53 @@ class KgcIterationEngine:
                     question=question,
                     trusted_context=trusted_context,
                 )
+                from src.pipeline.debug_log import log_debug_event
+                from src.pipeline.structured_output import get_last_parse_anomalies
+
+                for anomaly in get_last_parse_anomalies():
+                    log_debug_event(
+                        "structured_triple_anomaly",
+                        anomaly.reason,
+                        anomaly.to_dict(),
+                        sub_question_id=sub_question_id,
+                    )
+
                 aligned_claims = align_claims_to_kgc_schema(
                     aligned_claims,
                     kgc_facts,
                     question_target=question_target,
+                )
+                log_debug_event(
+                    "claim_alignment",
+                    "aligned",
+                    {
+                        "extracted": [
+                            {
+                                "subject": c.subject,
+                                "relation": c.relation,
+                                "object": c.object,
+                            }
+                            for c in extracted_claims
+                        ],
+                        "aligned": [
+                            {
+                                "subject": c.subject,
+                                "relation": c.relation,
+                                "object": c.object,
+                            }
+                            for c in aligned_claims
+                        ],
+                        "comparator_fact_count": len(kgc_facts),
+                        "comparator_facts": [
+                            {
+                                "subject": f.subject,
+                                "relation": f.relation,
+                                "object": f.object,
+                            }
+                            for f in kgc_facts
+                        ],
+                    },
+                    sub_question_id=sub_question_id,
                 )
                 evaluated_claims = self._comparator.compare_claims(
                     aligned_claims,
@@ -235,6 +278,25 @@ class KgcIterationEngine:
                     question_target=question_target,
                     question=question,
                     frame_trace=frame_trace,
+                )
+                log_debug_event(
+                    "claim_comparison",
+                    "compared",
+                    {
+                        "evaluations": [
+                            {
+                                "subject": ev.triple.subject,
+                                "relation": ev.triple.relation,
+                                "object": ev.triple.object,
+                                "label": ev.label.value
+                                if hasattr(ev.label, "value")
+                                else str(ev.label),
+                                "reason": ev.reason,
+                            }
+                            for ev in evaluated_claims
+                        ]
+                    },
+                    sub_question_id=sub_question_id,
                 )
                 _enrich_evaluations(
                     extracted_claims,

@@ -426,13 +426,15 @@ def run_benchmark_question(
         _log_decomposed_runtime_failure(example_id=example.id, exc=exc)
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
+    result_payload = result.to_dict()
     return {
-        "result": result.to_dict(),
+        "result": result_payload,
         "benchmark": score_result(
             benchmark_id=request.benchmark_id,
             question=question,
             result=result,
         ),
+        "debug_log_path": result_payload.get("debug_log_path"),
     }
 
 

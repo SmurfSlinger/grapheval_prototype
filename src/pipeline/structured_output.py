@@ -9,6 +9,11 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Callable, TypeVar
 
 from src.models import KgcFact, SubQuestion, Triple
+from src.pipeline.debug_log import log_debug_event
+from src.pipeline.structured_triple_validation import (
+    StructuredTripleAnomaly,
+    coerce_raw_triple_item,
+)
 
 T = TypeVar("T")
 
@@ -16,6 +21,17 @@ CONTEXT_FACT_HEADERS = ("subject", "relation", "object", "evidence")
 CLAIM_HEADERS = ("subject", "relation", "object", "source_sentence")
 
 RAW_PREVIEW_LIMIT = 1200
+
+# Populated by the most recent parse_*_response call for downstream debug/API use.
+_LAST_PARSE_ANOMALIES: list[StructuredTripleAnomaly] = []
+
+
+def get_last_parse_anomalies() -> list[StructuredTripleAnomaly]:
+    return list(_LAST_PARSE_ANOMALIES)
+
+
+def clear_last_parse_anomalies() -> None:
+    _LAST_PARSE_ANOMALIES.clear()
 
 
 class StructuredOutputError(ValueError):
@@ -113,9 +129,17 @@ def parse_csv_rows(text: str, headers: tuple[str, ...]) -> list[dict[str, str]]:
             f"got {','.join(reader.fieldnames)}"
         )
 
+    # DictReader keys keep original header casing; map case-insensitively.
+    key_map = {
+        name.strip().lower(): name for name in reader.fieldnames if name is not None
+    }
+
     rows: list[dict[str, str]] = []
     for line_no, row in enumerate(reader, start=2):
-        record = {header: (row.get(header) or "").strip() for header in headers}
+        record = {
+            header: (row.get(key_map[header.lower()]) or "").strip()
+            for header in headers
+        }
         if _row_is_blank(record):
             continue
         if not all(record[headers[i]] for i in range(3)):
@@ -131,30 +155,76 @@ def parse_csv_rows(text: str, headers: tuple[str, ...]) -> list[dict[str, str]]:
     return rows
 
 
+def _record_anomaly(anomaly: StructuredTripleAnomaly) -> None:
+    _LAST_PARSE_ANOMALIES.append(anomaly)
+    log_debug_event(
+        "structured_triple_anomaly",
+        anomaly.reason,
+        anomaly.to_dict(),
+    )
+
+
+def _record_validated(validated, *, kind: str) -> None:
+    log_debug_event(
+        "structured_triple_validated",
+        f"{kind}_accepted",
+        validated.to_debug_dict(),
+    )
+
+
 def parse_context_facts_csv(text: str) -> list[KgcFact]:
     rows = parse_csv_rows(text, CONTEXT_FACT_HEADERS)
-    return [
-        KgcFact(
-            subject=row["subject"],
-            relation=row["relation"],
-            object=row["object"],
-            evidence=row["evidence"] or None,
+    facts: list[KgcFact] = []
+    for row in rows:
+        validated, anomaly = coerce_raw_triple_item(
+            row,
+            kind="fact",
+            source_stage="context_fact_csv",
+            provenance="trusted_context",
         )
-        for row in rows
-    ]
+        if anomaly is not None:
+            _record_anomaly(anomaly)
+            raise StructuredOutputError(
+                f"Invalid context fact CSV row: {anomaly.reason}"
+            )
+        assert validated is not None
+        _record_validated(validated, kind="fact")
+        facts.append(
+            KgcFact(
+                subject=validated.subject,
+                relation=validated.relation,
+                object=validated.object,
+                evidence=validated.evidence or (row.get("evidence") or None),
+            )
+        )
+    return facts
 
 
 def parse_claims_csv(text: str) -> list[Triple]:
     rows = parse_csv_rows(text, CLAIM_HEADERS)
-    return [
-        Triple(
-            subject=row["subject"],
-            relation=row["relation"],
-            object=row["object"],
-            source_sentence=row["source_sentence"] or None,
+    claims: list[Triple] = []
+    for row in rows:
+        validated, anomaly = coerce_raw_triple_item(
+            row,
+            kind="claim",
+            source_stage="claim_csv",
+            provenance="answer_claim",
         )
-        for row in rows
-    ]
+        if anomaly is not None:
+            _record_anomaly(anomaly)
+            raise StructuredOutputError(f"Invalid claim CSV row: {anomaly.reason}")
+        assert validated is not None
+        _record_validated(validated, kind="claim")
+        claims.append(
+            Triple(
+                subject=validated.subject,
+                relation=validated.relation,
+                object=validated.object,
+                source_sentence=validated.source_sentence
+                or (row.get("source_sentence") or None),
+            )
+        )
+    return claims
 
 
 def parse_context_facts_json(text: str) -> list[KgcFact]:
@@ -164,22 +234,29 @@ def parse_context_facts_json(text: str) -> list[KgcFact]:
         raise StructuredOutputError("JSON must contain a 'triples' list.")
     facts: list[KgcFact] = []
     for item in triples:
-        if not isinstance(item, dict):
-            raise StructuredOutputError("Each triple must be an object.")
-        subject = str(item.get("subject", "")).strip()
-        relation = str(item.get("relation", "")).strip()
-        obj = str(item.get("object", "")).strip()
-        if not subject or not relation or not obj:
-            raise StructuredOutputError(
-                "Each context fact must have subject, relation, and object."
-            )
+        validated, anomaly = coerce_raw_triple_item(
+            item,
+            kind="fact",
+            source_stage="context_fact_json",
+            provenance="trusted_context",
+        )
+        if anomaly is not None:
+            _record_anomaly(anomaly)
+            # Keep the run alive when other triples remain usable.
+            continue
+        assert validated is not None
+        _record_validated(validated, kind="fact")
         facts.append(
             KgcFact(
-                subject=subject,
-                relation=relation,
-                object=obj,
-                evidence=(str(item["evidence"]).strip() if item.get("evidence") else None),
+                subject=validated.subject,
+                relation=validated.relation,
+                object=validated.object,
+                evidence=validated.evidence,
             )
+        )
+    if not facts and triples:
+        raise StructuredOutputError(
+            "All context-fact triples were rejected by structured validation."
         )
     return facts
 
@@ -191,44 +268,94 @@ def parse_claims_json(text: str) -> list[Triple]:
         raise StructuredOutputError("JSON must contain a 'triples' list.")
     claims: list[Triple] = []
     for item in triples:
-        if not isinstance(item, dict):
-            raise StructuredOutputError("Each triple must be an object.")
-        subject = str(item.get("subject", "")).strip()
-        relation = str(item.get("relation", "")).strip()
-        obj = str(item.get("object", "")).strip()
-        if not subject or not relation or not obj:
-            raise StructuredOutputError(
-                "Each claim must have subject, relation, and object."
-            )
+        validated, anomaly = coerce_raw_triple_item(
+            item,
+            kind="claim",
+            source_stage="claim_json",
+            provenance="answer_claim",
+        )
+        if anomaly is not None:
+            _record_anomaly(anomaly)
+            continue
+        assert validated is not None
+        _record_validated(validated, kind="claim")
         claims.append(
             Triple(
-                subject=subject,
-                relation=relation,
-                object=obj,
-                source_sentence=(
-                    str(item["source_sentence"]).strip()
-                    if item.get("source_sentence")
-                    else None
-                ),
+                subject=validated.subject,
+                relation=validated.relation,
+                object=validated.object,
+                source_sentence=validated.source_sentence,
             )
+        )
+    if not claims and triples:
+        raise StructuredOutputError(
+            "All claim triples were rejected by structured validation."
         )
     return claims
 
 
 def parse_context_facts_response(text: str) -> list[KgcFact]:
     """Accept CSV or legacy JSON triples."""
+    clear_last_parse_anomalies()
+    log_debug_event(
+        "context_fact_raw_response",
+        "received",
+        {"raw_preview": raw_preview(text)},
+    )
     cleaned = _strip_code_fences(text)
     if _looks_like_csv(cleaned, CONTEXT_FACT_HEADERS):
-        return parse_context_facts_csv(cleaned)
-    return parse_context_facts_json(cleaned)
+        facts = parse_context_facts_csv(cleaned)
+    else:
+        facts = parse_context_facts_json(cleaned)
+    log_debug_event(
+        "context_fact_parsed",
+        "parsed",
+        {
+            "fact_count": len(facts),
+            "anomaly_count": len(_LAST_PARSE_ANOMALIES),
+            "facts": [
+                {
+                    "subject": fact.subject,
+                    "relation": fact.relation,
+                    "object": fact.object,
+                }
+                for fact in facts
+            ],
+        },
+    )
+    return facts
 
 
 def parse_claims_response(text: str) -> list[Triple]:
     """Accept CSV or legacy JSON triples."""
+    clear_last_parse_anomalies()
+    log_debug_event(
+        "claim_extraction_raw_response",
+        "received",
+        {"raw_preview": raw_preview(text)},
+    )
     cleaned = _strip_code_fences(text)
     if _looks_like_csv(cleaned, CLAIM_HEADERS):
-        return parse_claims_csv(cleaned)
-    return parse_claims_json(cleaned)
+        claims = parse_claims_csv(cleaned)
+    else:
+        claims = parse_claims_json(cleaned)
+    log_debug_event(
+        "claim_parsed",
+        "parsed",
+        {
+            "claim_count": len(claims),
+            "anomaly_count": len(_LAST_PARSE_ANOMALIES),
+            "claims": [
+                {
+                    "subject": claim.subject,
+                    "relation": claim.relation,
+                    "object": claim.object,
+                }
+                for claim in claims
+            ],
+        },
+    )
+    return claims
 
 
 def parse_question_split_response(text: str) -> list[SubQuestion]:

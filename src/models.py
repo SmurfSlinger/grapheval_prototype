@@ -574,6 +574,8 @@ class DecomposedBacktrackingResult:
     metrics: DecomposedExperimentMetrics | None = None
     carry_forward_context: str = ""
     max_iterations_per_sub_question: int = 3
+    debug_log_path: str | None = None
+    structured_triple_anomalies: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -591,6 +593,8 @@ class DecomposedBacktrackingResult:
             "metrics": self.metrics.to_dict() if self.metrics else None,
             "carry_forward_context": self.carry_forward_context,
             "max_iterations_per_sub_question": self.max_iterations_per_sub_question,
+            "debug_log_path": self.debug_log_path,
+            "structured_triple_anomalies": list(self.structured_triple_anomalies),
         }
 
 

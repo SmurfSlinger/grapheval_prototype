@@ -17,11 +17,19 @@ from src.models import (
 )
 from src.pipeline.answer_generator import AnswerGenerator
 from src.pipeline.context_triple_extractor import ContextTripleExtractor
+from src.pipeline.debug_log import (
+    begin_debug_run,
+    current_debug_log_path,
+    end_debug_run,
+    log_debug_event,
+    set_debug_context,
+)
 from src.pipeline.kgc_iteration import KgcIterationEngine, count_cumulative_evaluations
 from src.pipeline.kgc_serializer import serialize_kgc_facts
 from src.pipeline.provider_info import provider_label, provider_model, provider_trace
 from src.pipeline.question_splitter import QuestionSplitter
 from src.pipeline.relevant_context_fact_extractor import RelevantContextFactExtractor
+from src.pipeline.structured_output import get_last_parse_anomalies
 from src.pipeline.sub_answer_combiner import combine_sub_answers
 from src.pipeline.sub_answer_projector import SubAnswerProjector
 from src.pipeline.working_kgc import WorkingKgcState
@@ -90,6 +98,44 @@ class DecomposedBacktrackingRunner:
         )
 
     def run_example(self, example: Example) -> DecomposedBacktrackingResult:
+        debug_log_path = begin_debug_run(example.id)
+        anomalies: list[dict] = []
+        set_debug_context(question_id=example.id)
+        log_debug_event(
+            "request_received",
+            "run_example_started",
+            {
+                "example_id": example.id,
+                "question": example.question,
+                "context_chars": len(example.context or ""),
+                "has_initial_answer": bool(example.initial_answer),
+                "answer_0_mode": self.answer_0_mode,
+                "neo4j_readback": self.neo4j_readback,
+            },
+        )
+        try:
+            return self._run_example_inner(
+                example,
+                debug_log_path=debug_log_path,
+                anomalies=anomalies,
+            )
+        except Exception as exc:
+            log_debug_event(
+                "run_error",
+                type(exc).__name__,
+                {"error": str(exc)},
+            )
+            raise
+        finally:
+            end_debug_run()
+
+    def _run_example_inner(
+        self,
+        example: Example,
+        *,
+        debug_log_path: str | None,
+        anomalies: list[dict],
+    ) -> DecomposedBacktrackingResult:
         provider_info = provider_trace(self.provider)
         neo4j_cleared = clear_neo4j_if_enabled(
             required=self.clear_neo4j_before_run,
@@ -107,16 +153,60 @@ class DecomposedBacktrackingRunner:
             "claim_extractor": provider_label(self._iteration_engine._claim_extractor.provider),
             "reviser": provider_label(self._iteration_engine._reviser.provider),
         }
+        log_debug_event(
+            "example_constructed",
+            "ready",
+            {
+                "example_id": example.id,
+                "effective_answer_0_mode": effective_mode,
+                "stage_providers": stage_providers,
+            },
+        )
 
         sub_questions, split_retries = self._question_splitter.split(example.question)
+        log_debug_event(
+            "question_split_parsed",
+            "parsed",
+            {
+                "sub_questions": [
+                    {"id": sq.id, "question": sq.question} for sq in sub_questions
+                ],
+                "retries": split_retries,
+            },
+        )
 
         base_kgc_facts, kgc_trace = self._context_extractor.extract_with_trace(
             example.context
+        )
+        anomalies.extend(a.to_dict() for a in get_last_parse_anomalies())
+        log_debug_event(
+            "context_fact_parsed",
+            "base_facts_ready",
+            {
+                "fact_count": len(base_kgc_facts),
+                "facts": [
+                    {
+                        "subject": f.subject,
+                        "relation": f.relation,
+                        "object": f.object,
+                    }
+                    for f in base_kgc_facts
+                ],
+                "extraction_trace": kgc_trace.to_dict(),
+            },
         )
         base_facts_persisted = store_kgc_facts_if_enabled(
             example.id,
             base_kgc_facts,
             required=self.require_neo4j,
+        )
+        log_debug_event(
+            "neo4j_fact_write",
+            "base_facts",
+            {
+                "persisted": bool(base_facts_persisted),
+                "fact_count": len(base_kgc_facts) if base_facts_persisted else 0,
+            },
         )
         kgc_evaluation_source = "in_memory"
         if self.neo4j_readback:
@@ -129,12 +219,36 @@ class DecomposedBacktrackingRunner:
                     raise RuntimeError(
                         "Neo4j FACT readback returned no facts after context persistence."
                     )
+                log_debug_event(
+                    "neo4j_fact_readback",
+                    "replaced_base_facts",
+                    {
+                        "readback_count": len(persisted_facts),
+                        "facts": [
+                            {
+                                "subject": f.subject,
+                                "relation": f.relation,
+                                "object": f.object,
+                            }
+                            for f in persisted_facts
+                        ],
+                    },
+                )
                 base_kgc_facts = persisted_facts
                 kgc_evaluation_source = "neo4j_readback"
 
         working_state = WorkingKgcState(
             base_kgc_facts,
             auto_promote=self.working_kgc_auto_promote,
+        )
+        log_debug_event(
+            "working_kgc_initialized",
+            "ready",
+            {
+                "working_fact_count": len(working_state.facts_for_comparison()),
+                "auto_promote": self.working_kgc_auto_promote,
+                "kgc_evaluation_source": kgc_evaluation_source,
+            },
         )
 
         compound_answer_0 = ""
@@ -180,6 +294,7 @@ class DecomposedBacktrackingRunner:
         )
 
         for sub_question in sub_questions:
+            set_debug_context(sub_question_id=sub_question.id)
             carry_forward = working_state.build_carry_forward_context(resolved_carry_forward)
 
             focused_facts, proactive_trace = self._focused_extractor.extract_with_trace(
@@ -187,10 +302,28 @@ class DecomposedBacktrackingRunner:
                 example.context,
                 existing_kgc_facts=working_state.facts_for_comparison(),
             )
+            anomalies.extend(a.to_dict() for a in get_last_parse_anomalies())
             total_retries += proactive_trace.retry_count
 
             proactive_added = working_state.merge_focused_facts(
                 focused_facts,
+                sub_question_id=sub_question.id,
+            )
+            log_debug_event(
+                "focused_fact_extraction",
+                "merged",
+                {
+                    "raw_count": len(proactive_trace.raw_focused_facts),
+                    "merged_count": len(proactive_added),
+                    "facts": [
+                        {
+                            "subject": f.subject,
+                            "relation": f.relation,
+                            "object": f.object,
+                        }
+                        for f in proactive_added
+                    ],
+                },
                 sub_question_id=sub_question.id,
             )
 
@@ -299,6 +432,29 @@ class DecomposedBacktrackingRunner:
                 focused_extraction_merged=list(proactive_added),
             )
             sub_results.append(sub_result)
+            log_debug_event(
+                "sub_question_finished",
+                stop_reason.value if hasattr(stop_reason, "value") else str(stop_reason),
+                {
+                    "final_answer": final_answer,
+                    "iteration_count": len(history),
+                    "final_supported": final_supported,
+                    "final_contradicted": final_contradicted,
+                    "final_no_evidence": final_no_evidence,
+                    "claims": [
+                        {
+                            "subject": ev.triple.subject,
+                            "relation": ev.triple.relation,
+                            "object": ev.triple.object,
+                            "label": ev.label.value
+                            if hasattr(ev.label, "value")
+                            else str(ev.label),
+                        }
+                        for ev in (last_iter.evaluated_claims if last_iter else [])
+                    ],
+                },
+                sub_question_id=sub_question.id,
+            )
 
             for item in history:
                 store_kgc_claims_if_enabled(
@@ -370,6 +526,11 @@ class DecomposedBacktrackingRunner:
                 metrics.no_claims_sub_questions += 1
 
         combined_answer = combine_sub_answers(sub_results)
+        log_debug_event(
+            "combined_answer",
+            "produced",
+            {"combined_answer": combined_answer},
+        )
         metrics.structured_output_retries = total_retries
         working_facts_persisted = store_working_kgc_additions_if_enabled(
             example.id,
@@ -415,6 +576,17 @@ class DecomposedBacktrackingRunner:
                 else answer_0_warning
             )
 
+        log_debug_event(
+            "run_finished",
+            "ok",
+            {
+                "combined_answer": combined_answer,
+                "anomaly_count": len(anomalies),
+                "base_fact_count": len(base_kgc_facts),
+                "working_fact_count": len(working_state.working_kgc),
+                "debug_log_path": debug_log_path or current_debug_log_path(),
+            },
+        )
         return DecomposedBacktrackingResult(
             example_id=example.id,
             original_question=example.question,
@@ -427,6 +599,8 @@ class DecomposedBacktrackingRunner:
             working_kgc_additions=working_state.focused_additions,
             candidate_kgc_updates=working_state.candidate_updates,
             trace=trace,
+            debug_log_path=debug_log_path or current_debug_log_path(),
+            structured_triple_anomalies=list(anomalies),
             metrics=metrics,
             carry_forward_context=working_state.build_carry_forward_context(
                 resolved_carry_forward

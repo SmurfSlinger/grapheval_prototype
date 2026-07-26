@@ -19,7 +19,9 @@ env/
 .DS_Store
 .pytest_cache/
 results/*.json
+results/hop_debug/*/
 !results/.gitkeep
+!results/hop_debug/README.md
 !results/apollo_multihop_report.json
 !results/apollo_multihop_real_smoke.json
 !results/apollo_multihop_partial_real.json
@@ -38,3 +40,4 @@ build-prompts.local.md
 scripts/.pids/
 HOW_IT_WORKS.md
 .runtime/*.lock
+.runtime/debug/
