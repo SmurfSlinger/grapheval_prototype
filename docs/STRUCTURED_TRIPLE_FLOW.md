@@ -1,6 +1,6 @@
 # Structured Triple Flow
 
-Documented from code inspection on `feature/final-simple-ui-triple-debug`.
+Documented from code inspection of the canonical `master` application.
 This describes **actual** behavior, not aspirational architecture.
 
 ## Dataflow

@@ -1,15 +1,28 @@
 # Professor handoff
 
+## Canonical version
+
+The complete GraphEval research application lives on **`master`**.
+
+```bash
+git switch master
+git pull --ff-only origin master
+```
+
+Start from that checkout. Temporary feature branches and staging PRs are
+obsolete once their work is on `master`.
+
 ## What is ready
 
-This branch continues the local custom-context Neo4j-backed GraphEval
+`master` contains the local custom-context Neo4j-backed GraphEval
 workstream. Decomposed Backtracking supports custom trusted context and
 compound questions: optional flawed initial answer, intentional local Neo4j
 clear, trusted FACT persistence, base KGc readback from Neo4j, separate
-evaluated CLAIM relationships, and both Research Trace and Advanced / Raw
-Trace.
+evaluated CLAIM relationships, simplified default UI, structured-triple
+debug logs, and both Research Trace and Advanced / Raw Trace under collapsed
+developer sections.
 
-The branch also contains:
+The repository also contains:
 
 - a validated 50-question Apollo/NASA measurement set
 - a second validated 50-question **NHS WannaCry** measurement set grounded in
@@ -22,6 +35,8 @@ and commands.
 
 ## Exact local startup
 
+Confirm you are on `master`, then:
+
 ```bash
 cp .env.example .env
 ```
@@ -30,9 +45,10 @@ Use an installed Ollama tag. Template default is `gemma4:e4b`. Example:
 
 ```dotenv
 DEFAULT_MODEL=gemma4:e4b
-OLLAMA_NUM_CTX=8192
+OLLAMA_NUM_CTX=32768
 OLLAMA_NUM_PREDICT=4096
 OLLAMA_REQUEST_TIMEOUT=600
+GRAPHEVAL_DEBUG_LOGS=true
 ```
 
 Optional:
@@ -63,14 +79,15 @@ directory so it falls back to a compatible CPU backend, then restart
 
 ## Run a custom context and question
 
-1. Select **Decomposed Backtracking**.
-2. Set **Input source** to **Custom local run**.
-3. Enter an optional run label.
-4. Paste the trusted context and compound question.
-5. Optionally paste a flawed initial answer. Blank means GraphEval generates
-   and projects Answer(0).
-6. Leave **Clear Neo4j before run** selected for an isolated local graph.
-7. Run and inspect Research Trace or Advanced / Raw Trace.
+1. Open GraphEval (default workflow is Decomposed Backtracking).
+2. Choose source **Custom Input**.
+3. Paste the trusted context and question.
+4. Optionally paste an initial answer. Blank means GraphEval generates
+   Answer(0).
+5. Under **Advanced settings**, leave **Clear Neo4j before run** selected for
+   an isolated local graph.
+6. Run, then inspect the final answer and step-by-step summary. Open
+   Research details / Developer debug / Raw JSON only when needed.
 
 The clear option is visible and executes the approved full local clear:
 

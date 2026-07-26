@@ -76,11 +76,17 @@ export OLLAMA_NUM_CTX=32768
 
 ## End-of-week target
 
-A stable version that can be demonstrated with:
+A stable version on **`master`** that can be demonstrated with:
 
 - very simple UI
 - selected small model
 - reproducible one-hop through three-hop runs
 - structured debug logs
 - a clear diagnosis of where three-hop processing fails
-- a pushed GitHub branch
+
+Work from `master` only:
+
+```bash
+git switch master
+git pull --ff-only origin master
+```

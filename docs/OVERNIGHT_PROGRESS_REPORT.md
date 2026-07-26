@@ -1,9 +1,12 @@
 # Overnight progress report
 
+Historical report retained for evidence. The canonical application is now on
+**`master`**; do not check out the branch names below for current work.
+
 ## Task 1 status — local Neo4j custom runs
 
-**Branch:** `cursor/cloud-agent-1784294800421-ztfpf`
-(continues the `feature/local-neo4j-custom-runs` workstream)
+**Historical branch:** `cursor/cloud-agent-1784294800421-ztfpf`
+(continued the `feature/local-neo4j-custom-runs` workstream)
 
 **Professor testing status: READY**
 

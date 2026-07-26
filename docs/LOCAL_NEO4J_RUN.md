@@ -108,10 +108,11 @@ installed Ollama tags.
 
 ## Professor run instructions
 
-1. Check out the feature branch:
+1. Use the canonical `master` checkout:
 
    ```bash
-   git switch feature/local-neo4j-custom-runs
+   git switch master
+   git pull --ff-only origin master
    ```
 
 2. Install dependencies if they are not already present:
@@ -345,7 +346,7 @@ depend on it.
 
 ## What is safe for professor to try
 
-This branch lets you paste a trusted context and compound question, clear
+`master` lets you paste a trusted context and compound question, clear
 Neo4j, generate a KGc from the context, persist it to Neo4j, run decomposed
 backtracking, and inspect both the trace and graph. Trusted FACTS and answer
 CLAIMS remain separate; base FACTS for custom runs are read back from Neo4j;
