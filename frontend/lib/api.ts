@@ -394,6 +394,9 @@ export interface DecomposedBacktrackingResult {
   max_iterations_per_sub_question: number;
   debug_log_path?: string | null;
   structured_triple_anomalies?: Array<Record<string, unknown>>;
+  /** Wall-clock seconds for the run when the API/client provides it. */
+  runtime_seconds?: number | null;
+  elapsed_seconds?: number | null;
 }
 
 export interface KgcRunOptions extends RunOptions {
@@ -489,6 +492,25 @@ export interface GraphClaimsResponse {
   error: string | null;
 }
 
+export interface DependenciesResponse {
+  api: { status: string };
+  neo4j: {
+    configured: boolean;
+    connected: boolean;
+    required_for_this_route?: boolean;
+    uri?: string;
+    user?: string;
+    database?: string;
+    error?: string | null;
+  };
+  ollama?: Record<string, unknown>;
+  config?: Record<string, unknown>;
+}
+
+export async function fetchDependencies(): Promise<DependenciesResponse> {
+  return apiFetch("/dependencies");
+}
+
 export async function fetchGraphClaims(options?: {
   limit?: number;
   exampleId?: string;
@@ -577,6 +599,10 @@ export interface BenchmarkRunScore {
   exact_match: boolean;
   contains_expected_answer: boolean;
   resolved_by_pipeline: boolean;
+  predicted_answer?: string;
+  final_stop_reason?: string | null;
+  failure_category?: string | null;
+  runtime_seconds?: number | null;
 }
 
 export interface BenchmarkQuestionRunResponse {

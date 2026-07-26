@@ -20,7 +20,7 @@ MISALIGNED_DRONE_CLAIMS = [
 
 
 def test_drone_misaligned_claims_align_to_kgc_schema():
-    aligned = align_claims_to_kgc_schema(MISALIGNED_DRONE_CLAIMS, DRONE_KGC)
+    aligned, _ = align_claims_to_kgc_schema(MISALIGNED_DRONE_CLAIMS, DRONE_KGC)
 
     assert len(aligned) == 3
     assert aligned[0].subject == DRONE
@@ -32,7 +32,7 @@ def test_drone_misaligned_claims_align_to_kgc_schema():
 
 
 def test_drone_aligned_claims_evaluate_as_supported():
-    aligned = align_claims_to_kgc_schema(MISALIGNED_DRONE_CLAIMS, DRONE_KGC)
+    aligned, _ = align_claims_to_kgc_schema(MISALIGNED_DRONE_CLAIMS, DRONE_KGC)
     results = GraphComparator().compare_claims(aligned, DRONE_KGC)
 
     assert len(results) == 3
@@ -45,7 +45,7 @@ def test_genuine_no_evidence_claim_not_aligned():
     claims = MISALIGNED_DRONE_CLAIMS + [
         Triple(DRONE, "supports_autonomous_night_operations", "true"),
     ]
-    aligned = align_claims_to_kgc_schema(claims, DRONE_KGC)
+    aligned, _ = align_claims_to_kgc_schema(claims, DRONE_KGC)
     results = GraphComparator().compare_claims(aligned, DRONE_KGC)
 
     assert results[-1].label == KgcClaimLabel.NO_EVIDENCE
@@ -54,7 +54,7 @@ def test_genuine_no_evidence_claim_not_aligned():
 
 def test_positive_carry_claim_does_not_align_via_unique_object():
     claims = [Triple("Weapons status", "carries", "weapons")]
-    aligned = align_claims_to_kgc_schema(claims, DRONE_KGC)
+    aligned, _ = align_claims_to_kgc_schema(claims, DRONE_KGC)
 
     assert aligned[0].relation == "carries"
     assert aligned[0].subject == "Weapons status"
@@ -76,7 +76,7 @@ def test_apollo_flawed_answer_claims_include_launch_site():
         Triple("Apollo 11 first stage", "used", "five J-2 engines"),
         Triple("Apollo 11", "achieved", "first crewed Moon landing"),
     ]
-    aligned = align_claims_to_kgc_schema(claims, APOLLO_KGC)
+    aligned, _ = align_claims_to_kgc_schema(claims, APOLLO_KGC)
 
     assert len(aligned) == 4
     assert aligned[0].relation == "launched_by"
@@ -94,7 +94,7 @@ def test_apollo_flawed_answer_claims_include_launch_site():
 
 def test_apollo_first_stage_used_claim_aligns_and_contradicts():
     claim = Triple("Apollo 11 first stage", "used", "five J-2 engines")
-    aligned = align_claims_to_kgc_schema([claim], APOLLO_KGC)
+    aligned, _ = align_claims_to_kgc_schema([claim], APOLLO_KGC)
 
     assert aligned[0].subject == "Saturn V S-IC stage"
     assert aligned[0].relation == "powered_by"

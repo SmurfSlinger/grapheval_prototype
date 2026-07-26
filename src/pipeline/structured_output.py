@@ -5,11 +5,12 @@ from __future__ import annotations
 import csv
 import io
 import json
+import threading
 from dataclasses import asdict, dataclass, field
 from typing import Any, Callable, TypeVar
 
 from src.models import KgcFact, SubQuestion, Triple
-from src.pipeline.debug_log import log_debug_event
+from src.pipeline.debug_log import log_debug_event, write_raw_model_output_artifact
 from src.pipeline.structured_triple_validation import (
     StructuredTripleAnomaly,
     coerce_raw_triple_item,
@@ -22,16 +23,48 @@ CLAIM_HEADERS = ("subject", "relation", "object", "source_sentence")
 
 RAW_PREVIEW_LIMIT = 1200
 
-# Populated by the most recent parse_*_response call for downstream debug/API use.
-_LAST_PARSE_ANOMALIES: list[StructuredTripleAnomaly] = []
+# Per-thread / per-run anomaly buffers. Never share across concurrent requests.
+_anomaly_state = threading.local()
+
+
+def _last_parse_buffer() -> list[StructuredTripleAnomaly]:
+    buf = getattr(_anomaly_state, "last_parse", None)
+    if buf is None:
+        buf = []
+        _anomaly_state.last_parse = buf
+    return buf
+
+
+def _run_anomaly_buffer() -> list[StructuredTripleAnomaly]:
+    buf = getattr(_anomaly_state, "run", None)
+    if buf is None:
+        buf = []
+        _anomaly_state.run = buf
+    return buf
+
+
+def begin_anomaly_collection() -> None:
+    """Start a request/run-local anomaly accumulator."""
+    _anomaly_state.last_parse = []
+    _anomaly_state.run = []
+
+
+def end_anomaly_collection() -> None:
+    _anomaly_state.last_parse = []
+    _anomaly_state.run = []
 
 
 def get_last_parse_anomalies() -> list[StructuredTripleAnomaly]:
-    return list(_LAST_PARSE_ANOMALIES)
+    return list(_last_parse_buffer())
+
+
+def get_run_parse_anomalies() -> list[StructuredTripleAnomaly]:
+    return list(_run_anomaly_buffer())
 
 
 def clear_last_parse_anomalies() -> None:
-    _LAST_PARSE_ANOMALIES.clear()
+    """Clear only the last-parse snapshot; run accumulator is preserved."""
+    _anomaly_state.last_parse = []
 
 
 class StructuredOutputError(ValueError):
@@ -156,7 +189,8 @@ def parse_csv_rows(text: str, headers: tuple[str, ...]) -> list[dict[str, str]]:
 
 
 def _record_anomaly(anomaly: StructuredTripleAnomaly) -> None:
-    _LAST_PARSE_ANOMALIES.append(anomaly)
+    _last_parse_buffer().append(anomaly)
+    _run_anomaly_buffer().append(anomaly)
     log_debug_event(
         "structured_triple_anomaly",
         anomaly.reason,
@@ -297,10 +331,19 @@ def parse_claims_json(text: str) -> list[Triple]:
 def parse_context_facts_response(text: str) -> list[KgcFact]:
     """Accept CSV or legacy JSON triples."""
     clear_last_parse_anomalies()
+    raw_artifact = write_raw_model_output_artifact(
+        stage="context_fact_extraction",
+        raw_text=text,
+        format_hint="context_facts",
+    )
     log_debug_event(
         "context_fact_raw_response",
         "received",
-        {"raw_preview": raw_preview(text)},
+        {
+            "raw_preview": raw_preview(text),
+            "raw_chars": len(text),
+            "raw_artifact_path": raw_artifact,
+        },
     )
     cleaned = _strip_code_fences(text)
     if _looks_like_csv(cleaned, CONTEXT_FACT_HEADERS):
@@ -312,7 +355,7 @@ def parse_context_facts_response(text: str) -> list[KgcFact]:
         "parsed",
         {
             "fact_count": len(facts),
-            "anomaly_count": len(_LAST_PARSE_ANOMALIES),
+            "anomaly_count": len(_last_parse_buffer()),
             "facts": [
                 {
                     "subject": fact.subject,
@@ -329,10 +372,19 @@ def parse_context_facts_response(text: str) -> list[KgcFact]:
 def parse_claims_response(text: str) -> list[Triple]:
     """Accept CSV or legacy JSON triples."""
     clear_last_parse_anomalies()
+    raw_artifact = write_raw_model_output_artifact(
+        stage="claim_extraction",
+        raw_text=text,
+        format_hint="claims",
+    )
     log_debug_event(
         "claim_extraction_raw_response",
         "received",
-        {"raw_preview": raw_preview(text)},
+        {
+            "raw_preview": raw_preview(text),
+            "raw_chars": len(text),
+            "raw_artifact_path": raw_artifact,
+        },
     )
     cleaned = _strip_code_fences(text)
     if _looks_like_csv(cleaned, CLAIM_HEADERS):
@@ -344,7 +396,7 @@ def parse_claims_response(text: str) -> list[Triple]:
         "parsed",
         {
             "claim_count": len(claims),
-            "anomaly_count": len(_LAST_PARSE_ANOMALIES),
+            "anomaly_count": len(_last_parse_buffer()),
             "claims": [
                 {
                     "subject": claim.subject,

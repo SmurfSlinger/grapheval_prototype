@@ -81,15 +81,17 @@ Text-only prompts — image input is not used even if the model supports it.
 
 Verified triples can be persisted to Neo4j **after** the existing LLM verification step. Neo4j is **not** used as the verifier — it only stores results.
 
-Start a local Neo4j instance:
+Start a local Neo4j instance (or use `./scripts/start-dev.sh`, which respects `.env`):
 
 ```bash
 docker run \
   --name grapheval-neo4j \
   -p 7474:7474 -p 7687:7687 \
   -e NEO4J_AUTH=neo4j/password123 \
-  neo4j:latest
+  neo4j:5.26.0
 ```
+
+Pinned image default: `NEO4J_IMAGE=neo4j:5.26.0` (see `.env.example`).
 
 Enable storage when running the pipeline:
 
@@ -98,6 +100,7 @@ export NEO4J_ENABLED=true
 export NEO4J_URI=bolt://localhost:7687
 export NEO4J_USER=neo4j
 export NEO4J_PASSWORD=password123
+export NEO4J_DATABASE=neo4j
 
 python -m src.main --provider mock
 ```
@@ -105,18 +108,20 @@ python -m src.main --provider mock
 Graph model:
 
 - `(:Entity {name})` nodes for subject and object (merged by name)
-- `[:CLAIM {relation, label, reason, evidence, example_id, answer_stage}]` relationships
+- `[:FACT {relation, evidence, example_id, provenance, ...}]` trusted context
+- `[:CLAIM {relation, label, reason, evidence, example_id, answer_stage, iteration}]` answer claims
 
-Each pipeline run stores:
+Verification:
 
-- `answer_stage="initial"` — triples from the initial answer
-- `answer_stage="graph_revised"` — triples after graph-feedback revision (if revision occurred)
+```bash
+./scripts/verify-master.sh
+./scripts/verify-master-live.sh   # requires Docker Neo4j + Ollama
+curl http://localhost:8000/dependencies
+```
 
-If Neo4j is enabled but unavailable, the pipeline prints a warning and continues normally.
-
-Browse the graph at [http://localhost:7474](http://localhost:7474) (default auth: `neo4j` / `password123`).
-
-Example Cypher query:
+Hop count means designed root-to-answer graph-path depth in the fixed benchmark
+graph, not a forced number of reasoning steps. Expected answers are post-inference
+scoring only. Supported claims are never promoted to FACTS.
 
 ```cypher
 MATCH (s:Entity)-[c:CLAIM]->(o:Entity)

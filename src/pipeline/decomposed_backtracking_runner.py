@@ -29,7 +29,11 @@ from src.pipeline.kgc_serializer import serialize_kgc_facts
 from src.pipeline.provider_info import provider_label, provider_model, provider_trace
 from src.pipeline.question_splitter import QuestionSplitter
 from src.pipeline.relevant_context_fact_extractor import RelevantContextFactExtractor
-from src.pipeline.structured_output import get_last_parse_anomalies
+from src.pipeline.structured_output import (
+    begin_anomaly_collection,
+    end_anomaly_collection,
+    get_run_parse_anomalies,
+)
 from src.pipeline.sub_answer_combiner import combine_sub_answers
 from src.pipeline.sub_answer_projector import SubAnswerProjector
 from src.pipeline.working_kgc import WorkingKgcState
@@ -97,8 +101,14 @@ class DecomposedBacktrackingRunner:
             focused_extractor=self._focused_extractor,
         )
 
-    def run_example(self, example: Example) -> DecomposedBacktrackingResult:
-        debug_log_path = begin_debug_run(example.id)
+    def run_example(
+        self,
+        example: Example,
+        *,
+        attempt: int | None = None,
+    ) -> DecomposedBacktrackingResult:
+        begin_anomaly_collection()
+        debug_log_path = begin_debug_run(example.id, attempt=attempt)
         anomalies: list[dict] = []
         set_debug_context(question_id=example.id)
         log_debug_event(
@@ -111,6 +121,7 @@ class DecomposedBacktrackingRunner:
                 "has_initial_answer": bool(example.initial_answer),
                 "answer_0_mode": self.answer_0_mode,
                 "neo4j_readback": self.neo4j_readback,
+                "attempt": attempt,
             },
         )
         try:
@@ -128,6 +139,7 @@ class DecomposedBacktrackingRunner:
             raise
         finally:
             end_debug_run()
+            end_anomaly_collection()
 
     def _run_example_inner(
         self,
@@ -178,7 +190,6 @@ class DecomposedBacktrackingRunner:
         base_kgc_facts, kgc_trace = self._context_extractor.extract_with_trace(
             example.context
         )
-        anomalies.extend(a.to_dict() for a in get_last_parse_anomalies())
         log_debug_event(
             "context_fact_parsed",
             "base_facts_ready",
@@ -302,7 +313,6 @@ class DecomposedBacktrackingRunner:
                 example.context,
                 existing_kgc_facts=working_state.facts_for_comparison(),
             )
-            anomalies.extend(a.to_dict() for a in get_last_parse_anomalies())
             total_retries += proactive_trace.retry_count
 
             proactive_added = working_state.merge_focused_facts(
@@ -576,6 +586,7 @@ class DecomposedBacktrackingRunner:
                 else answer_0_warning
             )
 
+        anomalies.extend(a.to_dict() for a in get_run_parse_anomalies())
         log_debug_event(
             "run_finished",
             "ok",

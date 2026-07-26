@@ -285,13 +285,6 @@ export default function ControlsPanel(props: ControlsPanelProps) {
             >
               Next
             </button>
-            <button
-              type="button"
-              onClick={onRunDecomposedKgc}
-              disabled={primaryRunDisabled}
-            >
-              {running ? "Running…" : "Run"}
-            </button>
           </div>
         </div>
       ) : null}
@@ -348,37 +341,43 @@ export default function ControlsPanel(props: ControlsPanelProps) {
       <details className="simple-advanced">
         <summary>Advanced settings</summary>
         <div className="simple-advanced-body">
-          <label className="controls-checkbox">
-            <input
-              type="checkbox"
-              checked={clearNeo4jBeforeRun}
-              onChange={(e) => onClearNeo4jBeforeRunChange(e.target.checked)}
-            />
-            Clear Neo4j before run
-          </label>
-          <label>
-            Run label / ID (optional)
-            <input
-              type="text"
-              value={customRunId}
-              onChange={(e) => onCustomRunIdChange(e.target.value)}
-              placeholder="professor-test-1"
-            />
-          </label>
-          <label>
-            Answer(0) source (built-in / backtracking)
-            <select
-              value={answer0Mode}
-              onChange={(e) =>
-                onAnswer0ModeChange(e.target.value as Answer0Mode)
-              }
-            >
-              <option value="preset" disabled={!presetAvailable}>
-                Preset flawed answer
-              </option>
-              <option value="generated">Generate from context</option>
-            </select>
-          </label>
+          {inputSource === "custom" || inputSource === "benchmark" ? (
+            <label className="controls-checkbox">
+              <input
+                type="checkbox"
+                checked={clearNeo4jBeforeRun}
+                onChange={(e) => onClearNeo4jBeforeRunChange(e.target.checked)}
+              />
+              Clear Neo4j before run
+            </label>
+          ) : null}
+          {inputSource === "custom" ? (
+            <label>
+              Run label / ID (optional)
+              <input
+                type="text"
+                value={customRunId}
+                onChange={(e) => onCustomRunIdChange(e.target.value)}
+                placeholder="professor-test-1"
+              />
+            </label>
+          ) : null}
+          {inputSource === "built_in" || toolMode === "kgc" ? (
+            <label>
+              Answer(0) source (built-in / backtracking)
+              <select
+                value={answer0Mode}
+                onChange={(e) =>
+                  onAnswer0ModeChange(e.target.value as Answer0Mode)
+                }
+              >
+                <option value="preset" disabled={!presetAvailable}>
+                  Preset flawed answer
+                </option>
+                <option value="generated">Generate from context</option>
+              </select>
+            </label>
+          ) : null}
           {provider === "ollama" ? (
             <p className="controls-hint">
               Requires <code>ollama serve</code> and{" "}

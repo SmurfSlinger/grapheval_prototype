@@ -44,7 +44,7 @@ def test_q1_real_model_shape_resolves_after_alignment():
     kgc = [KgcFact("Apollo 11", "occurred_during", "July 16-24, 1969")]
     target = derive_question_target(question, kgc)
     claim = Triple("Apollo 11", "occurred_during", "July 16-24, 1969")
-    aligned = align_claims_to_kgc_schema([claim], kgc)
+    aligned, _ = align_claims_to_kgc_schema([claim], kgc)
     if aligned[0].relation != "occurred_from":
         aligned = [
             Triple("Apollo 11", "occurred_from", "July 16-24, 1969", source_sentence=claim.source_sentence)

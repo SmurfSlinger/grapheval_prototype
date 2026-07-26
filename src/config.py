@@ -27,7 +27,7 @@ PROMPT_SUB_QUESTION_ANSWER_GENERATION = PROMPTS_DIR / "sub_question_answer_gener
 PROMPT_SUB_ANSWER_PROJECTION = PROMPTS_DIR / "sub_answer_projection.txt"
 
 # LLM provider settings
-DEFAULT_LLM_PROVIDER = os.getenv("DEFAULT_LLM_PROVIDER", "mock")
+DEFAULT_LLM_PROVIDER = os.getenv("DEFAULT_LLM_PROVIDER", "ollama")
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gemma4:e4b")
@@ -51,4 +51,7 @@ if OLLAMA_NUM_PREDICT is not None and OLLAMA_NUM_PREDICT <= 0:
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password123")
+NEO4J_DATABASE = os.getenv("NEO4J_DATABASE", "neo4j")
+NEO4J_IMAGE = os.getenv("NEO4J_IMAGE", "neo4j:5.26.0")
 NEO4J_ENABLED = os.getenv("NEO4J_ENABLED", "false").lower() == "true"
+NEO4J_REQUIRED = os.getenv("NEO4J_REQUIRED", "false").lower() == "true"

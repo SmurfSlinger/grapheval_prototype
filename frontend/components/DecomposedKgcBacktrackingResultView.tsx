@@ -9,16 +9,85 @@ interface DecomposedKgcBacktrackingResultViewProps {
   result: DecomposedBacktrackingResult | null;
   loading: boolean;
   benchmarkScore?: BenchmarkRunScore | null;
+  elapsedSeconds?: number | null;
 }
 
 function pipelineStatus(result: DecomposedBacktrackingResult): string {
   const stops = result.sub_question_results.map((row) => row.stop_reason);
   if (stops.length === 0) return "No sub-questions";
-  if (stops.every((stop) => stop === "resolved")) return "Resolved";
-  if (stops.some((stop) => stop.includes("unresolved") || stop === "stalled")) {
+  if (stops.every((stop) => stop === "RESOLVED" || stop === "resolved")) {
+    return "Resolved";
+  }
+  if (
+    stops.some(
+      (stop) =>
+        stop.toLowerCase().includes("unresolved") ||
+        stop === "STALLED" ||
+        stop === "stalled",
+    )
+  ) {
     return "Partially unresolved";
   }
   return stops.join(", ");
+}
+
+function stopReasonsSummary(result: DecomposedBacktrackingResult): string {
+  const stops = result.sub_question_results.map((row) => row.stop_reason);
+  if (stops.length === 0) return "n/a";
+  return stops.join(", ");
+}
+
+function finalStopReason(result: DecomposedBacktrackingResult): string | null {
+  const last = result.sub_question_results.at(-1);
+  return last?.stop_reason ?? null;
+}
+
+function failureCategory(
+  score: BenchmarkRunScore,
+  result: DecomposedBacktrackingResult,
+): string | null {
+  if (score.failure_category) return score.failure_category;
+  if (score.resolved_by_pipeline) return null;
+  if (score.contains_expected_answer) {
+    return "answer_matched_textually_but_pipeline_unresolved";
+  }
+  const stop = (
+    score.final_stop_reason ??
+    finalStopReason(result) ??
+    ""
+  ).toLowerCase();
+  if (stop.includes("target_not_satisfied")) return "target_not_satisfied";
+  if (stop.includes("no_evidence")) return "unresolved_no_evidence";
+  if (stop.includes("no_claims")) return "no_claims_extracted";
+  if (stop.includes("max_iterations")) {
+    return "contradiction_or_uncertainty_remained";
+  }
+  return "pipeline_unresolved";
+}
+
+function elapsedFromResult(
+  result: DecomposedBacktrackingResult,
+  elapsedSeconds: number | null | undefined,
+): number | null {
+  const fromResult =
+    result.runtime_seconds ??
+    result.elapsed_seconds ??
+    null;
+  if (typeof fromResult === "number" && Number.isFinite(fromResult)) {
+    return fromResult;
+  }
+  if (typeof elapsedSeconds === "number" && Number.isFinite(elapsedSeconds)) {
+    return elapsedSeconds;
+  }
+  return null;
+}
+
+function formatSeconds(seconds: number): string {
+  if (seconds < 10) return `${seconds.toFixed(2)}s`;
+  if (seconds < 60) return `${seconds.toFixed(1)}s`;
+  const mins = Math.floor(seconds / 60);
+  const rem = seconds - mins * 60;
+  return `${mins}m ${rem.toFixed(0)}s`;
 }
 
 function stepSummaries(result: DecomposedBacktrackingResult): string[] {
@@ -60,6 +129,7 @@ export default function DecomposedKgcBacktrackingResultView({
   result,
   loading,
   benchmarkScore = null,
+  elapsedSeconds = null,
 }: DecomposedKgcBacktrackingResultViewProps) {
   if (loading) {
     return (
@@ -81,6 +151,17 @@ export default function DecomposedKgcBacktrackingResultView({
 
   const steps = stepSummaries(result);
   const anomalies = result.structured_triple_anomalies ?? [];
+  const elapsed = elapsedFromResult(result, elapsedSeconds);
+  const usedModel = result.trace?.model ?? null;
+  const usedProvider =
+    result.trace?.provider_class ??
+    (result.trace?.stage_providers
+      ? Object.values(result.trace.stage_providers)[0]
+      : null);
+  const predicted =
+    benchmarkScore?.predicted_answer ?? result.combined_answer;
+  const stopSummary =
+    benchmarkScore?.final_stop_reason ?? stopReasonsSummary(result);
 
   return (
     <section className="results-stack simple-results">
@@ -89,17 +170,74 @@ export default function DecomposedKgcBacktrackingResultView({
         <p className="simple-final-answer-text">{result.combined_answer}</p>
         <p className="simple-meta-line">
           <span>Pipeline status: {pipelineStatus(result)}</span>
-          <span>
-            Runtime:{" "}
-            {typeof result.trace?.configured_num_ctx === "number"
-              ? `num_ctx=${result.trace.configured_num_ctx}`
-              : "n/a"}
-            {result.metrics
-              ? ` · ${result.metrics.total_iterations} iteration(s)`
-              : ""}
-          </span>
+          <span>Stop reason: {stopSummary}</span>
         </p>
+        <p className="simple-meta-line">
+          {usedModel || usedProvider ? (
+            <span>
+              Model used: {usedModel ?? "n/a"}
+              {usedProvider ? ` · ${usedProvider}` : ""}
+            </span>
+          ) : null}
+          {typeof result.trace?.configured_num_ctx === "number" ? (
+            <span>
+              Configured context length (num_ctx):{" "}
+              {result.trace.configured_num_ctx}
+            </span>
+          ) : null}
+          {elapsed != null ? (
+            <span>Elapsed runtime: {formatSeconds(elapsed)}</span>
+          ) : null}
+          {result.metrics ? (
+            <span>{result.metrics.total_iterations} iteration(s)</span>
+          ) : null}
+        </p>
+        {result.debug_log_path ? (
+          <p className="simple-meta-line">
+            <span>Debug log: {result.debug_log_path}</span>
+          </p>
+        ) : null}
       </div>
+
+      {benchmarkScore ? (
+        <div className="simple-steps">
+          <h3>Benchmark score</h3>
+          <ul className="benchmark-score-list">
+            <li>
+              <strong>Question:</strong> {benchmarkScore.question_id} (hop{" "}
+              {benchmarkScore.hop_count})
+            </li>
+            <li>
+              <strong>Hop depth:</strong> {benchmarkScore.hop_count}
+            </li>
+            <li>
+              <strong>Predicted:</strong> {predicted}
+            </li>
+            <li>
+              <strong>Expected:</strong> {benchmarkScore.expected_answer}
+            </li>
+            <li>
+              <strong>Exact match:</strong>{" "}
+              {benchmarkScore.exact_match ? "yes" : "no"}
+            </li>
+            <li>
+              <strong>Contains expected:</strong>{" "}
+              {benchmarkScore.contains_expected_answer ? "yes" : "no"}
+            </li>
+            <li>
+              <strong>Pipeline resolved:</strong>{" "}
+              {benchmarkScore.resolved_by_pipeline ? "yes" : "no"}
+            </li>
+            <li>
+              <strong>Stop reason:</strong> {stopSummary}
+            </li>
+            <li>
+              <strong>Failure category:</strong>{" "}
+              {failureCategory(benchmarkScore, result) ?? "none"}
+            </li>
+          </ul>
+        </div>
+      ) : null}
 
       <div className="simple-steps">
         <h3>Step-by-step</h3>
@@ -130,26 +268,6 @@ export default function DecomposedKgcBacktrackingResultView({
       <details className="kgc-expand-details">
         <summary>Research details</summary>
         <div className="simple-research-details">
-          {benchmarkScore ? (
-            <ul className="benchmark-score-list">
-              <li>
-                <strong>Question:</strong> {benchmarkScore.question_id} (hop{" "}
-                {benchmarkScore.hop_count})
-              </li>
-              <li>
-                <strong>Exact match:</strong>{" "}
-                {benchmarkScore.exact_match ? "yes" : "no"}
-              </li>
-              <li>
-                <strong>Contains expected:</strong>{" "}
-                {benchmarkScore.contains_expected_answer ? "yes" : "no"}
-              </li>
-              <li>
-                <strong>Resolved by pipeline:</strong>{" "}
-                {benchmarkScore.resolved_by_pipeline ? "yes" : "no"}
-              </li>
-            </ul>
-          ) : null}
           <h4>Sub-questions</h4>
           <ul>
             {result.sub_question_results.map((row) => (
@@ -189,6 +307,12 @@ export default function DecomposedKgcBacktrackingResultView({
             <strong>Neo4j evaluation source:</strong>{" "}
             {result.trace?.kgc_evaluation_source ?? "n/a"}
           </p>
+          {typeof result.trace?.configured_num_ctx === "number" ? (
+            <p>
+              <strong>Configured context length (num_ctx):</strong>{" "}
+              {result.trace.configured_num_ctx}
+            </p>
+          ) : null}
           <p>
             <strong>Structured-triple anomalies:</strong> {anomalies.length}
           </p>

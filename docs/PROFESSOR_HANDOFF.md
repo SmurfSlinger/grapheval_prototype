@@ -33,7 +33,45 @@ The repository also contains:
 See `docs/NHS_WANNACRY_BENCHMARK.md` for WannaCry source policy, graph metrics,
 and commands.
 
-## Exact local startup
+## Verification
+
+Automated (non-destructive):
+
+```bash
+./scripts/verify-master.sh
+```
+
+Live integration (requires Docker Neo4j + Ollama + configured model; never
+falls back to mock):
+
+```bash
+./scripts/verify-master-live.sh
+```
+
+Dependency status while the API is running:
+
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/dependencies
+```
+
+### Hop count meaning
+
+Benchmark hop count is the **designed root-to-answer graph-path depth** in the
+fixed benchmark graph. It is not a forced count of explicit reasoning steps.
+
+### FACT vs CLAIM
+
+- Trusted context becomes `(:Entity)-[:FACT]->(:Entity)` (`KgcFact`).
+- Answer claims become `(:Entity)-[:CLAIM]->(:Entity)` (`Triple` + label).
+- A `SUPPORTED` claim is never promoted into a trusted FACT.
+
+### Expected answers
+
+Expected answers and paths are used only in post-inference scoring. They are
+not sent to the LLM during inference.
+
+
 
 Confirm you are on `master`, then:
 

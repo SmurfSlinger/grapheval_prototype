@@ -235,7 +235,7 @@ class KgcIterationEngine:
                         sub_question_id=sub_question_id,
                     )
 
-                aligned_claims = align_claims_to_kgc_schema(
+                aligned_claims, _alignment_traces = align_claims_to_kgc_schema(
                     aligned_claims,
                     kgc_facts,
                     question_target=question_target,
@@ -368,7 +368,7 @@ class KgcIterationEngine:
 
                 if focused_enrichment_applied or derived_facts_added:
                     serialized_kgc = serialize_kgc_facts(kgc_facts)
-                    aligned_claims = align_claims_to_kgc_schema(
+                    aligned_claims, _alignment_traces = align_claims_to_kgc_schema(
                         extracted_claims,
                         kgc_facts,
                         question_target=question_target,

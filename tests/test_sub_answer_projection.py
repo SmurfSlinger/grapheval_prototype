@@ -64,7 +64,7 @@ def test_grounding_uses_full_answer_for_single_claim_sub_answer():
             "Kennedy Space Center in Florida",
         )
     ]
-    grounded = ground_claim_objects_in_answer(claims, answer)
+    grounded, _ = ground_claim_objects_in_answer(claims, answer)
     assert grounded[0].object == answer
 
 
@@ -80,7 +80,7 @@ def test_grounding_replaces_kgc_leaked_object_with_source_sentence():
             source_sentence="july 16-august 5, 1985",
         )
     ]
-    grounded = ground_claim_objects_in_answer(claims, answer)
+    grounded, _ = ground_claim_objects_in_answer(claims, answer)
     assert "1985" in grounded[0].object
 
 
@@ -214,7 +214,7 @@ def test_derived_provenance_type_exists():
 def test_spoke_with_does_not_align_to_president_at_time():
     kgc = [KgcFact("Apollo 11 crew", "spoke_with", "President Richard Nixon")]
     claim = Triple("Apollo 11", "president_at_time", "Donald Trump")
-    aligned = align_claims_to_kgc_schema([claim], kgc)[0]
+    aligned = align_claims_to_kgc_schema([claim], kgc)[0][0]
     assert aligned.relation == "president_at_time"
     assert aligned.object == "Donald Trump"
 

@@ -1196,12 +1196,13 @@ def run_one(
                     id=question["id"],
                     question=question["question"],
                     context=context,
-                )
+                ),
+                attempt=attempt_number,
             )
     except Exception as exc:
         from src.pipeline.debug_log import (
-            debug_log_relative_path,
             debug_logs_enabled,
+            last_debug_log_path,
         )
 
         error = f"{type(exc).__name__}: {exc}"
@@ -1230,9 +1231,7 @@ def run_one(
                     final_stop_reason=None,
                 ),
                 "debug_log_path": (
-                    debug_log_relative_path(str(question["id"]))
-                    if debug_logs_enabled()
-                    else None
+                    last_debug_log_path() if debug_logs_enabled() else None
                 ),
                 "structured_triple_anomaly_count": 0,
                 "fact_count": 0,

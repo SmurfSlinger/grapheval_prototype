@@ -1,8 +1,14 @@
-"""Align extracted answer claims to the KGc canonical subject/relation schema."""
+"""Align extracted answer claims to the KGc canonical subject/relation schema.
+
+Subject and relation may be canonicalized when unambiguous. The claim object is
+never replaced with a trusted KGc object — that would hide contradictions.
+"""
 
 from __future__ import annotations
 
 from src.models import KgcFact, Triple
+from src.pipeline.claim_grounding import TripleTransformation
+from src.pipeline.debug_log import log_debug_event
 from src.pipeline.kgc_matching import (
     ALIGNMENT_PREFIX,
     is_engine_object,
@@ -86,12 +92,23 @@ def align_claims_to_kgc_schema(
     kgc_facts: list[KgcFact],
     *,
     question_target=None,
-) -> list[Triple]:
-    """Map display-label claims to canonical KGc subject/relation when unambiguous."""
-    if not kgc_facts:
-        return claims
+) -> tuple[list[Triple], list[TripleTransformation]]:
+    """Map display-label claims to canonical KGc subject/relation when unambiguous.
 
-    return [_align_claim(claim, kgc_facts, question_target=question_target) for claim in claims]
+    Never copies a trusted KGc object into the claim.
+    """
+    if not kgc_facts:
+        return claims, []
+
+    aligned: list[Triple] = []
+    traces: list[TripleTransformation] = []
+    for claim in claims:
+        next_claim, claim_traces = _align_claim(
+            claim, kgc_facts, question_target=question_target
+        )
+        aligned.append(next_claim)
+        traces.extend(claim_traces)
+    return aligned, traces
 
 
 def _find_first_stage_engine_schema_match(
@@ -155,9 +172,15 @@ def _find_launch_site_schema_match(
     return None
 
 
-def _align_claim(claim: Triple, kgc_facts: list[KgcFact], *, question_target=None) -> Triple:
+def _align_claim(
+    claim: Triple,
+    kgc_facts: list[KgcFact],
+    *,
+    question_target=None,
+) -> tuple[Triple, list[TripleTransformation]]:
+    traces: list[TripleTransformation] = []
     if _find_exact_canonical_match(claim, kgc_facts):
-        return claim
+        return claim, traces
 
     match = _find_relation_object_match(claim, kgc_facts)
     if match is None:
@@ -169,7 +192,7 @@ def _align_claim(claim: Triple, kgc_facts: list[KgcFact], *, question_target=Non
     if match is None:
         match = _find_launch_site_schema_match(claim, kgc_facts)
     if match is None:
-        return claim
+        return claim, traces
 
     if question_target is not None and question_target.expected_relations:
         from src.pipeline.target_frame_normalizer import relation_in_target_family
@@ -177,27 +200,64 @@ def _align_claim(claim: Triple, kgc_facts: list[KgcFact], *, question_target=Non
         claim_on_target = relation_in_target_family(claim.relation, question_target.intent)
         match_on_target = relation_in_target_family(match.relation, question_target.intent)
         if claim_on_target and not match_on_target:
-            return claim
+            return claim, traces
         if claim_on_target and match_on_target:
             if normalize_relation(claim.relation) != normalize_relation(match.relation):
-                return claim
+                return claim, traces
 
     if not relations_polarity_compatible(claim.relation, match.relation):
-        return claim
+        return claim, traces
 
     if (
         claim.subject == match.subject
         and claim.relation == match.relation
         and normalize(claim.object) == normalize(match.object)
     ):
-        return claim
+        return claim, traces
+
+    # Preserve the answer's object. Only canonicalize subject/relation.
+    if normalize(claim.object) != normalize(match.object):
+        log_debug_event(
+            "schema_alignment",
+            "preserved_claim_object",
+            {
+                "claim_object": claim.object,
+                "kgc_object": match.object,
+                "reason": "never_copy_trusted_kgc_object_into_claim",
+            },
+        )
 
     note = _format_alignment_note(claim)
     existing = claim.source_sentence
     source_sentence = f"{note} | {existing}" if existing else note
-    return Triple(
-        subject=match.subject,
-        relation=match.relation,
-        object=claim.object,
-        source_sentence=source_sentence,
+    if claim.subject != match.subject:
+        traces.append(
+            TripleTransformation(
+                field="subject",
+                before=claim.subject,
+                after=match.subject,
+                reason="canonicalize_subject_to_unique_kgc_match",
+                source_stage="schema_alignment",
+            )
+        )
+    if claim.relation != match.relation:
+        traces.append(
+            TripleTransformation(
+                field="relation",
+                before=claim.relation,
+                after=match.relation,
+                reason="canonicalize_relation_to_unique_kgc_match",
+                source_stage="schema_alignment",
+            )
+        )
+    for trace in traces:
+        log_debug_event("schema_alignment", "field_transformed", trace.to_dict())
+    return (
+        Triple(
+            subject=match.subject,
+            relation=match.relation,
+            object=claim.object,
+            source_sentence=source_sentence,
+        ),
+        traces,
     )

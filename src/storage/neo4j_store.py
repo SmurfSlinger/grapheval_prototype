@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import sys
 
-from src.config import NEO4J_ENABLED, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
+from src.config import (
+    NEO4J_DATABASE,
+    NEO4J_ENABLED,
+    NEO4J_PASSWORD,
+    NEO4J_URI,
+    NEO4J_USER,
+)
 from src.models import (
     KgcEvaluationResult,
     KgcFact,
@@ -14,24 +20,32 @@ from src.models import (
 
 
 class Neo4jStore:
-    """Store verified triples as Entity nodes linked by CLAIM relationships."""
+    """Store verified triples as Entity nodes linked by FACT/CLAIM relationships."""
 
     def __init__(
         self,
         uri: str = NEO4J_URI,
         user: str = NEO4J_USER,
         password: str = NEO4J_PASSWORD,
+        database: str = NEO4J_DATABASE,
     ) -> None:
         from neo4j import GraphDatabase
 
         self._driver = GraphDatabase.driver(uri, auth=(user, password))
+        self._database = database
 
     def close(self) -> None:
         self._driver.close()
 
+    def _session(self):
+        return self._driver.session(database=self._database)
+
+    def verify_connectivity(self) -> None:
+        self._driver.verify_connectivity()
+
     def clear_all(self) -> None:
         """Delete every node and relationship in the configured local database."""
-        with self._driver.session() as session:
+        with self._session() as session:
             session.run("MATCH (n) DETACH DELETE n").consume()
 
     _CLAIM_FIELDS = """
@@ -51,7 +65,7 @@ class Neo4jStore:
         RETURN {self._CLAIM_FIELDS}
         LIMIT $limit
         """
-        with self._driver.session() as session:
+        with self._session() as session:
             result = session.run(query, limit=limit)
             return [dict(record) for record in result]
 
@@ -62,25 +76,25 @@ class Neo4jStore:
         RETURN {self._CLAIM_FIELDS}
         LIMIT $limit
         """
-        with self._driver.session() as session:
+        with self._session() as session:
             result = session.run(query, example_id=example_id, limit=limit)
             return [dict(record) for record in result]
 
     def get_bad_claims(self, limit: int = 50) -> list[dict[str, str]]:
         query = f"""
         MATCH (s:Entity)-[c:CLAIM]->(o:Entity)
-        WHERE c.label IN ['CONTRADICTED', 'NOT_ENOUGH_INFO']
+        WHERE c.label IN ['CONTRADICTED', 'NO_EVIDENCE', 'NOT_ENOUGH_INFO']
         RETURN {self._CLAIM_FIELDS}
         LIMIT $limit
         """
-        with self._driver.session() as session:
+        with self._session() as session:
             result = session.run(query, limit=limit)
             return [dict(record) for record in result]
 
     def store_kgc_facts(self, example_id: str, facts: list[KgcFact]) -> None:
         if not facts:
             return
-        with self._driver.session() as session:
+        with self._session() as session:
             for created_order, fact in enumerate(facts):
                 session.execute_write(
                     self._create_fact,
@@ -98,7 +112,7 @@ class Neo4jStore:
                f.evidence AS evidence
         ORDER BY f.created_order, subject, relation, object
         """
-        with self._driver.session() as session:
+        with self._session() as session:
             result = session.run(query, example_id=example_id)
             return [
                 KgcFact(
@@ -112,7 +126,7 @@ class Neo4jStore:
 
     def get_relationship_counts(self, example_id: str) -> dict[str, int]:
         """Return actual scoped FACT and CLAIM relationship counts."""
-        with self._driver.session() as session:
+        with self._session() as session:
             fact_record = session.run(
                 """
                 MATCH ()-[r:FACT]->()
@@ -141,7 +155,7 @@ class Neo4jStore:
     ) -> None:
         if not additions:
             return
-        with self._driver.session() as session:
+        with self._session() as session:
             for addition in additions:
                 session.execute_write(
                     self._create_working_fact,
@@ -159,7 +173,7 @@ class Neo4jStore:
         if not evaluations:
             return
         stage = answer_stage if answer_stage else f"answer_{iteration}"
-        with self._driver.session() as session:
+        with self._session() as session:
             for evaluation in evaluations:
                 session.execute_write(
                     self._create_kgc_claim,
@@ -178,7 +192,7 @@ class Neo4jStore:
         if not verification_results:
             return
 
-        with self._driver.session() as session:
+        with self._session() as session:
             for result in verification_results:
                 session.execute_write(
                     self._create_claim,
@@ -360,6 +374,36 @@ def query_claims_if_enabled(
     finally:
         if store is not None:
             store.close()
+
+
+def neo4j_status(*, required_for_this_route: bool = False) -> dict[str, object]:
+    """Distinguish configuration from live Bolt connectivity."""
+    status: dict[str, object] = {
+        "configured": bool(NEO4J_ENABLED),
+        "connected": False,
+        "required_for_this_route": bool(required_for_this_route),
+        "uri": NEO4J_URI,
+        "user": NEO4J_USER,
+        "database": NEO4J_DATABASE,
+        "error": None,
+    }
+    if not NEO4J_ENABLED:
+        status["error"] = "Neo4j storage is disabled (set NEO4J_ENABLED=true)"
+        return status
+    store: Neo4jStore | None = None
+    try:
+        store = Neo4jStore()
+        store.verify_connectivity()
+        # Cheap authenticated round-trip beyond TCP.
+        with store._session() as session:
+            session.run("RETURN 1 AS ok").single()
+        status["connected"] = True
+    except Exception as exc:
+        status["error"] = str(exc)
+    finally:
+        if store is not None:
+            store.close()
+    return status
 
 
 def clear_neo4j_if_enabled(*, required: bool = False) -> bool:

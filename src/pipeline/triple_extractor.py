@@ -128,11 +128,33 @@ class TripleExtractor:
                 target,
                 kgc_facts,
             )
-            extracted = ground_claim_objects_in_answer(extracted, answer)
+            extracted, grounding_traces = ground_claim_objects_in_answer(
+                extracted, answer
+            )
+            if grounding_traces:
+                from src.pipeline.debug_log import log_debug_event
+
+                log_debug_event(
+                    "claim_grounding",
+                    "completed",
+                    {
+                        "transformations": [t.to_dict() for t in grounding_traces],
+                    },
+                )
             extracted = dedupe_minimal_claims(extracted, target, answer)
-            aligned = align_claims_to_kgc_schema(
+            aligned, alignment_traces = align_claims_to_kgc_schema(
                 extracted, kgc_facts, question_target=target
             )
+            if alignment_traces:
+                from src.pipeline.debug_log import log_debug_event
+
+                log_debug_event(
+                    "schema_alignment",
+                    "completed",
+                    {
+                        "transformations": [t.to_dict() for t in alignment_traces],
+                    },
+                )
             return extracted, aligned
 
         prompt = self._template.format(answer=answer)

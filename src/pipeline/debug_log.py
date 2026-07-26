@@ -1,6 +1,7 @@
 """Optional per-run JSONL debug logs for GraphEval research debugging.
 
-Enabled when GRAPHEVAL_DEBUG_LOGS=true. Writes to .runtime/debug/<run_id>.jsonl.
+Enabled when GRAPHEVAL_DEBUG_LOGS=true. Writes to
+.runtime/debug/<timestamp>_<run_id>_attempt_<n>.jsonl (unique per attempt).
 Never logs credentials or secrets.
 """
 
@@ -10,6 +11,7 @@ import json
 import os
 import re
 import threading
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -32,27 +34,49 @@ def debug_logs_enabled() -> bool:
     return env_enabled or bool(getattr(_thread_state, "force_enabled", False))
 
 
-def debug_log_relative_path(run_id: str) -> str:
-    safe = _sanitize_run_id(run_id)
+def debug_log_relative_path(filename_stem: str) -> str:
+    safe = _sanitize_run_id(filename_stem)
+    if safe.endswith(".jsonl"):
+        return f".runtime/debug/{safe}"
     return f".runtime/debug/{safe}.jsonl"
 
 
-def begin_debug_run(run_id: str, *, force: bool = False) -> str | None:
-    """Start a debug log for a run. Returns relative path when logging is active."""
+def _unique_debug_filename(run_id: str, *, attempt: int | None = None) -> str:
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    safe = _sanitize_run_id(run_id)
+    if attempt is not None:
+        attempt_part = f"attempt_{int(attempt)}"
+    else:
+        attempt_part = f"attempt_{uuid.uuid4().hex[:8]}"
+    return f"{timestamp}_{safe}_{attempt_part}.jsonl"
+
+
+def begin_debug_run(
+    run_id: str,
+    *,
+    force: bool = False,
+    attempt: int | None = None,
+) -> str | None:
+    """Start a unique debug log for a run. Returns relative path when active."""
     if force:
         _thread_state.force_enabled = True
     if not debug_logs_enabled():
         _thread_state.run_id = None
         _thread_state.path = None
+        _thread_state.relative_path = None
         return None
-    safe = _sanitize_run_id(run_id)
+    filename = _unique_debug_filename(run_id, attempt=attempt)
     DEBUG_DIR.mkdir(parents=True, exist_ok=True)
-    path = DEBUG_DIR / f"{safe}.jsonl"
-    _thread_state.run_id = safe
+    path = DEBUG_DIR / filename
+    # Open once to create the file even if no events are written later.
+    path.touch(exist_ok=True)
+    _thread_state.run_id = _sanitize_run_id(run_id)
     _thread_state.path = path
+    _thread_state.relative_path = f".runtime/debug/{filename}"
     _thread_state.question_id = ""
     _thread_state.sub_question_id = ""
-    return debug_log_relative_path(safe)
+    _thread_state.attempt = attempt
+    return _thread_state.relative_path
 
 
 def set_debug_context(
@@ -67,19 +91,23 @@ def set_debug_context(
 
 
 def end_debug_run() -> None:
+    # Preserve last path for error reporters after cleanup.
+    _thread_state.last_relative_path = getattr(_thread_state, "relative_path", None)
     _thread_state.run_id = None
     _thread_state.path = None
+    _thread_state.relative_path = None
     _thread_state.question_id = ""
     _thread_state.sub_question_id = ""
     _thread_state.force_enabled = False
+    _thread_state.attempt = None
 
 
 def current_debug_log_path() -> str | None:
-    path = getattr(_thread_state, "path", None)
-    run_id = getattr(_thread_state, "run_id", None)
-    if path is None or run_id is None:
-        return None
-    return debug_log_relative_path(str(run_id))
+    return getattr(_thread_state, "relative_path", None)
+
+
+def last_debug_log_path() -> str | None:
+    return getattr(_thread_state, "last_relative_path", None) or current_debug_log_path()
 
 
 def log_debug_event(
@@ -99,6 +127,8 @@ def log_debug_event(
     record = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "run_id": run_id,
+        "attempt": getattr(_thread_state, "attempt", None),
+        "debug_log_path": getattr(_thread_state, "relative_path", None),
         "question_id": question_id
         if question_id is not None
         else getattr(_thread_state, "question_id", ""),
@@ -111,6 +141,35 @@ def log_debug_event(
     }
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
+
+
+def write_raw_model_output_artifact(
+    *,
+    stage: str,
+    raw_text: str,
+    format_hint: str | None = None,
+) -> str | None:
+    """Persist full raw model output beside the JSONL when debug logging is on."""
+    if not debug_logs_enabled():
+        return None
+    path: Path | None = getattr(_thread_state, "path", None)
+    if path is None:
+        return None
+    stem = path.stem
+    suffix = f"_{_sanitize_run_id(stage)}"
+    artifact = path.with_name(f"{stem}{suffix}_raw.txt")
+    artifact.write_text(raw_text, encoding="utf-8")
+    relative = f".runtime/debug/{artifact.name}"
+    log_debug_event(
+        stage,
+        "raw_model_output_artifact",
+        {
+            "raw_artifact_path": relative,
+            "raw_chars": len(raw_text),
+            "format_hint": format_hint,
+        },
+    )
+    return relative
 
 
 def _sanitize_run_id(run_id: str) -> str:

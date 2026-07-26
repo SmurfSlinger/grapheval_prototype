@@ -18,7 +18,7 @@ from src.benchmarks import (
     score_result,
     trusted_context,
 )
-from src.config import DEFAULT_MODEL
+from src.config import DEFAULT_MODEL, DEFAULT_LLM_PROVIDER, OLLAMA_BASE_URL, OLLAMA_NUM_CTX, OLLAMA_NUM_PREDICT, OLLAMA_REQUEST_TIMEOUT
 from src.io_utils import load_examples, result_filename, save_result
 from src.llm.ollama_provider import (
     OllamaConnectionError,
@@ -32,7 +32,7 @@ from src.pipeline.backtracking_runner import BacktrackingRunner
 from src.pipeline.decomposed_backtracking_runner import DecomposedBacktrackingRunner
 from src.pipeline.runner import PipelineRunner
 from src.pipeline.structured_output import KgcExtractionError
-from src.storage.neo4j_store import query_claims_if_enabled
+from src.storage.neo4j_store import neo4j_status, query_claims_if_enabled
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -250,6 +250,50 @@ def _log_decomposed_runtime_failure(
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/dependencies")
+def dependencies() -> dict[str, Any]:
+    """Report API, Neo4j, and Ollama readiness without exposing secrets."""
+    neo4j = neo4j_status(required_for_this_route=False)
+    ollama: dict[str, Any] = {
+        "configured_base_url": OLLAMA_BASE_URL,
+        "configured_model": DEFAULT_MODEL,
+        "reachable": False,
+        "model_installed": False,
+        "installed_models": [],
+        "error": None,
+    }
+    try:
+        import urllib.request
+
+        with urllib.request.urlopen(f"{OLLAMA_BASE_URL.rstrip('/')}/api/tags", timeout=3) as resp:
+            payload = __import__("json").loads(resp.read().decode("utf-8"))
+        names = [m.get("name") for m in payload.get("models", []) if isinstance(m, dict)]
+        ollama["reachable"] = True
+        ollama["installed_models"] = names
+        ollama["model_installed"] = DEFAULT_MODEL in names or any(
+            str(name).startswith(f"{DEFAULT_MODEL}:") or str(name) == DEFAULT_MODEL
+            for name in names
+        )
+        # Exact tag match preferred; also accept identical digest aliases.
+        if DEFAULT_MODEL in names:
+            ollama["model_installed"] = True
+    except Exception as exc:
+        ollama["error"] = str(exc)
+
+    return {
+        "api": {"status": "ok"},
+        "neo4j": neo4j,
+        "ollama": ollama,
+        "config": {
+            "default_llm_provider": DEFAULT_LLM_PROVIDER,
+            "default_model": DEFAULT_MODEL,
+            "ollama_num_ctx": OLLAMA_NUM_CTX,
+            "ollama_num_predict": OLLAMA_NUM_PREDICT,
+            "ollama_request_timeout": OLLAMA_REQUEST_TIMEOUT,
+        },
+    }
 
 
 def _graph_claims_response(

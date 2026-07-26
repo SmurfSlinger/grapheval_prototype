@@ -897,7 +897,8 @@ export default function DecomposedKgcFlowView({ result }: DecomposedKgcFlowViewP
             </p>
             {result.trace?.configured_num_ctx ? (
               <p className="rt-note">
-                Model context configured to {result.trace.configured_num_ctx} tokens.
+                Configured context length (num_ctx):{" "}
+                {result.trace.configured_num_ctx} tokens.
               </p>
             ) : null}
           </section>

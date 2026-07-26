@@ -8,8 +8,8 @@ import PipelineResultView from "@/components/PipelineResultView";
 import {
   fetchBenchmarks,
   fetchBenchmarkQuestions,
+  fetchDependencies,
   fetchExamples,
-  fetchGraphClaims,
   fetchHealth,
   runAllExamples,
   runBenchmarkQuestion,
@@ -67,8 +67,11 @@ export default function HomePage() {
     "checking",
   );
   const [neo4jStatus, setNeo4jStatus] = useState<
-    "enabled" | "disabled" | "checking"
+    "connected" | "configured" | "disabled" | "checking"
   >("checking");
+  const [lastElapsedSeconds, setLastElapsedSeconds] = useState<number | null>(
+    null,
+  );
 
   const [customQuestion, setCustomQuestion] = useState("");
   const [customContext, setCustomContext] = useState("");
@@ -93,8 +96,15 @@ export default function HomePage() {
 
   const refreshNeo4jStatus = useCallback(async () => {
     try {
-      const response = await fetchGraphClaims({ limit: 1 });
-      setNeo4jStatus(response.enabled ? "enabled" : "disabled");
+      const response = await fetchDependencies();
+      const neo4j = response.neo4j;
+      if (!neo4j?.configured) {
+        setNeo4jStatus("disabled");
+      } else if (neo4j.connected) {
+        setNeo4jStatus("connected");
+      } else {
+        setNeo4jStatus("configured");
+      }
     } catch {
       setNeo4jStatus("disabled");
     }
@@ -281,6 +291,8 @@ export default function HomePage() {
     clearError();
     setDecomposedResult(null);
     setBenchmarkScore(null);
+    setLastElapsedSeconds(null);
+    const startedAt = performance.now();
     try {
       if (inputSource === "custom") {
         const output = await runCustomDecomposedKgcBacktracking({
@@ -317,8 +329,10 @@ export default function HomePage() {
         setDecomposedResult(output);
         setSelectedId(output.example_id);
       }
+      setLastElapsedSeconds((performance.now() - startedAt) / 1000);
       await refreshNeo4jStatus();
     } catch (err) {
+      setLastElapsedSeconds((performance.now() - startedAt) / 1000);
       handleApiFailure(err, "Decomposed KGc backtracking failed");
     } finally {
       setRunning(false);
@@ -393,10 +407,11 @@ export default function HomePage() {
           {apiStatus === "down" && "API disconnected"}
         </span>
         <span
-          className={`api-badge ${neo4jStatus === "enabled" ? "ok" : neo4jStatus === "disabled" ? "down" : ""}`}
+          className={`api-badge ${neo4jStatus === "connected" ? "ok" : neo4jStatus === "disabled" || neo4jStatus === "configured" ? "down" : ""}`}
         >
           {neo4jStatus === "checking" && "Neo4j…"}
-          {neo4jStatus === "enabled" && "Neo4j connected"}
+          {neo4jStatus === "connected" && "Neo4j connected"}
+          {neo4jStatus === "configured" && "Neo4j configured (not connected)"}
           {neo4jStatus === "disabled" && "Neo4j disabled"}
         </span>
       </div>
@@ -467,6 +482,7 @@ export default function HomePage() {
           result={decomposedResult}
           loading={running}
           benchmarkScore={benchmarkScore}
+          elapsedSeconds={lastElapsedSeconds}
         />
       ) : null}
 

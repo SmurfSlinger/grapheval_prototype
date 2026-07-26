@@ -37,7 +37,7 @@ def test_polarity_conflict_is_contradicted():
 
 def test_aligner_does_not_flip_positive_carry_to_does_not_carry():
     claims = [Triple("Weapons status", "carries", "weapons")]
-    aligned = align_claims_to_kgc_schema(claims, DRONE_KGC)
+    aligned, _ = align_claims_to_kgc_schema(claims, DRONE_KGC)
 
     assert aligned[0].relation == "carries"
     results = GraphComparator().compare_claims(aligned, DRONE_KGC)

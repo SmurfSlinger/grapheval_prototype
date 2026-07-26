@@ -170,7 +170,7 @@ def test_schema_aligner_preserves_president_target_relation():
         "Who was the president at the time?",
         [KgcFact("Apollo 11", "launched_by", "Saturn V")],
     )
-    aligned = align_claims_to_kgc_schema([claim], kgc, question_target=target)[0]
+    aligned = align_claims_to_kgc_schema([claim], kgc, question_target=target)[0][0]
     assert aligned.relation == "president_at_time"
 
 

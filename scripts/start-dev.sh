@@ -19,10 +19,19 @@ CONTAINER_NAME="grapheval-neo4j"
 BACKEND_PID_FILE="$PID_DIR/backend.pid"
 FRONTEND_PID_FILE="$PID_DIR/frontend.pid"
 
-export NEO4J_ENABLED=true
-export NEO4J_URI=bolt://localhost:7687
-export NEO4J_USER=neo4j
-export NEO4J_PASSWORD=password123
+# Shell defaults only when unset — never overwrite values sourced from .env.
+export NEO4J_ENABLED="${NEO4J_ENABLED:-true}"
+export NEO4J_URI="${NEO4J_URI:-bolt://localhost:7687}"
+export NEO4J_USER="${NEO4J_USER:-neo4j}"
+export NEO4J_PASSWORD="${NEO4J_PASSWORD:-password123}"
+export NEO4J_DATABASE="${NEO4J_DATABASE:-neo4j}"
+export NEO4J_IMAGE="${NEO4J_IMAGE:-neo4j:5.26.0}"
+export DEFAULT_LLM_PROVIDER="${DEFAULT_LLM_PROVIDER:-ollama}"
+export DEFAULT_MODEL="${DEFAULT_MODEL:-gemma4:e4b}"
+export OLLAMA_NUM_CTX="${OLLAMA_NUM_CTX:-32768}"
+export OLLAMA_NUM_PREDICT="${OLLAMA_NUM_PREDICT:-4096}"
+export OLLAMA_REQUEST_TIMEOUT="${OLLAMA_REQUEST_TIMEOUT:-600}"
+export GRAPHEVAL_DEBUG_LOGS="${GRAPHEVAL_DEBUG_LOGS:-true}"
 
 port_in_use() {
   (echo >/dev/tcp/127.0.0.1/"$1") &>/dev/null
@@ -99,22 +108,30 @@ if port_in_use 7474 || port_in_use 7687; then
 fi
 
 # --- Neo4j ---
+echo "Neo4j config:"
+echo "  URI:      $NEO4J_URI"
+echo "  user:     $NEO4J_USER"
+echo "  database: $NEO4J_DATABASE"
+echo "  image:    $NEO4J_IMAGE"
+echo "  enabled:  $NEO4J_ENABLED"
+echo "  (password not printed)"
+
 if docker ps -a --format '{{.Names}}' | grep -qx "$CONTAINER_NAME"; then
   echo "Starting existing Neo4j container: $CONTAINER_NAME"
   docker start "$CONTAINER_NAME"
 else
-  echo "Creating Neo4j container: $CONTAINER_NAME"
+  echo "Creating Neo4j container: $CONTAINER_NAME ($NEO4J_IMAGE)"
   docker run -d \
     --name "$CONTAINER_NAME" \
     -p 7474:7474 -p 7687:7687 \
-    -e NEO4J_AUTH=neo4j/password123 \
-    neo4j:latest
+    -e "NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}" \
+    "$NEO4J_IMAGE"
 fi
 
-echo "Waiting for Neo4j (http://localhost:7474)..."
+echo "Waiting for Neo4j Bolt authentication..."
 neo4j_ready=false
-for _ in $(seq 1 45); do
-  if curl -sf http://localhost:7474 >/dev/null 2>&1; then
+for _ in $(seq 1 60); do
+  if docker exec "$CONTAINER_NAME" cypher-shell -u "$NEO4J_USER" -p "$NEO4J_PASSWORD" -d "$NEO4J_DATABASE" "RETURN 1;" >/dev/null 2>&1; then
     neo4j_ready=true
     break
   fi
@@ -122,10 +139,11 @@ for _ in $(seq 1 45); do
 done
 
 if [[ "$neo4j_ready" == true ]]; then
-  echo "Neo4j is ready."
+  echo "Neo4j Bolt is ready (authenticated)."
 else
-  echo "Warning: Neo4j did not respond within 45s."
-  echo "         Backend will start anyway; graph storage may warn until Neo4j is up."
+  echo "Error: Neo4j did not accept Bolt authentication within 60s."
+  echo "       Check container logs: docker logs $CONTAINER_NAME"
+  exit 1
 fi
 
 # --- Python dependencies (project .venv — avoids sudo/root Python issues) ---
@@ -210,11 +228,14 @@ echo "============================================"
 echo " Frontend:      http://localhost:3000"
 echo "                (Next.js uses 3001 if 3000 is busy)"
 echo " Backend:       http://localhost:8000/health"
+echo " Dependencies:  http://localhost:8000/dependencies"
 echo " API docs:      http://localhost:8000/docs"
 echo " Neo4j Browser: http://localhost:7474"
-echo "                login: neo4j / password123"
+echo " Neo4j URI:     $NEO4J_URI (user=$NEO4J_USER db=$NEO4J_DATABASE image=$NEO4J_IMAGE)"
+echo " Model:         $DEFAULT_MODEL (provider=$DEFAULT_LLM_PROVIDER)"
+echo " num_ctx:       $OLLAMA_NUM_CTX"
 echo ""
-echo " Neo4j storage: ENABLED (verifier unchanged — storage only)"
+echo " Neo4j storage configured: $NEO4J_ENABLED"
 echo " Press Ctrl+C to stop backend + frontend"
 echo " Stop Neo4j:     scripts/stop-dev.sh"
 echo "============================================"

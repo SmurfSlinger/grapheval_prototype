@@ -185,7 +185,7 @@ def test_fulfilled_goal_set_by_does_not_satisfy_president_at_time():
 def test_spoke_with_does_not_equal_president_at_time():
     kgc = [KgcFact("Apollo 11 crew", "spoke_with", "President Richard Nixon")]
     claim = Triple("Apollo 11", "president_at_time", "Donald Trump")
-    aligned = align_claims_to_kgc_schema([claim], kgc)[0]
+    aligned = align_claims_to_kgc_schema([claim], kgc)[0][0]
     assert aligned.relation == "president_at_time"
     target = derive_question_target(
         "Who was the president at the time of Apollo 11?",

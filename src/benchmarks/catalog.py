@@ -140,12 +140,40 @@ def score_result(
 ) -> dict[str, Any]:
     expected = str(question.get("expected_answer") or "")
     predicted = str(result.combined_answer or "")
+    stops = [sub.stop_reason for sub in result.sub_question_results]
+    final_stop = stops[-1] if stops else None
+    if hasattr(final_stop, "value"):
+        final_stop = final_stop.value
+    resolved = resolved_by_pipeline(result)
+    contains = contains_expected_answer(predicted, expected)
+    category = None
+    if not resolved:
+        if contains:
+            category = "answer_matched_textually_but_pipeline_unresolved"
+        else:
+            stop = str(final_stop or "").casefold()
+            if "target_not_satisfied" in stop:
+                category = "target_not_satisfied"
+            elif "no_evidence" in stop:
+                category = "unresolved_no_evidence"
+            elif "no_claims" in stop:
+                category = "no_claims_extracted"
+            elif "max_iterations" in stop:
+                category = "contradiction_or_uncertainty_remained"
+            else:
+                category = "pipeline_unresolved"
     return {
         "benchmark_id": benchmark_id,
         "question_id": str(question["id"]),
         "hop_count": int(question["hop_count"]),
         "expected_answer": expected,
+        "predicted_answer": predicted,
         "exact_match": exact_match(predicted, expected),
-        "contains_expected_answer": contains_expected_answer(predicted, expected),
-        "resolved_by_pipeline": resolved_by_pipeline(result),
+        "contains_expected_answer": contains,
+        "resolved_by_pipeline": resolved,
+        "final_stop_reason": final_stop,
+        "all_stop_reasons": [
+            s.value if hasattr(s, "value") else str(s) for s in stops
+        ],
+        "failure_category": category,
     }

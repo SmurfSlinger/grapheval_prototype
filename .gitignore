@@ -41,3 +41,5 @@ scripts/.pids/
 HOW_IT_WORKS.md
 .runtime/*.lock
 .runtime/debug/
+
+!results/verify_master_live_*.md
