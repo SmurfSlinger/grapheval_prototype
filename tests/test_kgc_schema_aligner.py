@@ -12,8 +12,9 @@ DRONE_KGC = [
     KgcFact(DRONE, "does_not_carry", "weapons"),
 ]
 
+# Relation+object matches may canonicalize subject; object-only drift must not.
 MISALIGNED_DRONE_CLAIMS = [
-    Triple("Flight time", "has_value", "42 minutes"),
+    Triple("Flight time", "has_maximum_flight_time", "42 minutes"),
     Triple("Reconnaissance approval", "approved_for", "daylight reconnaissance"),
     Triple("Weapons status", "does_not_carry", "weapons"),
 ]
@@ -58,6 +59,18 @@ def test_positive_carry_claim_does_not_align_via_unique_object():
 
     assert aligned[0].relation == "carries"
     assert aligned[0].subject == "Weapons status"
+
+
+def test_object_only_relation_drift_is_rejected():
+    """Unique object match must not rewrite subject and relation together."""
+    claims = [Triple("Flight time", "has_value", "42 minutes")]
+    aligned, _ = align_claims_to_kgc_schema(claims, DRONE_KGC)
+
+    assert aligned[0].subject == "Flight time"
+    assert aligned[0].relation == "has_value"
+    assert aligned[0].object == "42 minutes"
+    results = GraphComparator().compare_claims(aligned, DRONE_KGC)
+    assert results[0].label == KgcClaimLabel.NO_EVIDENCE
 
 
 APOLLO_KGC = [

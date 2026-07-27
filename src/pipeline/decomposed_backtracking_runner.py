@@ -440,6 +440,7 @@ class DecomposedBacktrackingRunner:
                     final_answer,
                     last_iter.evidence_path,
                     path_complete=True,
+                    resolved=True,
                 )
 
             sub_result = SubQuestionResult(

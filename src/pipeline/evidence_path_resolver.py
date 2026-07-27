@@ -14,7 +14,7 @@ from dataclasses import asdict, dataclass, field
 
 from src.models import KgcFact, Triple
 from src.pipeline.kgc_matching import normalize, normalize_relation
-from src.pipeline.question_target import QuestionTarget
+from src.pipeline.question_target import QuestionTarget, relation_matches_target
 from src.pipeline.trusted_context_bootstrap import infer_primary_subject_from_context
 
 _MAX_DEPTH = 10
@@ -128,6 +128,48 @@ def resolve_evidence_path(
 
     # Depth-1: the root is the terminal claim subject.
     if _names_match(start, answer_claim.subject):
+        # When the terminal claim answers the typed question target, prefer a
+        # unique source→subject prefix so multi-hop on-target paths are not
+        # collapsed to a depth-1 self-root.
+        if _is_target_claim(answer_claim, question_target):
+            source_paths, ambiguity = _find_source_paths_to(
+                end_entity=answer_claim.subject,
+                trusted_facts=trusted_facts,
+                max_depth=_MAX_DEPTH - 1,
+            )
+            if ambiguity:
+                return EvidencePathResult(
+                    start_entity=start,
+                    terminal_claim=terminal,
+                    ambiguity=ambiguity,
+                    failure_reason="ambiguous_branch",
+                )
+            if source_paths:
+                full_path = list(source_paths[0]) + [terminal_edge]
+                source_start = full_path[0].subject
+                if _has_cycle(full_path):
+                    return EvidencePathResult(
+                        start_entity=source_start,
+                        terminal_claim=terminal,
+                        evidence_path=full_path,
+                        path_length=len(full_path),
+                        failure_reason="cycle_detected",
+                    )
+                if len(full_path) <= _MAX_DEPTH:
+                    return EvidencePathResult(
+                        start_entity=source_start,
+                        terminal_claim=terminal,
+                        evidence_path=full_path,
+                        path_length=len(full_path),
+                        complete=True,
+                    )
+                return EvidencePathResult(
+                    start_entity=source_start,
+                    terminal_claim=terminal,
+                    evidence_path=full_path,
+                    path_length=len(full_path),
+                    failure_reason="path_exceeds_max_depth",
+                )
         return EvidencePathResult(
             start_entity=start,
             terminal_claim=terminal,
@@ -338,6 +380,53 @@ def _find_paths(
     return [shortest[0]], None
 
 
+def _find_source_paths_to(
+    *,
+    end_entity: str,
+    trusted_facts: list[KgcFact],
+    max_depth: int,
+) -> tuple[list[list[PathEdge]], str | None]:
+    """Return a unique shortest path from a directed graph source to end_entity."""
+    end_key = normalize(end_entity)
+    incoming = {normalize(fact.object) for fact in trusted_facts}
+    sources: list[str] = []
+    seen_sources: set[str] = set()
+    for fact in trusted_facts:
+        key = normalize(fact.subject)
+        if not key or key == end_key or key in incoming or key in seen_sources:
+            continue
+        sources.append(fact.subject)
+        seen_sources.add(key)
+
+    paths: list[list[PathEdge]] = []
+    for source in sources:
+        source_paths, ambiguity = _find_paths(
+            start_entity=source,
+            end_entity=end_entity,
+            trusted_facts=trusted_facts,
+            max_depth=max_depth,
+        )
+        if ambiguity:
+            return [], ambiguity
+        paths.extend(source_paths)
+
+    if not paths:
+        return [], None
+
+    shortest_len = min(len(path) for path in paths)
+    shortest = [path for path in paths if len(path) == shortest_len]
+    signatures = {
+        tuple(
+            (normalize(edge.subject), normalize_relation(edge.relation), normalize(edge.object))
+            for edge in path
+        )
+        for path in shortest
+    }
+    if len(signatures) > 1:
+        return [], "sibling_branch_ambiguity"
+    return [shortest[0]], None
+
+
 def _shortest_distance(
     start: str,
     end: str,
@@ -386,6 +475,17 @@ def _entities_from_facts(trusted_facts: list[KgcFact]) -> list[str]:
             seen.add(key)
             ordered.append(name)
     return ordered
+
+
+def _is_target_claim(
+    claim: Triple,
+    question_target: QuestionTarget | None,
+) -> bool:
+    return bool(
+        question_target
+        and question_target.expected_relations
+        and relation_matches_target(claim.relation, question_target)
+    )
 
 
 def _has_cycle(path: list[PathEdge]) -> bool:

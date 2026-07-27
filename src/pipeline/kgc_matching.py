@@ -339,6 +339,44 @@ CAPITAL_RELATIONS = frozenset(
     }
 )
 
+RESEARCH_FIELD_RELATIONS = frozenset(
+    {
+        "is_studied_by",
+        "studied_by",
+        "studied_by_field",
+        "researched_by",
+    }
+)
+
+FOUNDER_RELATIONS = frozenset(
+    {
+        "is_founded_by",
+        "founded_by",
+        "founder",
+        "established_by",
+        "created_by",
+    }
+)
+
+ADMINISTERED_BY_RELATIONS = frozenset(
+    {
+        "is_administered_by",
+        "administered_by",
+        "managed_by",
+        "run_by",
+        "overseen_by",
+    }
+)
+
+EMPLOYMENT_RELATIONS = frozenset(
+    {
+        "is_employed_by",
+        "employed_by",
+        "works_for",
+        "works_at",
+    }
+)
+
 # Medication-status families must remain distinct (no unsafe collapse).
 MEDICATION_STATUS_EXCLUSIONS: dict[str, frozenset[str]] = {
     "medication_discontinued": ACTIVE_MED_RELATIONS | DISCUSSED_NOT_STARTED_RELATIONS,
@@ -363,6 +401,10 @@ INTENT_RELATION_FAMILIES: dict[str, frozenset[str]] = {
     "headquarters": HEADQUARTERS_RELATIONS,
     "location_containment": CONTAINMENT_RELATIONS,
     "capital_city": CAPITAL_RELATIONS,
+    "research_field": RESEARCH_FIELD_RELATIONS,
+    "founder": FOUNDER_RELATIONS,
+    "administered_by": ADMINISTERED_BY_RELATIONS,
+    "employment": EMPLOYMENT_RELATIONS,
     "diagnosis": DIAGNOSIS_RELATIONS,
     "lab_measurement": LAB_VALUE_RELATIONS,
     "disease_stage": DISEASE_STAGE_RELATIONS,
@@ -395,6 +437,10 @@ INTENT_CANONICAL_RELATIONS: dict[str, str] = {
     "headquarters": "headquartered_in",
     "location_containment": "located_in",
     "capital_city": "capital",
+    "research_field": "is_studied_by",
+    "founder": "is_founded_by",
+    "administered_by": "is_administered_by",
+    "employment": "is_employed_by",
     "diagnosis": "diagnosed_with",
     "lab_measurement": "has_a1c",
     "disease_stage": "has_ckd_stage",

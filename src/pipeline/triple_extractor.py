@@ -11,6 +11,7 @@ from src.io_utils import load_prompt, parse_json_response
 from src.llm.base import LLMProvider
 from src.models import KgcFact, Triple
 from src.pipeline.kgc_matching import normalize, normalize_relation
+from src.pipeline.claim_direction import enforce_claim_direction_integrity
 from src.pipeline.claim_grounding import ground_claim_objects_in_answer
 from src.pipeline.kgc_schema_aligner import align_claims_to_kgc_schema
 from src.pipeline.question_target import (
@@ -142,6 +143,19 @@ class TripleExtractor:
                     },
                 )
             extracted = dedupe_minimal_claims(extracted, target, answer)
+            extracted, direction_anomalies = enforce_claim_direction_integrity(
+                extracted, kgc_facts, answer=answer
+            )
+            if direction_anomalies:
+                from src.pipeline.debug_log import log_debug_event
+
+                log_debug_event(
+                    "claim_direction",
+                    "completed",
+                    {
+                        "anomalies": [a.to_dict() for a in direction_anomalies],
+                    },
+                )
             aligned, alignment_traces = align_claims_to_kgc_schema(
                 extracted, kgc_facts, question_target=target
             )

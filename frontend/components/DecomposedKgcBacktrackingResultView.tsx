@@ -338,10 +338,31 @@ export default function DecomposedKgcBacktrackingResultView({
           contradicted · {finalNoEvidence} no evidence
         </p>
         {!showSubQuestions ? (
-          <p className="kgc-evidence-text">
-            Trusted evidence path → {hops ?? 0} hops ·{" "}
-            {pathComplete ? "Complete" : "Incomplete"}
-          </p>
+          pipelineResolved ? (
+            <p className="kgc-evidence-text">
+              Trusted evidence path → {hops ?? 0} hops ·{" "}
+              {pathComplete ? "Complete" : "Incomplete"}
+            </p>
+          ) : (
+            <>
+              <p className="kgc-evidence-text">
+                Claim evidence path → {hops ?? 0} hops ·{" "}
+                {pathComplete
+                  ? `Complete to ${
+                      terminalEdge?.object
+                        ?? pathSub?.evidence_path?.terminal_claim?.object
+                        ?? "terminal claim"
+                    }`
+                  : "Incomplete"}
+              </p>
+              <p className="kgc-evidence-text">
+                Question answer target →{" "}
+                {pathSub?.question_target_satisfied
+                  ? "Satisfied"
+                  : "Not satisfied"}
+              </p>
+            </>
+          )
         ) : (
           <p className="kgc-evidence-text">
             Aggregate of {subQuestionCount} sub-questions — see cards below for

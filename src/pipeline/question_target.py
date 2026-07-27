@@ -125,6 +125,14 @@ _FRAME_PREDICATES: dict[str, str] = {
     "studies": "studies",
     "study": "studies",
     "studied": "studies",
+    "founded": "founded",
+    "founds": "founded",
+    "administers": "administers",
+    "administer": "administers",
+    "administered": "administers",
+    "employs": "employs",
+    "employ": "employs",
+    "employed": "employs",
 }
 
 _PLACE_HEADS = frozenset({"town", "city", "village", "municipality", "birthplace", "place"})
@@ -140,8 +148,10 @@ _COMPANY_HEADS = frozenset(
 _PERSON_HEADS = frozenset({"person", "man", "woman", "individual", "leader", "commander"})
 _VEHICLE_HEADS = frozenset({"vehicle", "rocket", "booster", "spacecraft"})
 _DATE_HEADS = frozenset({"date", "year", "day", "month", "time"})
+_FIELD_HEADS = frozenset({"field", "discipline", "science", "domain"})
+_MATERIAL_HEADS = frozenset({"material", "substance", "product", "alloy", "compound"})
 _GEO_FEATURE_HEADS = frozenset(
-    {"river", "bay", "ocean", "sea", "lake", "waterway", "body", "field", "capital"}
+    {"river", "bay", "ocean", "sea", "lake", "waterway", "body", "capital"}
 )
 _CREW_HEADS = ("crew member", "crew members", "astronaut", "astronauts", "crew")
 
@@ -174,6 +184,8 @@ _COMPLETE_HEAD_TOKENS = (
     | _VEHICLE_HEADS
     | _DATE_HEADS
     | _GEO_FEATURE_HEADS
+    | _FIELD_HEADS
+    | _MATERIAL_HEADS
     | {"astronaut", "astronauts", "crew", "president", "medication", "diagnosis"}
 )
 
@@ -290,6 +302,16 @@ def _frame_intent(frame: InterrogativeFrame) -> str | None:
     if not wh:
         return None
 
+    # Predicate-led intents that do not depend on a typed head noun.
+    if predicate == "studies":
+        return "research_field"
+    if predicate == "founded":
+        return "founder"
+    if predicate == "administers":
+        return "administered_by"
+    if predicate == "employs":
+        return "employment"
+
     if wh in {"which", "what"} and head:
         head_token = head.split()[-1]
         if any(head.startswith(crew) or crew in head for crew in _CREW_HEADS):
@@ -298,6 +320,10 @@ def _frame_intent(frame: InterrogativeFrame) -> str | None:
             return "president_at_time"
         if head_token == "capital" or predicate == "capital":
             return "capital_city"
+        if head_token in _FIELD_HEADS:
+            return "research_field"
+        if head_token in _MATERIAL_HEADS and predicate == "built":
+            return "manufacturer"
         if head_token in _PLACE_HEADS or head_token in _REGION_HEADS:
             if predicate == "born":
                 return "birthplace"
@@ -321,14 +347,16 @@ def _frame_intent(frame: InterrogativeFrame) -> str | None:
                 "part_of",
             }:
                 return "location_containment"
-            # River/field and similar open-domain geo asks stay untyped so a
-            # nested "capital"/"containing" qualifier cannot rewrite the claim.
+            # River and similar open-domain geo asks stay untyped so a nested
+            # "capital"/"containing" qualifier cannot rewrite the claim.
             return None
         if head_token in _COMPANY_HEADS:
             if predicate == "built":
                 return "manufacturer"
             if predicate == "led":
                 return "leader"
+            if predicate == "administers":
+                return "administered_by"
             return None
         if head_token in _PERSON_HEADS:
             if predicate == "led":
@@ -337,6 +365,8 @@ def _frame_intent(frame: InterrogativeFrame) -> str | None:
                 return "crew_members"
             if predicate == "president":
                 return "president_at_time"
+            if predicate == "founded":
+                return "founder"
             return None
         if head_token in _VEHICLE_HEADS:
             if predicate == "launched":
@@ -371,6 +401,10 @@ def _frame_intent(frame: InterrogativeFrame) -> str | None:
             return "leader"
         if predicate == "built":
             return "manufacturer"
+        if predicate == "founded":
+            return "founder"
+        if predicate == "administers":
+            return "administered_by"
         return None
 
     return None
@@ -840,6 +874,10 @@ def dedupe_minimal_claims(
         "headquarters",
         "location_containment",
         "capital_city",
+        "research_field",
+        "founder",
+        "administered_by",
+        "employment",
         "diagnosis",
         "lab_measurement",
         "discussed_not_started",

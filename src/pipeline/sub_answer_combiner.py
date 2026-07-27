@@ -13,12 +13,19 @@ def prefer_terminal_object_answer(
     evidence_path: dict[str, Any] | None,
     *,
     path_complete: bool = False,
+    resolved: bool = False,
 ) -> str:
     """Prefer the evidence-path terminal object when the answer elaborates it.
 
     Keeps already-atomic answers unchanged. Only rewrites when a complete path
     provides a terminal object that appears inside a longer answer string.
+
+    Must only be applied for RESOLVED results. Unsuccessful statuses
+    (STALLED, UNRESOLVED, MAX_ITERATIONS, GENERATION_FAILED, …) preserve the
+    model answer text and never project a path terminal object into the answer.
     """
+    if not resolved:
+        return (answer or "").strip()
     cleaned = normalize_entity_text(answer)
     if not path_complete or not evidence_path:
         return cleaned
@@ -55,6 +62,7 @@ def combine_sub_answers(
             result.final_answer,
             result.evidence_path,
             path_complete=bool(result.evidence_path_complete),
+            resolved=result.stop_reason == SubQuestionStopReason.RESOLVED,
         )
 
     if (

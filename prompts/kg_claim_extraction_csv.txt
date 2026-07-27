@@ -6,7 +6,17 @@ KGc facts define canonical entity and relation names when a claim maps to KGc. N
 
 The object column must always reflect what the answer states, not KGc evidence.
 
-Return the minimal non-redundant claims needed for this sub-question. Prefer one canonical claim for a single-value answer.
+Return the minimal non-redundant claims needed for this sub-question. Prefer one canonical claim for a single-value answer. Always include the terminal answer-bearing claim. Do not replace it with an explanatory intermediate claim.
+
+Canonical relation direction (active prose → passive relation):
+- "Researcher X studies Subject Y" with canonical is_studied_by → Subject Y — is_studied_by → Researcher X
+- "Organization X employs Person Y" with canonical is_employed_by → Person Y — is_employed_by → Organization X
+- "City X contains Landmark Y" with canonical is_located_in → Landmark Y — is_located_in → City X
+- "Person X founded Organization Y" with canonical is_founded_by → Organization Y — is_founded_by → Person X
+- "Organization X administers Program Y" with canonical is_administered_by → Program Y — is_administered_by → Organization X
+- "Factory X produces Material Y" with canonical produced_by → Material Y — produced_by → Factory X
+
+Subject/relation/object direction must match the canonical relation meaning. For who / which-person / which-field / which-organization questions, the direct answer ordinarily appears as the answer-bearing object of the terminal claim when the canonical relation is passive. The source_sentence must genuinely support the triple direction.
 
 Preserve negation. Do not merge negated and positive relations.
 

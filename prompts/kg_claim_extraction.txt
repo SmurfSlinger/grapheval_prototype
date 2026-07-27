@@ -6,13 +6,24 @@ KGc facts define the canonical entity and relation names only. Use KGc for subje
 
 The object field must always state what the answer claims — taken from the answer wording, not from KGc evidence.
 
-Return the minimal claim or claims needed to represent the answer for this sub-question. Prefer one canonical claim when the answer is a single value or list.
+Return the minimal claim or claims needed to represent the answer for this sub-question. Prefer one canonical claim when the answer is a single value or list. Always include the terminal answer-bearing claim that directly answers the sub-question. Do not replace that terminal claim with an explanatory intermediate claim.
+
+Canonical relation direction (active prose → passive relation):
+- "Researcher X studies Subject Y" with canonical is_studied_by → Subject Y — is_studied_by → Researcher X
+- "Organization X employs Person Y" with canonical is_employed_by → Person Y — is_employed_by → Organization X
+- "City X contains Landmark Y" with canonical is_located_in → Landmark Y — is_located_in → City X
+- "Person X founded Organization Y" with canonical is_founded_by → Organization Y — is_founded_by → Person X
+- "Organization X administers Program Y" with canonical is_administered_by → Program Y — is_administered_by → Organization X
+- "Factory X produces Material Y" with canonical produced_by → Material Y — produced_by → Factory X
+
+Subject/relation/object direction must match the canonical relation meaning. For who / which-person / which-field / which-organization questions, the direct answer ordinarily appears as the answer-bearing object of the terminal claim when the canonical relation is passive. The source_sentence must genuinely support the triple direction.
 
 Examples (question → answer → claim):
 - When was Apollo 11? / "July 16-August 5, 1985." → Apollo 11 — occurred_during → July 16-August 5, 1985
 - Who were the astronauts? / "Neil Armstrong, Jessica Davis, Buzz Lightyear." → Apollo 11 — crewed_by → Neil Armstrong, Jessica Davis, Buzz Lightyear
 - Where launched? / "John F Kennedy Airport." → Apollo 11 — launched_from → John F Kennedy Airport
 - How much lunar material? / "7 ounces." → Apollo 11 — collected (or lunar_material_collected) → 7 ounces
+- Which field studies Subject Y? / "Field X studies Subject Y." → Subject Y — is_studied_by → Field X
 
 Do not use section labels like "Mission dates" or "Astronauts" as subjects when the KGc entity is available.
 
