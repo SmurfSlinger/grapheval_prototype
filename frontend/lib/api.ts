@@ -418,6 +418,7 @@ export interface DecomposedBacktrackingResult {
   max_iterations_per_sub_question: number;
   debug_log_path?: string | null;
   structured_triple_anomalies?: Array<Record<string, unknown>>;
+  execution_id?: string | null;
   /** Wall-clock seconds for the run when the API/client provides it. */
   runtime_seconds?: number | null;
   elapsed_seconds?: number | null;

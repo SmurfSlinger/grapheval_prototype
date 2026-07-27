@@ -47,10 +47,6 @@ function pipelineStatus(result: DecomposedBacktrackingResult): string {
   return aggregate;
 }
 
-function stopReasonsSummary(result: DecomposedBacktrackingResult): string {
-  return aggregateStopReason(result);
-}
-
 function failureCategory(
   score: BenchmarkRunScore,
   result: DecomposedBacktrackingResult,
@@ -62,7 +58,7 @@ function failureCategory(
   }
   const stop = (
     score.final_stop_reason ??
-    stopReasonsSummary(result) ??
+    aggregateStopReason(result) ??
     ""
   ).toLowerCase();
   if (stop.includes("target_not_satisfied")) return "target_not_satisfied";
@@ -78,10 +74,7 @@ function elapsedFromResult(
   result: DecomposedBacktrackingResult,
   elapsedSeconds: number | null | undefined,
 ): number | null {
-  const fromResult =
-    result.runtime_seconds ??
-    result.elapsed_seconds ??
-    null;
+  const fromResult = result.runtime_seconds ?? result.elapsed_seconds ?? null;
   if (typeof fromResult === "number" && Number.isFinite(fromResult)) {
     return fromResult;
   }
@@ -105,6 +98,29 @@ function prettyEvidenceRelation(relation: string): string {
   if (r === "born_in" || r === "was_born_in") return "was born in";
   if (r === "located_in" || r === "is_located_in") return "is located in";
   return r.replace(/_/g, " ");
+}
+
+function prettyProvider(providerRaw: string | null | undefined): string | null {
+  if (!providerRaw) return null;
+  const lower = providerRaw.toLowerCase();
+  if (lower.includes("ollama")) return "Ollama";
+  if (lower.includes("mock")) return "Mock";
+  return providerRaw;
+}
+
+function pluralize(count: number, singular: string, plural = `${singular}S`): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function DetailRow({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="kgc-check-detail-row">
+      <div className="kgc-check-detail-line">
+        <span className="kgc-check-detail-key">{label}</span>
+        <span className="kgc-check-detail-value">{value}</span>
+      </div>
+    </div>
+  );
 }
 
 export default function DecomposedKgcBacktrackingResultView({
@@ -136,19 +152,15 @@ export default function DecomposedKgcBacktrackingResultView({
   const elapsed = elapsedFromResult(result, elapsedSeconds);
 
   const usedModel = result.trace?.model ?? null;
-  const providerRaw = result.trace?.provider_class ?? null;
-  const usedProvider = providerRaw
-    ? providerRaw.toLowerCase().includes("ollama")
-      ? "Ollama"
-      : providerRaw
-    : null;
+  const usedProvider = prettyProvider(result.trace?.provider_class);
 
   const predicted = benchmarkScore?.predicted_answer ?? result.combined_answer;
   const stopSummary =
-    benchmarkScore?.final_stop_reason ?? stopReasonsSummary(result);
+    benchmarkScore?.final_stop_reason ?? aggregateStopReason(result);
 
   const exactMatch = benchmarkScore?.exact_match ?? null;
   const expectedAnswer = benchmarkScore?.expected_answer ?? null;
+  const containsExpected = benchmarkScore?.contains_expected_answer ?? null;
 
   const pipelineResolved = benchmarkScore?.resolved_by_pipeline
     ? true
@@ -156,27 +168,42 @@ export default function DecomposedKgcBacktrackingResultView({
       ? false
       : pipelineStatus(result) === "Resolved";
 
-  const pathComplete =
-    typeof lastSub?.evidence_path_complete === "boolean"
-      ? lastSub.evidence_path_complete
-      : Boolean(lastSub?.evidence_path?.complete);
+  const subQuestionCount = result.sub_questions.length;
+  const showSubQuestions = subQuestionCount > 1;
 
-  const evidenceEdges = lastSub?.evidence_path?.evidence_path ?? [];
+  // Single-question runs use that path as the run evidence path.
+  // Multi-question runs keep aggregate summary separate from per-sub paths.
+  const pathSub = showSubQuestions ? null : lastSub;
+  const pathComplete =
+    pathSub == null
+      ? null
+      : typeof pathSub.evidence_path_complete === "boolean"
+        ? pathSub.evidence_path_complete
+        : Boolean(pathSub.evidence_path?.complete);
+
+  const evidenceEdges = pathSub?.evidence_path?.evidence_path ?? [];
   const terminalEdge = evidenceEdges.at(-1) ?? null;
 
   const hops =
-    typeof lastSub?.evidence_path_length === "number"
-      ? lastSub.evidence_path_length
-      : typeof lastSub?.evidence_path?.path_length === "number"
-        ? lastSub.evidence_path?.path_length
-        : evidenceEdges.length;
+    pathSub == null
+      ? null
+      : typeof pathSub.evidence_path_length === "number"
+        ? pathSub.evidence_path_length
+        : typeof pathSub.evidence_path?.path_length === "number"
+          ? pathSub.evidence_path.path_length
+          : evidenceEdges.length;
 
   const revisions = result.metrics?.total_revisions ?? 0;
-
   const configuredCtx =
     typeof result.trace?.configured_num_ctx === "number"
       ? result.trace.configured_num_ctx
       : null;
+
+  const factCount = result.base_kgc_facts.length;
+  const finalSupported = result.metrics?.final_supported ?? 0;
+  const finalContradicted = result.metrics?.final_contradicted ?? 0;
+  const finalNoEvidence = result.metrics?.final_no_evidence ?? 0;
+  const finalClaimCount = finalSupported + finalContradicted + finalNoEvidence;
 
   const evidenceLines: string[] =
     evidenceEdges.length > 0
@@ -188,31 +215,33 @@ export default function DecomposedKgcBacktrackingResultView({
         )
       : [];
 
-  const terminalSupportedClaim = (() => {
+  const terminalClaim = (() => {
     if (!terminalEdge) return null;
-    const lastIter = lastSub?.iteration_history?.at(-1);
+    const lastIter = pathSub?.iteration_history?.at(-1);
     const evaluated = lastIter?.evaluated_claims ?? [];
     const match = evaluated.find((c) => {
       const triple = c.triple;
       return (
         triple.subject === terminalEdge.subject &&
         triple.relation === terminalEdge.relation &&
-        triple.object === terminalEdge.object &&
-        c.label.toUpperCase() === "SUPPORTED"
+        triple.object === terminalEdge.object
       );
     });
-    return match
-      ? `${terminalEdge.subject} — ${prettyEvidenceRelation(
-          terminalEdge.relation,
-        )} — ${terminalEdge.object}`
-      : null;
+    return {
+      text: `${terminalEdge.subject} — ${prettyEvidenceRelation(
+        terminalEdge.relation,
+      )} → ${terminalEdge.object}`,
+      label: (match?.label ?? "n/a").toUpperCase(),
+    };
   })();
 
-  const subQuestionCount = result.sub_questions.length;
-  const showSubQuestions = subQuestionCount > 1;
-  const executionId = result.trace?.execution_id ?? null;
-  const benchmarkId = benchmarkScore?.benchmark_id ?? result.trace?.benchmark_id ?? null;
-  const questionId = benchmarkScore?.question_id ?? result.trace?.question_id ?? null;
+  const executionId =
+    result.execution_id ?? result.trace?.execution_id ?? null;
+  const benchmarkId =
+    benchmarkScore?.benchmark_id ?? result.trace?.benchmark_id ?? null;
+  const questionId =
+    benchmarkScore?.question_id ?? result.trace?.question_id ?? null;
+  const designedDepth = benchmarkScore?.hop_count ?? null;
 
   const workingAdditions = result.working_kgc_additions ?? [];
   const directAdds = workingAdditions.filter(
@@ -222,90 +251,164 @@ export default function DecomposedKgcBacktrackingResultView({
     a.provenance.toLowerCase().includes("derived"),
   ).length;
 
-  async function copyDebugPath(text: string) {
+  async function copyText(text: string) {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      // no-op: clipboard may be blocked in some browsers
+      // clipboard may be blocked
     }
   }
 
+  const inputBits = [
+    usedModel,
+    usedProvider,
+    configuredCtx != null ? `${configuredCtx.toLocaleString()} context` : null,
+    `${pluralize(factCount, "trusted FACT", "trusted FACTS")}`,
+  ].filter(Boolean);
+
   return (
     <section className="results-stack simple-results">
+      <div className="simple-steps">
+        <h3>Experiment</h3>
+        {(questionId || designedDepth != null) && (
+          <p style={{ margin: 0 }}>
+            {[
+              questionId,
+              designedDepth != null ? `designed depth ${designedDepth}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        )}
+        <p style={{ margin: "0.35rem 0 0" }}>{result.original_question}</p>
+        {inputBits.length > 0 ? (
+          <p style={{ margin: "0.35rem 0 0", color: "var(--muted)", fontSize: "0.92rem" }}>
+            {inputBits.join(" · ")}
+          </p>
+        ) : null}
+      </div>
+
       <div className="simple-final-answer">
-        <h2>Answer</h2>
+        <h2>Output</h2>
+        <p className="kgc-empty-note" style={{ marginBottom: "0.25rem" }}>
+          Answer
+        </p>
         <p className="simple-final-answer-text">{predicted}</p>
 
+        {benchmarkScore && expectedAnswer ? (
+          <p className="simple-meta-line">
+            <span>Expected for scoring: {expectedAnswer}</span>
+          </p>
+        ) : null}
+
         <p className="simple-meta-line">
-          <span>{pipelineResolved ? "Resolved" : "Unresolved"}</span>
           {exactMatch != null ? (
             <span>Exact match: {exactMatch ? "Yes" : "No"}</span>
           ) : null}
-          {hops != null ? (
-            <span>
-              {pathComplete ? "Complete" : "Incomplete"} {hops}-hop path
-            </span>
-          ) : null}
-          <span>{revisions} revision(s)</span>
+          <span>Pipeline: {pipelineResolved ? "Resolved" : "Unresolved"}</span>
           {elapsed != null ? <span>Runtime: {formatSeconds(elapsed)}</span> : null}
+          <span>Revisions: {revisions}</span>
         </p>
 
-        {benchmarkScore && expectedAnswer && (!pipelineResolved || exactMatch === false) ? (
+        {benchmarkScore && (!pipelineResolved || exactMatch === false) ? (
           <p className="simple-meta-line">
-            <span>Expected: {expectedAnswer}</span>
-            <span>Failure: {failureCategory(benchmarkScore, result) ?? "unknown"}</span>
+            <span>
+              Failure: {failureCategory(benchmarkScore, result) ?? "unknown"}
+            </span>
+            {containsExpected != null ? (
+              <span>
+                Contains expected: {containsExpected ? "Yes" : "No"}
+              </span>
+            ) : null}
+            <span>Stop: {stopSummary}</span>
           </p>
         ) : null}
       </div>
 
       <div className="simple-steps">
-        <h3>Evidence path</h3>
-        {evidenceLines.length > 0 ? (
-          <ul className="kgc-evidence-list">
-            {evidenceLines.map((line, idx) => (
-              <li key={idx} className="kgc-evidence-item">
-                {line}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="kgc-empty-note">No evidence path available.</p>
-        )}
-        <p className="kgc-evidence-text">
-          {hops} hops · {pathComplete ? "Complete" : "Incomplete"}
+        <h3>Verification{showSubQuestions ? " (aggregate)" : ""}</h3>
+        <p className="kgc-evidence-text" style={{ marginTop: 0 }}>
+          Trusted context → {pluralize(factCount, "FACT")}
         </p>
-        {terminalSupportedClaim ? (
-          <p className="kgc-evidence-text">Supported claim: {terminalSupportedClaim}</p>
-        ) : null}
-      </div>
+        <p className="kgc-evidence-text">
+          Model answer → {pluralize(finalClaimCount, "CLAIM")}
+        </p>
+        <p className="kgc-evidence-text">
+          CLAIM evaluation → {finalSupported} supported · {finalContradicted}{" "}
+          contradicted · {finalNoEvidence} no evidence
+        </p>
+        {!showSubQuestions ? (
+          <p className="kgc-evidence-text">
+            Trusted evidence path → {hops ?? 0} hops ·{" "}
+            {pathComplete ? "Complete" : "Incomplete"}
+          </p>
+        ) : (
+          <p className="kgc-evidence-text">
+            Aggregate of {subQuestionCount} sub-questions — see cards below for
+            per-question paths
+          </p>
+        )}
+        <p className="controls-hint" style={{ marginTop: "0.45rem" }}>
+          FACTS come from trusted context. CLAIMS come from the model answer and
+          remain CLAIMS after evaluation.
+        </p>
 
-      <div className="simple-steps">
-        <h3>Question</h3>
-        <p style={{ margin: 0 }}>{result.original_question}</p>
+        {!showSubQuestions && terminalClaim ? (
+          <p className="kgc-evidence-text" style={{ marginTop: "0.65rem" }}>
+            {terminalClaim.text}
+            <br />
+            {terminalClaim.label}
+          </p>
+        ) : null}
+
+        {!showSubQuestions ? (
+          evidenceLines.length > 0 ? (
+            <ul className="kgc-evidence-list" style={{ marginTop: "0.55rem" }}>
+              {evidenceLines.map((line, idx) => (
+                <li key={idx} className="kgc-evidence-item">
+                  {line}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="kgc-empty-note">No evidence path available.</p>
+          )
+        ) : null}
       </div>
 
       {showSubQuestions ? (
         <div className="simple-steps">
           <h3>Sub-questions</h3>
           {result.sub_question_results.map((row) => {
-            const rowTerminal = row.evidence_path?.evidence_path?.at(-1) ?? null;
+            const rowEdges = row.evidence_path?.evidence_path ?? [];
+            const rowTerminal = rowEdges.at(-1) ?? null;
+            const rowLen =
+              typeof row.evidence_path_length === "number"
+                ? row.evidence_path_length
+                : row.evidence_path?.path_length ?? rowEdges.length;
+            const rowComplete =
+              typeof row.evidence_path_complete === "boolean"
+                ? row.evidence_path_complete
+                : Boolean(row.evidence_path?.complete);
             return (
-              <div key={row.sub_question_id} className="card" style={{ marginBottom: "0.85rem" }}>
+              <div
+                key={row.sub_question_id}
+                className="card"
+                style={{ marginBottom: "0.85rem" }}
+              >
                 <p style={{ margin: 0 }}>
                   <strong>Q{row.sub_question_id}:</strong> {row.question}
                 </p>
-                <p style={{ margin: "0.3rem 0 0" }}>
-                  Answer: {row.final_answer}
-                </p>
+                <p style={{ margin: "0.3rem 0 0" }}>Answer: {row.final_answer}</p>
                 <p className="simple-meta-line" style={{ marginTop: "0.35rem" }}>
                   <span>Status: {row.stop_reason}</span>
-                  {typeof row.evidence_path_length === "number" ? (
-                    <span>Path length: {row.evidence_path_length}</span>
-                  ) : null}
+                  <span>
+                    Path: {rowLen} · {rowComplete ? "Complete" : "Incomplete"}
+                  </span>
                   {rowTerminal ? (
                     <span>
                       {rowTerminal.subject} —{" "}
-                      {prettyEvidenceRelation(rowTerminal.relation)} —{" "}
+                      {prettyEvidenceRelation(rowTerminal.relation)} →{" "}
                       {rowTerminal.object}
                     </span>
                   ) : null}
@@ -317,21 +420,25 @@ export default function DecomposedKgcBacktrackingResultView({
       ) : null}
 
       <div className="simple-steps">
-        <h3>Run details</h3>
+        <h3>Traceability</h3>
         <p className="simple-meta-line" style={{ marginTop: 0 }}>
           <span>{usedModel ?? "n/a"}</span>
           <span>{usedProvider ?? "n/a"}</span>
-          {configuredCtx != null ? <span>{configuredCtx.toLocaleString()} context</span> : null}
-          {elapsed != null ? <span>{formatSeconds(elapsed)}</span> : null}
+          {configuredCtx != null ? (
+            <span>{configuredCtx.toLocaleString()} context</span>
+          ) : null}
+          {executionId ? <span>Execution: {executionId}</span> : null}
         </p>
         {result.debug_log_path ? (
           <p className="simple-meta-line">
             <span>Debug log</span>
-            <span style={{ fontFamily: "ui-monospace, monospace" }}>{result.debug_log_path}</span>
+            <span style={{ fontFamily: "ui-monospace, monospace" }}>
+              {result.debug_log_path}
+            </span>
             <button
               type="button"
               className="btn-link"
-              onClick={() => copyDebugPath(result.debug_log_path ?? "")}
+              onClick={() => copyText(result.debug_log_path ?? "")}
             >
               Copy
             </button>
@@ -343,124 +450,48 @@ export default function DecomposedKgcBacktrackingResultView({
         <summary>Technical details</summary>
         <div className="simple-research-details">
           <div className="kgc-check-detail-list">
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Question ID</span>
-                <span className="kgc-check-detail-value">
-                  {questionId ?? "n/a"}
-                </span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Benchmark</span>
-                <span className="kgc-check-detail-value">
-                  {benchmarkId ?? "n/a"}
-                </span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Designed depth</span>
-                <span className="kgc-check-detail-value">
-                  {benchmarkScore?.hop_count ?? "n/a"}
-                </span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Execution ID</span>
-                <span className="kgc-check-detail-value">
-                  {executionId ?? "n/a"}
-                </span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Model</span>
-                <span className="kgc-check-detail-value">
-                  {usedModel ?? "n/a"}
-                </span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Provider</span>
-                <span className="kgc-check-detail-value">
-                  {usedProvider ?? "n/a"}
-                </span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Configured context</span>
-                <span className="kgc-check-detail-value">
-                  {configuredCtx ?? "n/a"}
-                </span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Iteration count</span>
-                <span className="kgc-check-detail-value">
-                  {result.metrics?.total_iterations ?? "n/a"}
-                </span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Revision count</span>
-                <span className="kgc-check-detail-value">{revisions}</span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">FACT count</span>
-                <span className="kgc-check-detail-value">
-                  {result.base_kgc_facts.length}
-                </span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">CLAIM count</span>
-                <span className="kgc-check-detail-value">
-                  {result.metrics?.total_claims_evaluated ?? "n/a"}
-                </span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Direct FACT additions</span>
-                <span className="kgc-check-detail-value">{directAdds}</span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Derived FACT additions</span>
-                <span className="kgc-check-detail-value">{derivedAdds}</span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Structured-triple anomalies</span>
-                <span className="kgc-check-detail-value">{anomalies.length}</span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Neo4j evaluation source</span>
-                <span className="kgc-check-detail-value">
-                  {result.trace?.kgc_evaluation_source ?? "n/a"}
-                </span>
-              </div>
-            </div>
-            <div className="kgc-check-detail-row">
-              <div className="kgc-check-detail-line">
-                <span className="kgc-check-detail-key">Stop reason</span>
-                <span className="kgc-check-detail-value">{stopSummary}</span>
-              </div>
-            </div>
+            <DetailRow label="Question ID" value={questionId ?? "n/a"} />
+            <DetailRow label="Benchmark" value={benchmarkId ?? "n/a"} />
+            <DetailRow
+              label="Designed depth"
+              value={designedDepth ?? "n/a"}
+            />
+            <DetailRow label="Execution ID" value={executionId ?? "n/a"} />
+            <DetailRow label="Model" value={usedModel ?? "n/a"} />
+            <DetailRow label="Provider" value={usedProvider ?? "n/a"} />
+            <DetailRow
+              label="Configured context"
+              value={configuredCtx ?? "n/a"}
+            />
+            <DetailRow
+              label="Total iterations"
+              value={result.metrics?.total_iterations ?? "n/a"}
+            />
+            <DetailRow label="Revision count" value={revisions} />
+            <DetailRow label="Base FACT count" value={factCount} />
+            <DetailRow label="Final CLAIM count" value={finalClaimCount} />
+            <DetailRow label="Direct FACT additions" value={directAdds} />
+            <DetailRow label="Derived FACT additions" value={derivedAdds} />
+            <DetailRow label="Anomaly count" value={anomalies.length} />
+            <DetailRow
+              label="Neo4j evaluation source"
+              value={result.trace?.kgc_evaluation_source ?? "n/a"}
+            />
+            <DetailRow label="Aggregate stop reason" value={stopSummary} />
+            <DetailRow
+              label="Contains expected"
+              value={
+                containsExpected == null
+                  ? "n/a"
+                  : containsExpected
+                    ? "Yes"
+                    : "No"
+              }
+            />
+            <DetailRow
+              label="Expected answer source"
+              value="benchmark scoring only"
+            />
           </div>
         </div>
       </details>
@@ -480,9 +511,11 @@ export default function DecomposedKgcBacktrackingResultView({
               className="btn-link"
               style={{ marginTop: "0.3rem" }}
               onClick={() =>
-                copyDebugPath(
+                copyText(
                   JSON.stringify(
-                    benchmarkScore ? { result, benchmark: benchmarkScore } : result,
+                    benchmarkScore
+                      ? { result, benchmark: benchmarkScore }
+                      : result,
                     null,
                     2,
                   ),
@@ -496,7 +529,9 @@ export default function DecomposedKgcBacktrackingResultView({
               style={{ marginTop: "0.5rem", overflowY: "auto" }}
             >
               {JSON.stringify(
-                benchmarkScore ? { result, benchmark: benchmarkScore } : result,
+                benchmarkScore
+                  ? { result, benchmark: benchmarkScore }
+                  : result,
                 null,
                 2,
               )}

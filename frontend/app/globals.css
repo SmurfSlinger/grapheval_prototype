@@ -2812,6 +2812,38 @@ h4 {
   gap: 0.65rem;
 }
 
+@media (max-width: 720px) {
+  main {
+    padding: 1rem 0.85rem 1.5rem;
+    overflow-x: clip;
+  }
+
+  .simple-run-row,
+  .simple-benchmark-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .simple-results,
+  .results-stack,
+  .simple-controls {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .simple-meta-line {
+    gap: 0.45rem 0.75rem;
+  }
+
+  .simple-final-answer-text,
+  .kgc-evidence-item,
+  .kgc-evidence-text,
+  .kgc-check-detail-value {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
 .simple-question-preview {
   margin: 0;
   padding: 0.75rem 0.85rem;
