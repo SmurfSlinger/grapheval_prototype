@@ -8,6 +8,7 @@ from src.llm.base import LLMProvider
 from src.models import Example, PipelineResult, VerificationLabel
 from src.pipeline.answer_generator import AnswerGenerator
 from src.pipeline.answer_reviser import AnswerReviser
+from src.pipeline.execution_context import ExecutionScope
 from src.pipeline.feedback_builder import FeedbackBuilder
 from src.pipeline.self_corrector import SelfCorrector
 from src.pipeline.triple_extractor import TripleExtractor
@@ -24,7 +25,13 @@ class PipelineRunner:
         self.feedback_builder = FeedbackBuilder()
         self.answer_reviser = AnswerReviser(provider)
 
-    def run_example(self, example: Example) -> PipelineResult:
+    def run_example(
+        self,
+        example: Example,
+        *,
+        execution_id: str | None = None,
+    ) -> PipelineResult:
+        scope = ExecutionScope.begin(example.id, execution_id=execution_id)
         initial_answer = example.initial_answer or self.answer_generator.generate(
             example.question, example.context
         )
@@ -38,7 +45,7 @@ class PipelineRunner:
             extracted_triples, example.context
         )
         store_verified_triples_if_enabled(
-            example.id, "initial", verification_results
+            scope, "initial", verification_results
         )
         feedback = self.feedback_builder.build(verification_results)
 
@@ -57,7 +64,7 @@ class PipelineRunner:
                 graph_revised_triples, example.context
             )
             store_verified_triples_if_enabled(
-                example.id, "graph_revised", graph_revised_verification_results
+                scope, "graph_revised", graph_revised_verification_results
             )
 
         metrics = build_metrics(
@@ -68,6 +75,7 @@ class PipelineRunner:
 
         return PipelineResult(
             example_id=example.id,
+            execution_id=scope.execution_id,
             question=example.question,
             context=example.context,
             initial_answer=initial_answer,

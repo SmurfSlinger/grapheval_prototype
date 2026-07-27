@@ -132,8 +132,9 @@ def test_run_benchmark_question_uses_context_and_excludes_scoring_from_example(
         def __init__(self, *args, **kwargs):
             captured["runner_kwargs"] = kwargs
 
-        def run_example(self, example):
+        def run_example(self, example, **kwargs):
             captured["example"] = example
+            captured["run_kwargs"] = kwargs
             return _fake_result(example)
 
     monkeypatch.setattr(server, "_make_decomposed_backtracking_runner", FakeRunner)
@@ -184,7 +185,7 @@ def test_run_benchmark_question_does_not_send_expected_fields_to_provider(
         def __init__(self, *args, **kwargs):
             captured["runner_kwargs"] = kwargs
 
-        def run_example(self, example):
+        def run_example(self, example, **kwargs):
             captured["example"] = example
             captured["example_keys"] = sorted(example.__dict__.keys())
             return _fake_result(example)
@@ -234,7 +235,7 @@ def test_existing_custom_and_builtin_decomposed_endpoints_still_work(monkeypatch
         def __init__(self, *args, **kwargs):
             pass
 
-        def run_example(self, example):
+        def run_example(self, example, **kwargs):
             seen.append(example.id)
             return _fake_result(example)
 

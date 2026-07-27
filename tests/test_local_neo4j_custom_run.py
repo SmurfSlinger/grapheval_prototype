@@ -77,43 +77,52 @@ def test_custom_context_uses_persisted_readback_and_keeps_claims_separate(
     stored_claims = []
     stored_working = []
     clear_calls = 0
+    seen_execution_ids: set[str] = set()
 
-    def fake_clear(*, required: bool = False) -> bool:
+    def fake_clear(execution_id, *, required: bool = False) -> bool:
         nonlocal clear_calls
         assert required is True
+        assert execution_id
+        seen_execution_ids.add(execution_id)
         clear_calls += 1
         return True
 
-    def fake_store_base(example_id, facts, *, required=False):
-        assert example_id == "synthetic_custom_smoke"
+    def fake_store_base(scope, facts, *, required=False):
+        assert scope.example_id == "synthetic_custom_smoke"
+        assert scope.execution_id
+        assert scope.execution_id != scope.example_id
+        seen_execution_ids.add(scope.execution_id)
         assert required is True
         stored_base.extend(facts)
         return True
 
-    def fake_readback(example_id, *, required=False):
-        assert example_id == "synthetic_custom_smoke"
+    def fake_readback(execution_id, *, required=False):
+        assert execution_id in seen_execution_ids
         assert required is True
         return list(stored_base)
 
     def fake_store_claims(
-        example_id,
+        scope,
         iteration,
         evaluations,
         answer_stage=None,
+        sub_question_id=None,
         *,
         required=False,
     ):
-        assert example_id == "synthetic_custom_smoke"
+        assert scope.example_id == "synthetic_custom_smoke"
+        assert scope.execution_id in seen_execution_ids
         assert required is True
         stored_claims.extend(evaluations)
         return True
 
-    monkeypatch.setattr(runner_module, "clear_neo4j_if_enabled", fake_clear)
+    monkeypatch.setattr(runner_module, "clear_execution_if_enabled", fake_clear)
     monkeypatch.setattr(runner_module, "store_kgc_facts_if_enabled", fake_store_base)
     monkeypatch.setattr(runner_module, "read_kgc_facts_if_enabled", fake_readback)
     monkeypatch.setattr(runner_module, "store_kgc_claims_if_enabled", fake_store_claims)
 
-    def fake_store_working(example_id, additions, *, required=False):
+    def fake_store_working(scope, additions, *, required=False):
+        assert scope.execution_id in seen_execution_ids
         assert required is True
         stored_working.extend(additions)
         return True
@@ -147,3 +156,6 @@ def test_custom_context_uses_persisted_readback_and_keeps_claims_separate(
     assert stored_claims
     assert stored_working == []
     assert len(stored_base) == 4
+    assert result.execution_id
+    assert result.execution_id in seen_execution_ids
+    assert result.execution_id != result.example_id

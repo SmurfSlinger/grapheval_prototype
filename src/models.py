@@ -158,6 +158,7 @@ class BacktrackingResult:
     kgc_extraction_notice: Optional[str] = None
     stop_reason: Optional[str] = None
     iteration_history: list[dict[str, Any]] = field(default_factory=list)
+    execution_id: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         def _triple_dict(t: Triple) -> dict[str, Any]:
@@ -191,6 +192,7 @@ class BacktrackingResult:
 
         return {
             "example_id": self.example_id,
+            "execution_id": self.execution_id,
             "question": self.question,
             "context": self.context,
             "answer_0": self.answer_0,
@@ -490,6 +492,9 @@ class DecomposedBacktrackingTrace:
     provider_class: str | None = None
     model: str | None = None
     example_id: str | None = None
+    execution_id: str | None = None
+    benchmark_id: str | None = None
+    question_id: str | None = None
     context_extraction_format: str | None = None
     context_extraction_trace: dict[str, Any] | None = None
     stage_providers: dict[str, str] = field(default_factory=dict)
@@ -563,6 +568,7 @@ class DecomposedBacktrackingResult:
     example_id: str
     original_question: str
     context: str
+    execution_id: str | None = None
     sub_questions: list[SubQuestion] = field(default_factory=list)
     sub_question_results: list[SubQuestionResult] = field(default_factory=list)
     combined_answer: str = ""
@@ -580,6 +586,7 @@ class DecomposedBacktrackingResult:
     def to_dict(self) -> dict[str, Any]:
         return {
             "example_id": self.example_id,
+            "execution_id": self.execution_id,
             "original_question": self.original_question,
             "context": self.context,
             "sub_questions": [asdict(sq) for sq in self.sub_questions],
@@ -628,6 +635,7 @@ class PipelineResult:
     question: str
     context: str
     initial_answer: str
+    execution_id: str | None = None
     extracted_triples: list[Triple] = field(default_factory=list)
     verification_results: list[VerificationResult] = field(default_factory=list)
     feedback: list[FeedbackItem] = field(default_factory=list)
@@ -644,6 +652,7 @@ class PipelineResult:
         graph_answer = self.graph_feedback_revised_answer or self.revised_answer
         return {
             "example_id": self.example_id,
+            "execution_id": self.execution_id,
             "question": self.question,
             "context": self.context,
             "initial_answer": self.initial_answer,

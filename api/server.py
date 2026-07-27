@@ -32,7 +32,11 @@ from src.pipeline.backtracking_runner import BacktrackingRunner
 from src.pipeline.decomposed_backtracking_runner import DecomposedBacktrackingRunner
 from src.pipeline.runner import PipelineRunner
 from src.pipeline.structured_output import KgcExtractionError
-from src.storage.neo4j_store import neo4j_status, query_claims_if_enabled
+from src.storage.neo4j_store import (
+    neo4j_status,
+    query_claims_if_enabled,
+    query_execution_summary_if_enabled,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -133,13 +137,25 @@ class StoredClaim(BaseModel):
     label: str
     reason: str
     evidence: str
-    example_id: str
-    answer_stage: str
+    example_id: str | None = None
+    answer_stage: str | None = None
+    execution_id: str | None = None
+    benchmark_id: str | None = None
+    question_id: str | None = None
+    sub_question_id: int | None = None
+    iteration: int | None = None
+    source: str | None = None
 
 
 class GraphClaimsResponse(BaseModel):
     enabled: bool
     claims: list[StoredClaim]
+    error: str | None = None
+
+
+class ExecutionSummaryResponse(BaseModel):
+    enabled: bool
+    summary: dict[str, Any] | None = None
     error: str | None = None
 
 
@@ -298,11 +314,13 @@ def dependencies() -> dict[str, Any]:
 
 def _graph_claims_response(
     *,
+    execution_id: str | None = None,
     example_id: str | None = None,
-    limit: int = 50,
+    limit: int = 200,
     bad_only: bool = False,
 ) -> GraphClaimsResponse:
     enabled, claims, error = query_claims_if_enabled(
+        execution_id=execution_id,
         example_id=example_id,
         limit=limit,
         bad_only=bad_only,
@@ -316,15 +334,33 @@ def _graph_claims_response(
 
 @app.get("/graph/claims", response_model=GraphClaimsResponse)
 def get_graph_claims(
-    limit: int = 50,
+    limit: int = 200,
+    execution_id: str | None = None,
     example_id: str | None = None,
 ) -> GraphClaimsResponse:
-    return _graph_claims_response(example_id=example_id, limit=limit)
+    return _graph_claims_response(
+        execution_id=execution_id,
+        example_id=example_id,
+        limit=limit,
+    )
 
 
 @app.get("/graph/bad-claims", response_model=GraphClaimsResponse)
-def get_graph_bad_claims(limit: int = 50) -> GraphClaimsResponse:
-    return _graph_claims_response(limit=limit, bad_only=True)
+def get_graph_bad_claims(
+    execution_id: str,
+    limit: int = 200,
+) -> GraphClaimsResponse:
+    return _graph_claims_response(
+        execution_id=execution_id,
+        limit=limit,
+        bad_only=True,
+    )
+
+
+@app.get("/graph/execution-summary", response_model=ExecutionSummaryResponse)
+def get_graph_execution_summary(execution_id: str) -> ExecutionSummaryResponse:
+    enabled, summary, error = query_execution_summary_if_enabled(execution_id)
+    return ExecutionSummaryResponse(enabled=enabled, summary=summary, error=error)
 
 
 @app.get("/examples", response_model=list[ExampleSummary])
@@ -459,7 +495,11 @@ def run_benchmark_question(
         require_neo4j=True,
     )
     try:
-        result = runner.run_example(example)
+        result = runner.run_example(
+            example,
+            benchmark_id=request.benchmark_id,
+            question_id=request.question_id,
+        )
     except KgcExtractionError as exc:
         _log_kgc_extraction_failure(example_id=example.id, exc=exc)
         raise HTTPException(status_code=422, detail=exc.to_dict()) from exc
@@ -473,6 +513,7 @@ def run_benchmark_question(
     result_payload = result.to_dict()
     return {
         "result": result_payload,
+        "execution_id": result_payload.get("execution_id"),
         "benchmark": score_result(
             benchmark_id=request.benchmark_id,
             question=question,

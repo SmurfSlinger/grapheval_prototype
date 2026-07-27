@@ -56,10 +56,12 @@ def begin_debug_run(
     *,
     force: bool = False,
     attempt: int | None = None,
+    execution_id: str | None = None,
 ) -> str | None:
     """Start a unique debug log for a run. Returns relative path when active."""
     if force:
         _thread_state.force_enabled = True
+    _thread_state.execution_id = execution_id or ""
     if not debug_logs_enabled():
         _thread_state.run_id = None
         _thread_state.path = None
@@ -83,11 +85,14 @@ def set_debug_context(
     *,
     question_id: str | None = None,
     sub_question_id: str | int | None = None,
+    execution_id: str | None = None,
 ) -> None:
     if question_id is not None:
         _thread_state.question_id = str(question_id)
     if sub_question_id is not None:
         _thread_state.sub_question_id = str(sub_question_id)
+    if execution_id is not None:
+        _thread_state.execution_id = str(execution_id)
 
 
 def end_debug_run() -> None:
@@ -100,6 +105,7 @@ def end_debug_run() -> None:
     _thread_state.sub_question_id = ""
     _thread_state.force_enabled = False
     _thread_state.attempt = None
+    _thread_state.execution_id = ""
 
 
 def current_debug_log_path() -> str | None:
@@ -127,6 +133,7 @@ def log_debug_event(
     record = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "run_id": run_id,
+        "execution_id": getattr(_thread_state, "execution_id", "") or "",
         "attempt": getattr(_thread_state, "attempt", None),
         "debug_log_path": getattr(_thread_state, "relative_path", None),
         "question_id": question_id

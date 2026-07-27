@@ -41,5 +41,7 @@ scripts/.pids/
 HOW_IT_WORKS.md
 .runtime/*.lock
 .runtime/debug/
+.runtime/neo4j-migration/
+.runtime/benchmarks/
 
 !results/verify_master_live_*.md

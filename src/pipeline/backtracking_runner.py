@@ -20,6 +20,7 @@ from src.pipeline.backtracking_feedback_builder import (
 )
 from src.pipeline.backtracking_reviser import BacktrackingReviser
 from src.pipeline.context_triple_extractor import ContextTripleExtractor
+from src.pipeline.execution_context import ExecutionScope
 from src.pipeline.graph_comparator import GraphComparator
 from src.pipeline.kg_answer_generator import KgAnswerGenerator
 from src.pipeline.kgc_serializer import serialize_kgc_facts
@@ -132,7 +133,9 @@ class BacktrackingRunner:
         example: Example,
         *,
         answer_0_mode: Answer0Mode = "preset",
+        execution_id: str | None = None,
     ) -> BacktrackingResult:
+        scope = ExecutionScope.begin(example.id, execution_id=execution_id)
         answer_0, answer_0_source, effective_mode, answer_0_warning = _resolve_answer_0(
             example,
             answer_0_mode,
@@ -141,7 +144,7 @@ class BacktrackingRunner:
 
         kgc_facts = self._context_extractor.extract(example.context)
         serialized_kgc = serialize_kgc_facts(kgc_facts)
-        store_kgc_facts_if_enabled(example.id, kgc_facts)
+        store_kgc_facts_if_enabled(scope, kgc_facts)
 
         kgc_reference_answer = self._kg_answer_generator.generate(
             example.question,
@@ -178,7 +181,7 @@ class BacktrackingRunner:
             )
 
             store_kgc_claims_if_enabled(
-                example.id,
+                scope,
                 iteration=n,
                 evaluations=evaluated_claims,
                 answer_stage=f"answer_{n}",
@@ -249,6 +252,7 @@ class BacktrackingRunner:
 
         return BacktrackingResult(
             example_id=example.id,
+            execution_id=scope.execution_id,
             question=example.question,
             context=example.context,
             answer_0=answer_0,

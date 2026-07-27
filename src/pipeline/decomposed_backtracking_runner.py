@@ -24,6 +24,7 @@ from src.pipeline.debug_log import (
     log_debug_event,
     set_debug_context,
 )
+from src.pipeline.execution_context import ExecutionScope
 from src.pipeline.kgc_iteration import KgcIterationEngine, count_cumulative_evaluations
 from src.pipeline.kgc_serializer import serialize_kgc_facts
 from src.pipeline.provider_info import provider_label, provider_model, provider_trace
@@ -39,7 +40,7 @@ from src.pipeline.sub_answer_projector import SubAnswerProjector
 from src.pipeline.working_kgc import WorkingKgcState
 from src.config import NEO4J_ENABLED
 from src.storage.neo4j_store import (
-    clear_neo4j_if_enabled,
+    clear_execution_if_enabled,
     read_kgc_facts_if_enabled,
     store_kgc_claims_if_enabled,
     store_kgc_facts_if_enabled,
@@ -106,16 +107,33 @@ class DecomposedBacktrackingRunner:
         example: Example,
         *,
         attempt: int | None = None,
+        execution_id: str | None = None,
+        benchmark_id: str | None = None,
+        question_id: str | None = None,
     ) -> DecomposedBacktrackingResult:
+        # One immutable execution identity per attempt, generated at the boundary.
+        scope = ExecutionScope.begin(
+            example.id,
+            benchmark_id=benchmark_id,
+            question_id=question_id,
+            execution_id=execution_id,
+        )
         begin_anomaly_collection()
-        debug_log_path = begin_debug_run(example.id, attempt=attempt)
+        debug_log_path = begin_debug_run(
+            example.id,
+            attempt=attempt,
+            execution_id=scope.execution_id,
+        )
         anomalies: list[dict] = []
-        set_debug_context(question_id=example.id)
+        set_debug_context(question_id=example.id, execution_id=scope.execution_id)
         log_debug_event(
             "request_received",
             "run_example_started",
             {
                 "example_id": example.id,
+                "execution_id": scope.execution_id,
+                "benchmark_id": scope.benchmark_id,
+                "benchmark_question_id": scope.question_id,
                 "question": example.question,
                 "context_chars": len(example.context or ""),
                 "has_initial_answer": bool(example.initial_answer),
@@ -127,6 +145,7 @@ class DecomposedBacktrackingRunner:
         try:
             return self._run_example_inner(
                 example,
+                scope=scope,
                 debug_log_path=debug_log_path,
                 anomalies=anomalies,
             )
@@ -145,11 +164,16 @@ class DecomposedBacktrackingRunner:
         self,
         example: Example,
         *,
+        scope: ExecutionScope,
         debug_log_path: str | None,
         anomalies: list[dict],
     ) -> DecomposedBacktrackingResult:
         provider_info = provider_trace(self.provider)
-        neo4j_cleared = clear_neo4j_if_enabled(
+        # Execution-scoped: a fresh execution ID has nothing to clear, and other
+        # executions' graph state is never touched. Full graph deletion is only
+        # available through the explicit development reset helper.
+        neo4j_cleared = clear_execution_if_enabled(
+            scope.execution_id,
             required=self.clear_neo4j_before_run,
         ) if self.clear_neo4j_before_run else False
         effective_mode, answer_0_warning = resolve_decomposed_answer_0_mode(
@@ -207,7 +231,7 @@ class DecomposedBacktrackingRunner:
             },
         )
         base_facts_persisted = store_kgc_facts_if_enabled(
-            example.id,
+            scope,
             base_kgc_facts,
             required=self.require_neo4j,
         )
@@ -215,6 +239,7 @@ class DecomposedBacktrackingRunner:
             "neo4j_fact_write",
             "base_facts",
             {
+                "execution_id": scope.execution_id,
                 "persisted": bool(base_facts_persisted),
                 "fact_count": len(base_kgc_facts) if base_facts_persisted else 0,
             },
@@ -222,7 +247,7 @@ class DecomposedBacktrackingRunner:
         kgc_evaluation_source = "in_memory"
         if self.neo4j_readback:
             persisted_facts = read_kgc_facts_if_enabled(
-                example.id,
+                scope.execution_id,
                 required=self.require_neo4j,
             )
             if persisted_facts is not None:
@@ -468,12 +493,13 @@ class DecomposedBacktrackingRunner:
 
             for item in history:
                 store_kgc_claims_if_enabled(
-                    example.id,
+                    scope,
                     iteration=item.iteration,
                     evaluations=item.evaluated_claims,
                     answer_stage=(
                         f"sub_question_{sub_question.id}_answer_{item.iteration}"
                     ),
+                    sub_question_id=sub_question.id,
                     required=self.require_neo4j,
                 )
 
@@ -543,7 +569,7 @@ class DecomposedBacktrackingRunner:
         )
         metrics.structured_output_retries = total_retries
         working_facts_persisted = store_working_kgc_additions_if_enabled(
-            example.id,
+            scope,
             working_state.focused_additions,
             required=self.require_neo4j,
         )
@@ -555,6 +581,9 @@ class DecomposedBacktrackingRunner:
             provider_class=provider_info["provider_class"],
             model=provider_model(self.provider),
             example_id=example.id,
+            execution_id=scope.execution_id,
+            benchmark_id=scope.benchmark_id,
+            question_id=scope.question_id,
             context_extraction_format=kgc_trace.format_used,
             context_extraction_trace=kgc_trace.to_dict(),
             stage_providers=stage_providers,
@@ -591,6 +620,7 @@ class DecomposedBacktrackingRunner:
             "run_finished",
             "ok",
             {
+                "execution_id": scope.execution_id,
                 "combined_answer": combined_answer,
                 "anomaly_count": len(anomalies),
                 "base_fact_count": len(base_kgc_facts),
@@ -600,6 +630,7 @@ class DecomposedBacktrackingRunner:
         )
         return DecomposedBacktrackingResult(
             example_id=example.id,
+            execution_id=scope.execution_id,
             original_question=example.question,
             context=example.context,
             sub_questions=sub_questions,

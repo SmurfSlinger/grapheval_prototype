@@ -2,7 +2,10 @@
 
 from src.storage.neo4j_store import (
     Neo4jStore,
+    clear_execution_if_enabled,
     query_claims_if_enabled,
+    query_execution_summary_if_enabled,
+    reset_neo4j_dev_if_enabled,
     store_kgc_claims_if_enabled,
     store_kgc_facts_if_enabled,
     store_verified_triples_if_enabled,
@@ -10,7 +13,10 @@ from src.storage.neo4j_store import (
 
 __all__ = [
     "Neo4jStore",
+    "clear_execution_if_enabled",
     "query_claims_if_enabled",
+    "query_execution_summary_if_enabled",
+    "reset_neo4j_dev_if_enabled",
     "store_kgc_claims_if_enabled",
     "store_kgc_facts_if_enabled",
     "store_verified_triples_if_enabled",

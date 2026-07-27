@@ -37,6 +37,7 @@ from src.config import DEFAULT_MODEL, NEO4J_ENABLED, OLLAMA_NUM_CTX, PROJECT_ROO
 from src.main import get_provider
 from src.models import Example, SubQuestionStopReason
 from src.pipeline.decomposed_backtracking_runner import DecomposedBacktrackingRunner
+from src.pipeline.execution_context import new_execution_id
 from src.storage.neo4j_store import query_relationship_counts_if_enabled
 
 
@@ -1094,6 +1095,7 @@ def base_result_row(
     path = question["expected_path"]
     return {
         "id": question["id"],
+        "execution_id": None,
         "hop_count": question["hop_count"],
         "question": question["question"],
         "expected_answer": expected,
@@ -1170,6 +1172,7 @@ def run_one(
     timeout_seconds: float,
     attempt_number: int = 1,
     resumed: bool = False,
+    benchmark_id: str | None = None,
 ) -> dict[str, Any]:
     started = time.monotonic()
     call_start = len(getattr(provider, "call_telemetry", []))
@@ -1181,6 +1184,10 @@ def run_one(
         attempt_number=attempt_number,
         resumed=resumed,
     )
+    # Generated here (not inside the runner) so even failed attempts record
+    # the unique execution identity in the benchmark row.
+    execution_id = new_execution_id(str(question["id"]))
+    row["execution_id"] = execution_id
     runner = DecomposedBacktrackingRunner(
         provider,
         max_iterations_per_sub_question=max_iterations,
@@ -1198,6 +1205,9 @@ def run_one(
                     context=context,
                 ),
                 attempt=attempt_number,
+                execution_id=execution_id,
+                benchmark_id=benchmark_id,
+                question_id=str(question["id"]),
             )
     except Exception as exc:
         from src.pipeline.debug_log import (
@@ -1255,7 +1265,7 @@ def run_one(
     contains = contains_expected_answer(predicted, expected)
     telemetry = call_telemetry_summary(result, call_start)
     counts = query_relationship_counts_if_enabled(
-        str(question["id"]),
+        execution_id,
         required=False,
     ) if neo4j_enabled else None
     final_stop_reason = final_sub.stop_reason.value if final_sub else None
@@ -1800,6 +1810,7 @@ def main() -> None:
                     timeout_seconds=args.timeout_per_question,
                     attempt_number=attempt_number,
                     resumed=resumed,
+                    benchmark_id=str(payload.get("test_set_id") or ""),
                 )
                 print(
                     f"{row['id']}: match={row['contains_expected_answer']} "
