@@ -47,6 +47,11 @@ except ValueError as exc:
     raise ValueError("OLLAMA_NUM_PREDICT must be a positive integer") from exc
 if OLLAMA_NUM_PREDICT is not None and OLLAMA_NUM_PREDICT <= 0:
     raise ValueError("OLLAMA_NUM_PREDICT must be a positive integer")
+_ollama_temperature = os.getenv("OLLAMA_TEMPERATURE", "").strip()
+try:
+    OLLAMA_TEMPERATURE = float(_ollama_temperature) if _ollama_temperature else None
+except ValueError as exc:
+    raise ValueError("OLLAMA_TEMPERATURE must be a number") from exc
 
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")

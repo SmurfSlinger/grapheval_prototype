@@ -49,6 +49,17 @@ class SubAnswerProjector:
         use_deterministic_labeled_fields: bool = True,
     ) -> tuple[list[SubQuestionInitialAnswer], ProjectionTrace]:
         source = compound_answer_0.strip()
+        if len(sub_questions) == 1:
+            only = sub_questions[0]
+            return [
+                SubQuestionInitialAnswer(sub_question_id=only.id, answer=source)
+            ], ProjectionTrace(
+                method="single_subquestion_passthrough",
+                source=source,
+                faithfulness_passed=True,
+                retry_count=0,
+            )
+
         if use_deterministic_labeled_fields:
             deterministic = project_labeled_fields(source, sub_questions)
             if deterministic is not None and validate_projection_faithfulness(source, deterministic):

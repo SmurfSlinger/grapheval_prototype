@@ -35,7 +35,10 @@ from src.pipeline.structured_output import (
     end_anomaly_collection,
     get_run_parse_anomalies,
 )
-from src.pipeline.sub_answer_combiner import combine_sub_answers
+from src.pipeline.sub_answer_combiner import (
+    combine_sub_answers,
+    prefer_terminal_object_answer,
+)
 from src.pipeline.sub_answer_projector import SubAnswerProjector
 from src.pipeline.working_kgc import WorkingKgcState
 from src.config import NEO4J_ENABLED
@@ -427,6 +430,17 @@ class DecomposedBacktrackingRunner:
                         sub_question_id=sub_question.id,
                         iteration=last_iter.iteration,
                     )
+
+            if (
+                stop_reason == SubQuestionStopReason.RESOLVED
+                and last_iter
+                and last_iter.evidence_path_complete
+            ):
+                final_answer = prefer_terminal_object_answer(
+                    final_answer,
+                    last_iter.evidence_path,
+                    path_complete=True,
+                )
 
             sub_result = SubQuestionResult(
                 sub_question_id=sub_question.id,

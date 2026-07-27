@@ -13,7 +13,7 @@ from src.pipeline.backtracking_feedback_builder import BacktrackingFeedbackBuild
 from src.pipeline.backtracking_reviser import BacktrackingReviser
 from src.pipeline.backtracking_runner import _enrich_evaluations
 from src.pipeline.graph_comparator import GraphComparator
-from src.pipeline.kgc_matching import normalize, normalize_relation
+from src.pipeline.kgc_matching import normalize, normalize_entity_text, normalize_relation
 from src.pipeline.kgc_schema_aligner import align_claims_to_kgc_schema
 from src.pipeline.kgc_serializer import serialize_kgc_facts
 from src.pipeline.abstention_detection import is_abstention_answer
@@ -71,7 +71,7 @@ def evaluation_signature(evaluated_claims: list[KgcEvaluationResult]) -> str:
 
 
 def normalize_answer_text(text: str) -> str:
-    return " ".join(text.strip().split())
+    return normalize_entity_text(" ".join((text or "").strip().split()))
 
 
 def determine_stop_reason(
@@ -92,7 +92,16 @@ def determine_stop_reason(
     focused_enrichment_attempted: bool = False,
     derivation_attempted: bool = False,
     evidence_path_complete: bool | None = None,
+    new_facts_added: bool = False,
 ) -> tuple[SubQuestionStopReason | None, str | None]:
+    answer_unchanged = (
+        previous_answer is not None
+        and normalize_answer_text(current_answer) == normalize_answer_text(previous_answer)
+    )
+    claims_unchanged = bool(
+        previous_signature and previous_signature == current_signature
+    )
+
     if claim_count == 0:
         if is_abstention_answer(current_answer):
             if previous_answer is not None and is_abstention_answer(previous_answer):
@@ -119,16 +128,37 @@ def determine_stop_reason(
             # target-unsatisfied so the defect is visible.
             if iteration + 1 >= max_iterations:
                 return SubQuestionStopReason.UNRESOLVED_TARGET_NOT_SATISFIED, "incomplete_evidence_path"
+            if (
+                previous_answer is not None
+                and answer_unchanged
+                and claims_unchanged
+                and not new_facts_added
+            ):
+                return (
+                    SubQuestionStopReason.UNRESOLVED_TARGET_NOT_SATISFIED,
+                    "unchanged_incomplete_evidence_path",
+                )
             return None, "incomplete_evidence_path"
         if target_satisfied and evidence_path_complete is not False:
             return SubQuestionStopReason.RESOLVED, None
         if supported_but_irrelevant_count > 0 or supported_count > 0:
+            # Supported claims with an unsatisfied target: do not keep revising
+            # when the answer/claims are unchanged and no new trusted FACTS arrived.
+            if (
+                previous_answer is not None
+                and (answer_unchanged or claims_unchanged)
+                and not new_facts_added
+            ):
+                return (
+                    SubQuestionStopReason.UNRESOLVED_TARGET_NOT_SATISFIED,
+                    "unchanged_supported_target_unsatisfied",
+                )
             if iteration + 1 >= max_iterations:
                 return SubQuestionStopReason.UNRESOLVED_TARGET_NOT_SATISFIED, None
             return None, None
 
-    if previous_answer is not None:
-        if normalize_answer_text(current_answer) == normalize_answer_text(previous_answer):
+    if previous_answer is not None and not new_facts_added:
+        if answer_unchanged:
             if (
                 supported_but_irrelevant_count > 0
                 and contradicted_count == 0
@@ -136,7 +166,7 @@ def determine_stop_reason(
             ):
                 return SubQuestionStopReason.UNRESOLVED_TARGET_NOT_SATISFIED, None
             return SubQuestionStopReason.STALLED, None
-        if previous_signature and previous_signature == current_signature:
+        if claims_unchanged:
             if (
                 supported_but_irrelevant_count > 0
                 and contradicted_count == 0
@@ -446,6 +476,7 @@ class KgcIterationEngine:
                 focused_enrichment_attempted=focused_enrichment_attempted,
                 derivation_attempted=derivation_attempted,
                 evidence_path_complete=path_result.complete,
+                new_facts_added=bool(focused_facts_added or derived_facts_added),
             )
 
             history.append(

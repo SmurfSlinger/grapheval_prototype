@@ -9,9 +9,10 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
 
+from src.pipeline.kgc_matching import normalize_entity_text
+
 
 ValidationStatus = Literal["valid", "normalized", "rejected"]
-
 
 @dataclass
 class StructuredTripleAnomaly:
@@ -209,6 +210,15 @@ def coerce_raw_triple_item(
         )
 
     assert subject is not None and relation is not None and obj is not None
+
+    subject_norm = normalize_entity_text(subject)
+    obj_norm = normalize_entity_text(obj)
+    if subject_norm != subject:
+        subject = subject_norm
+        normalizations.append("strip_terminal_sentence_punctuation_subject")
+    if obj_norm != obj:
+        obj = obj_norm
+        normalizations.append("strip_terminal_sentence_punctuation_object")
 
     if obj == relation:
         return None, StructuredTripleAnomaly(

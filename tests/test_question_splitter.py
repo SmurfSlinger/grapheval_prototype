@@ -47,10 +47,12 @@ def test_apollo_complex_splits_five_sub_questions():
     assert sub_questions[2].question.lower().startswith("where was apollo 11")
 
 
-def test_malformed_question_split_rejected():
+def test_malformed_question_split_falls_back_to_original():
     class BadProvider(MockProvider):
         def complete(self, prompt: str) -> str:
             return '{"questions": [{"id": 1}]}'
 
-    with pytest.raises(ValueError, match="Question decomposition failed"):
-        QuestionSplitter(BadProvider()).split("Some question?")
+    original = "Some question?"
+    subs, _ = QuestionSplitter(BadProvider()).split(original)
+    assert len(subs) == 1
+    assert subs[0].question == original

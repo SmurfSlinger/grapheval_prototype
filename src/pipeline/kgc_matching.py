@@ -8,8 +8,25 @@ AUXILIARY_RELATION_PREFIXES = ("is_", "was_", "were_", "be_", "being_", "been_")
 ALIGNMENT_PREFIX = "Aligned from:"
 
 
+def normalize_entity_text(text: str) -> str:
+    """Strip harmless terminal sentence punctuation from entity/answer values.
+
+    Removes a single trailing ``.``, ``!``, or ``?`` only when the preceding
+    character is a lowercase letter or digit so values like ``Neil Armstrong.``
+    collapse to ``Neil Armstrong``, while preserving ``Washington, D.C.``,
+    ``John F. Kennedy``, and ``7.5 kg``.
+    """
+    cleaned = (text or "").strip()
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    if len(cleaned) >= 2 and cleaned[-1] in ".!?":
+        prev = cleaned[-2]
+        if prev.islower() or prev.isdigit():
+            cleaned = cleaned[:-1].rstrip()
+    return cleaned
+
+
 def normalize(text: str) -> str:
-    text = text.lower().strip()
+    text = normalize_entity_text(text).lower()
     text = re.sub(r"\s+", " ", text)
     text = re.sub(r"[^\w\s-]", "", text)
     return text.strip()

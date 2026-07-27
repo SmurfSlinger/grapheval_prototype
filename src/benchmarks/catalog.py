@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from src.models import DecomposedBacktrackingResult, SubQuestionStopReason
+from src.pipeline.kgc_matching import normalize_entity_text
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = ROOT / "data" / "test_sets"
@@ -24,13 +25,22 @@ BENCHMARK_TITLES: dict[str, str] = {
     "nhs_wannacry_multihop_50": "NHS WannaCry Multi-Hop 50",
 }
 
+_UNRESOLVED_STOP_PRIORITY = (
+    SubQuestionStopReason.UNRESOLVED_TARGET_NOT_SATISFIED,
+    SubQuestionStopReason.UNRESOLVED_NO_EVIDENCE,
+    SubQuestionStopReason.STALLED,
+    SubQuestionStopReason.NO_CLAIMS_EXTRACTED,
+    SubQuestionStopReason.GENERATION_FAILED,
+    SubQuestionStopReason.MAX_ITERATIONS,
+)
+
 
 def normalize_answer(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", str(value).casefold()).strip()
 
 
 def exact_match(predicted: str, expected: str) -> bool:
-    return str(predicted).strip() == str(expected).strip()
+    return normalize_entity_text(str(predicted)) == normalize_entity_text(str(expected))
 
 
 def contains_expected_answer(predicted: str, expected: str) -> bool:
@@ -47,6 +57,30 @@ def resolved_by_pipeline(result: DecomposedBacktrackingResult) -> bool:
     return bool(sub_results) and all(
         sub.stop_reason == SubQuestionStopReason.RESOLVED for sub in sub_results
     )
+
+
+def aggregate_stop_reason(
+    stops: list[SubQuestionStopReason | str],
+) -> str:
+    """Single run-level stop reason consistent with pipeline_resolved."""
+    if not stops:
+        return "NO_SUB_QUESTIONS"
+
+    normalized: list[str] = []
+    for stop in stops:
+        value = stop.value if hasattr(stop, "value") else str(stop)
+        normalized.append(value)
+
+    if all(value == SubQuestionStopReason.RESOLVED.value for value in normalized):
+        return SubQuestionStopReason.RESOLVED.value
+
+    if any(value == SubQuestionStopReason.RESOLVED.value for value in normalized):
+        return "PARTIALLY_UNRESOLVED"
+
+    for candidate in _UNRESOLVED_STOP_PRIORITY:
+        if candidate.value in normalized:
+            return candidate.value
+    return normalized[-1]
 
 
 def approved_benchmark_ids() -> list[str]:
@@ -141,10 +175,12 @@ def score_result(
     expected = str(question.get("expected_answer") or "")
     predicted = str(result.combined_answer or "")
     stops = [sub.stop_reason for sub in result.sub_question_results]
-    final_stop = stops[-1] if stops else None
-    if hasattr(final_stop, "value"):
-        final_stop = final_stop.value
+    final_stop = aggregate_stop_reason(stops)
     resolved = resolved_by_pipeline(result)
+    if resolved and final_stop != SubQuestionStopReason.RESOLVED.value:
+        final_stop = SubQuestionStopReason.RESOLVED.value
+    if not resolved and final_stop == SubQuestionStopReason.RESOLVED.value:
+        final_stop = "PARTIALLY_UNRESOLVED"
     contains = contains_expected_answer(predicted, expected)
     category = None
     if not resolved:
@@ -154,6 +190,8 @@ def score_result(
             stop = str(final_stop or "").casefold()
             if "target_not_satisfied" in stop:
                 category = "target_not_satisfied"
+            elif "partially_unresolved" in stop:
+                category = "pipeline_unresolved"
             elif "no_evidence" in stop:
                 category = "unresolved_no_evidence"
             elif "no_claims" in stop:

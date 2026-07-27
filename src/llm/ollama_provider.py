@@ -47,6 +47,7 @@ class OllamaProvider(LLMProvider):
         timeout: float = OLLAMA_REQUEST_TIMEOUT,
         num_ctx: int | None = OLLAMA_NUM_CTX,
         num_predict: int | None = OLLAMA_NUM_PREDICT,
+        temperature: float | None = None,
         *,
         verify_on_init: bool = True,
     ) -> None:
@@ -56,6 +57,7 @@ class OllamaProvider(LLMProvider):
         self.timeout = timeout
         self.num_ctx = num_ctx
         self.num_predict = num_predict
+        self.temperature = temperature
         self.call_telemetry: list[dict[str, int | str | None]] = []
         if verify_on_init:
             self.check_server(self.base_url, timeout=min(timeout, 10))
@@ -130,11 +132,13 @@ class OllamaProvider(LLMProvider):
             # tokens unless thinking mode is disabled for the final text reply.
             "think": False,
         }
-        options: dict[str, int] = {}
+        options: dict[str, int | float] = {}
         if self.num_ctx is not None:
             options["num_ctx"] = self.num_ctx
         if self.num_predict is not None:
             options["num_predict"] = self.num_predict
+        if self.temperature is not None:
+            options["temperature"] = self.temperature
         if options:
             payload["options"] = options
         body = json.dumps(payload).encode("utf-8")

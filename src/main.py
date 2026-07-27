@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from src.config import DEFAULT_LLM_PROVIDER, DEFAULT_MODEL, TEST_MODELS
+from src.config import DEFAULT_LLM_PROVIDER, DEFAULT_MODEL, OLLAMA_TEMPERATURE, TEST_MODELS
 from src.io_utils import load_examples, result_filename
 from src.llm.base import LLMProvider
 from src.llm.mock_provider import MockProvider
@@ -63,7 +63,11 @@ def get_provider(
 
     if name == "ollama":
         try:
-            return OllamaProvider(model=model, verify_on_init=True)
+            return OllamaProvider(
+                model=model,
+                temperature=OLLAMA_TEMPERATURE,
+                verify_on_init=True,
+            )
         except OllamaError as exc:
             if fallback_to_mock:
                 print(f"Warning: {exc}", file=sys.stderr)

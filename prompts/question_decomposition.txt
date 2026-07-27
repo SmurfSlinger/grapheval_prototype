@@ -2,7 +2,9 @@ Decompose the compound question below into ordered atomic sub-questions.
 
 Rules:
 - Preserve the original order of topics as they appear in the compound question.
-- Each sub-question must be answerable independently with the trusted context.
+- Each sub-question must be a complete, independently answerable question (not a bare WH word, isolated verb, entity name, or sentence fragment).
+- If the input is already a single atomic question, return exactly one sub-question that is the original question.
+- If the input is a single nested multi-hop question without coordinating conjunctions (no ", and", no second "?"), return exactly one sub-question that is the original question. Do not invent intermediate sub-questions.
 - Resolve pronouns and vague references ("its", "the mission", "they") into explicit entities.
 - Do not merge unrelated topics into one sub-question.
 - Do not answer the questions; only split them.

@@ -12,34 +12,46 @@ interface DecomposedKgcBacktrackingResultViewProps {
   elapsedSeconds?: number | null;
 }
 
-function pipelineStatus(result: DecomposedBacktrackingResult): string {
+function aggregateStopReason(result: DecomposedBacktrackingResult): string {
   const stops = result.sub_question_results.map((row) => row.stop_reason);
-  if (stops.length === 0) return "No sub-questions";
-  if (stops.every((stop) => stop === "RESOLVED" || stop === "resolved")) {
-    return "Resolved";
+  if (stops.length === 0) return "NO_SUB_QUESTIONS";
+  const resolved = (stop: string) =>
+    stop === "RESOLVED" || stop === "resolved";
+  if (stops.every(resolved)) return "RESOLVED";
+  if (stops.some(resolved)) return "PARTIALLY_UNRESOLVED";
+  const priority = [
+    "UNRESOLVED_TARGET_NOT_SATISFIED",
+    "UNRESOLVED_NO_EVIDENCE",
+    "STALLED",
+    "NO_CLAIMS_EXTRACTED",
+    "GENERATION_FAILED",
+    "MAX_ITERATIONS",
+  ];
+  for (const candidate of priority) {
+    if (stops.some((stop) => stop.toUpperCase() === candidate)) {
+      return candidate;
+    }
   }
-  if (
-    stops.some(
-      (stop) =>
-        stop.toLowerCase().includes("unresolved") ||
-        stop === "STALLED" ||
-        stop === "stalled",
-    )
-  ) {
-    return "Partially unresolved";
+  return stops[stops.length - 1] ?? "n/a";
+}
+
+function pipelineStatus(result: DecomposedBacktrackingResult): string {
+  const aggregate = aggregateStopReason(result);
+  if (aggregate === "RESOLVED") return "Resolved";
+  if (aggregate === "NO_SUB_QUESTIONS") return "No sub-questions";
+  if (aggregate === "PARTIALLY_UNRESOLVED") return "Partially unresolved";
+  if (aggregate.toLowerCase().includes("unresolved") || aggregate === "STALLED") {
+    return "Unresolved";
   }
-  return stops.join(", ");
+  return aggregate;
 }
 
 function stopReasonsSummary(result: DecomposedBacktrackingResult): string {
-  const stops = result.sub_question_results.map((row) => row.stop_reason);
-  if (stops.length === 0) return "n/a";
-  return stops.join(", ");
+  return aggregateStopReason(result);
 }
 
 function finalStopReason(result: DecomposedBacktrackingResult): string | null {
-  const last = result.sub_question_results.at(-1);
-  return last?.stop_reason ?? null;
+  return aggregateStopReason(result);
 }
 
 function failureCategory(
