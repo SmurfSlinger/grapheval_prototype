@@ -254,6 +254,72 @@ ALLERGIC_REACTION_RELATIONS = frozenset(
     }
 )
 
+BIRTHPLACE_RELATIONS = frozenset(
+    {
+        "born_in",
+        "born_at",
+        "birthplace",
+        "birth_place",
+        "place_of_birth",
+        "birth_town",
+        "birth_city",
+    }
+)
+
+MANUFACTURER_RELATIONS = frozenset(
+    {
+        "built_by",
+        "manufactured_by",
+        "made_by",
+        "constructed_by",
+        "produced_by",
+        "builder",
+        "manufacturer",
+    }
+)
+
+LEADER_RELATIONS = frozenset(
+    {
+        "led_by",
+        "leader",
+        "headed_by",
+        "governed_by",
+        "commanded_by",
+        "ruled_by",
+    }
+)
+
+HEADQUARTERS_RELATIONS = frozenset(
+    {
+        "headquartered_in",
+        "headquarters_in",
+        "headquarters",
+        "based_in",
+    }
+)
+
+CONTAINMENT_RELATIONS = frozenset(
+    {
+        "located_in",
+        "situated_in",
+        "part_of",
+        "contains",
+        "within",
+        "in_state",
+        "in_country",
+        "in_region",
+    }
+)
+
+CAPITAL_RELATIONS = frozenset(
+    {
+        "capital",
+        "capital_of",
+        "has_capital",
+        "capital_city",
+    }
+)
+
 # Medication-status families must remain distinct (no unsafe collapse).
 MEDICATION_STATUS_EXCLUSIONS: dict[str, frozenset[str]] = {
     "medication_discontinued": ACTIVE_MED_RELATIONS | DISCUSSED_NOT_STARTED_RELATIONS,
@@ -269,8 +335,15 @@ INTENT_RELATION_FAMILIES: dict[str, frozenset[str]] = {
     "occurrence_date": DATE_RELATIONS,
     "crew_members": CREW_RELATIONS,
     "launch_site": LAUNCH_SITE_RELATIONS,
+    "launch_vehicle": LAUNCH_VEHICLE_RELATIONS,
     "president_at_time": PRESIDENT_AT_TIME_RELATIONS,
     "collection_amount": COLLECTION_RELATIONS,
+    "birthplace": BIRTHPLACE_RELATIONS,
+    "manufacturer": MANUFACTURER_RELATIONS,
+    "leader": LEADER_RELATIONS,
+    "headquarters": HEADQUARTERS_RELATIONS,
+    "location_containment": CONTAINMENT_RELATIONS,
+    "capital_city": CAPITAL_RELATIONS,
     "diagnosis": DIAGNOSIS_RELATIONS,
     "lab_measurement": LAB_VALUE_RELATIONS,
     "disease_stage": DISEASE_STAGE_RELATIONS,
@@ -294,8 +367,15 @@ INTENT_CANONICAL_RELATIONS: dict[str, str] = {
     "occurrence_date": "occurred_during",
     "crew_members": "crewed_by",
     "launch_site": "launched_from",
+    "launch_vehicle": "launched_by",
     "president_at_time": "president_at_time",
     "collection_amount": "collected",
+    "birthplace": "born_in",
+    "manufacturer": "built_by",
+    "leader": "led_by",
+    "headquarters": "headquartered_in",
+    "location_containment": "located_in",
+    "capital_city": "capital",
     "diagnosis": "diagnosed_with",
     "lab_measurement": "has_a1c",
     "disease_stage": "has_ckd_stage",

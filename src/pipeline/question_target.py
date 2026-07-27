@@ -70,6 +70,212 @@ WEAK_SUBJECTS = frozenset(
 )
 
 
+# --- Interrogative-frame parsing -------------------------------------------
+#
+# Question intent must come from the grammatical target of the question (the
+# interrogative phrase plus its requested predicate), not from every
+# entity-description phrase. "In which town was the Apollo 11 crew member Neil
+# Armstrong born?" asks for a birthplace; the qualifier "crew member" describes
+# Neil Armstrong and must not hijack the requested answer type.
+
+_WH_FRAME_PATTERN = re.compile(
+    r"^(?:(?:in|on|at|from|of|to|within|during)\s+)?"
+    r"(which|what|who|whom|where|when|how)\b\s*(.*)$"
+)
+
+_FRAME_AUXILIARIES = frozenset(
+    {
+        "is", "are", "was", "were", "did", "do", "does",
+        "has", "have", "had", "will", "would", "can", "could",
+        "should", "may", "might",
+    }
+)
+
+# Surface predicate token -> canonical predicate key.
+_FRAME_PREDICATES: dict[str, str] = {
+    "born": "born",
+    "built": "built",
+    "build": "built",
+    "builds": "built",
+    "constructed": "built",
+    "manufactured": "built",
+    "made": "built",
+    "produced": "built",
+    "contains": "contains",
+    "contain": "contains",
+    "containing": "contains",
+    "located": "located",
+    "situated": "located",
+    "launched": "launched",
+    "launch": "launched",
+    "launches": "launched",
+    "led": "led",
+    "leads": "led",
+    "governed": "led",
+    "ruled": "led",
+    "headquartered": "headquartered",
+    "based": "headquartered",
+    "capital": "capital",
+    "crewed": "crewed",
+    "flew": "crewed",
+    "president": "president",
+    "part": "part_of",
+}
+
+_PLACE_HEADS = frozenset({"town", "city", "village", "municipality", "birthplace", "place"})
+_REGION_HEADS = frozenset(
+    {"state", "country", "province", "region", "county", "continent", "nation"}
+)
+_COMPANY_HEADS = frozenset(
+    {
+        "company", "manufacturer", "firm", "contractor", "corporation",
+        "organization", "organisation", "agency",
+    }
+)
+_PERSON_HEADS = frozenset({"person", "man", "woman", "individual", "leader", "commander"})
+_VEHICLE_HEADS = frozenset({"vehicle", "rocket", "booster", "spacecraft"})
+_DATE_HEADS = frozenset({"date", "year", "day", "month", "time"})
+_CREW_HEADS = ("crew member", "crew members", "astronaut", "astronauts", "crew")
+
+
+@dataclass
+class InterrogativeFrame:
+    wh_word: str | None = None
+    head_noun: str = ""
+    predicate: str | None = None
+    tail: str = ""
+
+
+def parse_interrogative_frame(question: str) -> InterrogativeFrame:
+    """Extract the wh-word, its head noun phrase, and the requested predicate.
+
+    Dependency/order-aware on purpose: when the wh-head is followed directly by
+    a predicate verb ("which company BUILT ..."), that verb is the requested
+    predicate even if other predicate words appear later in nested clauses.
+    When an auxiliary follows ("in which town WAS ... born"), the requested
+    predicate is the final predicate of the clause (passive participle).
+    """
+    q = normalize(question)
+    match = _WH_FRAME_PATTERN.match(q)
+    if not match:
+        return InterrogativeFrame()
+    wh_word = match.group(1)
+    tail = match.group(2).strip()
+    tokens = tail.split()
+
+    head_tokens: list[str] = []
+    predicate: str | None = None
+    rest_index = 0
+    if wh_word in {"which", "what"}:
+        for index, token in enumerate(tokens):
+            if token in _FRAME_AUXILIARIES:
+                rest_index = index + 1
+                break
+            if token in _FRAME_PREDICATES:
+                predicate = _FRAME_PREDICATES[token]
+                rest_index = index + 1
+                break
+            if len(head_tokens) >= 4:
+                rest_index = index
+                break
+            head_tokens.append(token)
+        else:
+            rest_index = len(tokens)
+    head_noun = " ".join(head_tokens)
+
+    if predicate is None:
+        # Auxiliary construction (or bare wh): the requested predicate is the
+        # last predicate keyword in the remaining clause.
+        for token in reversed(tokens[rest_index:] if head_tokens else tokens):
+            if token in _FRAME_PREDICATES:
+                predicate = _FRAME_PREDICATES[token]
+                break
+
+    return InterrogativeFrame(
+        wh_word=wh_word,
+        head_noun=head_noun,
+        predicate=predicate,
+        tail=tail,
+    )
+
+
+def _frame_intent(frame: InterrogativeFrame) -> str | None:
+    """Map the interrogative frame to a relation-family intent, or None."""
+    wh = frame.wh_word
+    head = frame.head_noun
+    predicate = frame.predicate
+    if not wh:
+        return None
+
+    if wh in {"which", "what"} and head:
+        if any(head.startswith(crew) or crew in head for crew in _CREW_HEADS):
+            return "crew_members"
+        if "president" in head:
+            return "president_at_time"
+        if head.split()[-1] in _PLACE_HEADS or head.split()[-1] in _REGION_HEADS:
+            if predicate == "born":
+                return "birthplace"
+            if predicate == "capital":
+                return "capital_city"
+            if predicate in {"contains", "located", "part_of"}:
+                return "location_containment"
+            if predicate == "launched":
+                return "launch_site"
+            if predicate == "headquartered":
+                return "headquarters"
+            return None
+        if head.split()[-1] in _COMPANY_HEADS:
+            if predicate == "built":
+                return "manufacturer"
+            if predicate == "led":
+                return "leader"
+            return None
+        if head.split()[-1] in _PERSON_HEADS:
+            if predicate == "led":
+                return "leader"
+            if predicate == "crewed":
+                return "crew_members"
+            if predicate == "president":
+                return "president_at_time"
+            return None
+        if head.split()[-1] in _VEHICLE_HEADS:
+            if predicate == "launched":
+                return "launch_vehicle"
+            return None
+        if head.split()[-1] in _DATE_HEADS:
+            return "occurrence_date"
+        return None
+
+    if wh == "where":
+        if predicate == "born":
+            return "birthplace"
+        if predicate == "launched":
+            return "launch_site"
+        if predicate == "headquartered":
+            return "headquarters"
+        if predicate in {"located", "contains", "part_of"}:
+            return "location_containment"
+        return None
+
+    if wh == "when":
+        return "occurrence_date"
+
+    if wh in {"who", "whom"}:
+        if predicate == "crewed" or any(
+            marker in frame.tail for marker in ("crew", "astronaut")
+        ):
+            return "crew_members"
+        if predicate == "president" or "president" in frame.tail:
+            return "president_at_time"
+        if predicate == "led":
+            return "leader"
+        if predicate == "built":
+            return "manufacturer"
+        return None
+
+    return None
+
+
 @dataclass
 class QuestionTarget:
     question: str
@@ -125,12 +331,23 @@ def is_atomic_sub_question(question: str) -> bool:
         return True
 
     wh_count = len(re.findall(r"\b(what|who|when|where|how|which)\b", q))
-    if wh_count > 1:
+    frame = parse_interrogative_frame(question)
+    frame_intent = _frame_intent(frame)
+
+    # Coordinated multi-asks ("What X, what Y, and where Z?") are compound.
+    # Nested relative clauses ("Which state contains the town where X was born?")
+    # remain atomic when the outer interrogative frame has one intent.
+    if wh_count > 1 and _is_coordinated_multi_question(q):
+        return False
+    if wh_count > 1 and not frame_intent:
         return False
     if "," in question and wh_count >= 1 and (
         " and " in q or question.count(",") >= 2
-    ):
+    ) and _is_coordinated_multi_question(q):
         return False
+
+    if frame_intent:
+        return True
 
     intents = [
         _matches_when_date(q),
@@ -156,6 +373,19 @@ def is_atomic_sub_question(question: str) -> bool:
     return False
 
 
+def _is_coordinated_multi_question(q: str) -> bool:
+    """Detect top-level coordinated asks, not nested relative clauses."""
+    return bool(
+        re.search(r",\s*(what|who|when|where|how|which)\b", q)
+        or re.search(r"\band\s+(what|who|when|where|how|which|did)\b", q)
+    )
+
+
+_FRAME_INTENT_EXCLUSIONS: dict[str, frozenset[str]] = {
+    "president_at_time": EXCLUDED_PRESIDENT_PROXY_RELATIONS,
+}
+
+
 def derive_question_target(
     question: str,
     kgc_facts: list[KgcFact],
@@ -163,13 +393,6 @@ def derive_question_target(
 ) -> QuestionTarget:
     q = normalize(question)
     primary_subject = _infer_primary_subject(kgc_facts, question, trusted_context)
-
-    if not is_atomic_sub_question(question):
-        return QuestionTarget(
-            question=question,
-            intent="compound",
-            primary_subject=primary_subject,
-        )
 
     def _build(intent: str, expected: frozenset[str], excluded: frozenset[str] | None = None) -> QuestionTarget:
         return QuestionTarget(
@@ -180,6 +403,30 @@ def derive_question_target(
             primary_subject=primary_subject,
             canonical_relation=canonical_relation_for_intent(intent, kgc_facts),
         )
+
+    # Compound / multi-attribute questions stay compound. Nested relative clauses
+    # with a single requested answer type remain atomic and are handled below.
+    if not is_atomic_sub_question(question):
+        return QuestionTarget(
+            question=question,
+            intent="compound",
+            primary_subject=primary_subject,
+        )
+
+    # The grammatical target of the question wins over any qualifier phrase.
+    # A nested question with relative clauses ("Which state contains the town
+    # where ... was born?") still has exactly one requested answer type.
+    frame_intent = _frame_intent(parse_interrogative_frame(question))
+    if frame_intent:
+        target = _build(
+            frame_intent,
+            INTENT_RELATION_FAMILIES.get(frame_intent, frozenset()),
+            _FRAME_INTENT_EXCLUSIONS.get(frame_intent),
+        )
+        refined = _subject_for_target(target, question, kgc_facts, [])
+        if refined:
+            target.primary_subject = refined
+        return target
 
     if _matches_when_date(q):
         return _build("occurrence_date", DATE_RELATIONS)
@@ -301,7 +548,27 @@ def condition_claims_to_question(
     if not target.expected_relations or target.intent == "compound":
         return claims
 
-    subject = target.primary_subject or _infer_primary_subject(kgc_facts, question)
+    # Never rewrite an already-on-target claim into a different relation family.
+    # That was the hop-2/3 hijack path: a correct birthplace claim became a
+    # crew-relation triple once the intent was wrong.
+    on_target = [
+        claim for claim in claims if relation_matches_target(claim.relation, target)
+    ]
+    if on_target and not is_composite_intent(target.intent):
+        value = extract_answer_value(answer, target.intent)
+        best = on_target[0]
+        if value:
+            return [
+                Triple(
+                    subject=best.subject,
+                    relation=best.relation,
+                    object=value,
+                    source_sentence=best.source_sentence or value,
+                )
+            ]
+        return on_target
+
+    subject = _subject_for_target(target, question, kgc_facts, claims)
     if not subject and claims:
         subject = claims[0].subject
 
@@ -333,6 +600,30 @@ def condition_claims_to_question(
             source_sentence=value,
         )
     ]
+
+
+def _subject_for_target(
+    target: QuestionTarget,
+    question: str,
+    kgc_facts: list[KgcFact],
+    claims: list[Triple],
+) -> str | None:
+    """Prefer the entity that owns the requested predicate, not the question root."""
+    q = normalize(question)
+    for claim in claims:
+        if relation_matches_target(claim.relation, target):
+            return claim.subject
+    for fact in kgc_facts:
+        if relation_matches_target(fact.relation, target) and normalize(fact.subject) in q:
+            return fact.subject
+    # "NAME was born" / "crew member NAME born" — capture a proper-name subject.
+    name_match = re.search(
+        r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b(?=[^.?]*\b(?:born|built|manufactured)\b)",
+        question,
+    )
+    if name_match:
+        return name_match.group(1)
+    return target.primary_subject or _infer_primary_subject(kgc_facts, question)
 
 
 def dedupe_minimal_claims(
@@ -387,8 +678,15 @@ def dedupe_minimal_claims(
     if target.intent in {
         "occurrence_date",
         "launch_site",
+        "launch_vehicle",
         "crew_members",
         "president_at_time",
+        "birthplace",
+        "manufacturer",
+        "leader",
+        "headquarters",
+        "location_containment",
+        "capital_city",
         "diagnosis",
         "lab_measurement",
         "discussed_not_started",
@@ -526,8 +824,15 @@ def filter_minimal_focused_facts(
     if target.intent in {
         "occurrence_date",
         "launch_site",
+        "launch_vehicle",
         "collection_amount",
         "crew_members",
+        "birthplace",
+        "manufacturer",
+        "leader",
+        "headquarters",
+        "location_containment",
+        "capital_city",
         "diagnosis",
         "lab_measurement",
         "discussed_not_started",
@@ -595,12 +900,49 @@ def _matches_when_date(q: str) -> bool:
 
 
 def _matches_crew(q: str) -> bool:
+    # Qualifier-only uses of "crew member" / "astronaut" (e.g. "Apollo 11 crew
+    # member Neil Armstrong") must not hijack a different requested predicate.
+    if _crew_is_qualifier_only(q):
+        return False
     return (
-        "astronaut" in q
-        or "crew member" in q
+        ("astronaut" in q and ("who" in q or "which" in q or "what" in q))
+        or ("crew member" in q and ("who" in q or "which" in q or "what" in q))
         or ("who were" in q and ("crew" in q or "astronaut" in q))
         or ("who" in q and ("crewed" in q or "crew of" in q))
     )
+
+
+def _crew_is_qualifier_only(q: str) -> bool:
+    """True when crew/astronaut wording describes an entity, not the answer type."""
+    frame = parse_interrogative_frame(q)
+    if frame.wh_word in {"which", "what"} and any(
+        frame.head_noun.startswith(head) or head in frame.head_noun
+        for head in _CREW_HEADS
+    ):
+        return False
+    has_crew_wording = (
+        "crew member" in q
+        or "astronaut" in q
+        or (" crew" in f" {q} " and "crewed" not in q)
+    )
+    if not has_crew_wording:
+        return False
+    if frame.predicate and frame.predicate != "crewed":
+        return True
+    competing = (
+        "born" in q
+        or "built" in q
+        or "a1c" in q
+        or "hba1c" in q
+        or "diagnos" in q
+        or "medication" in q
+        or "allerg" in q
+        or "egfr" in q
+        or "contains" in q
+        or "located" in q
+        or "headquarter" in q
+    )
+    return competing
 
 
 def _matches_launch_site(q: str) -> bool:

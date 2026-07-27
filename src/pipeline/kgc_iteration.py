@@ -475,19 +475,29 @@ class KgcIterationEngine:
             previous_signature = sig
             current_answer = answer_next
         else:
-            last_target = evaluate_target_satisfaction(
-                history[-1].evaluated_claims if history else [],
-                question_target,
-            )
+            # for/else: the loop completed without an early stop. Use the final
+            # iteration's label counts — the loop-local names contradicted_count /
+            # no_evidence_count are not in scope here on every path.
+            last_item = history[-1] if history else None
+            last_evals = last_item.evaluated_claims if last_item else []
+            last_supported, last_contradicted, last_no_evidence = count_labels(last_evals)
+            last_target = evaluate_target_satisfaction(last_evals, question_target)
             if (
                 not last_target.satisfied
                 and last_target.supported_but_irrelevant_count > 0
-                and contradicted_count == 0
-                and no_evidence_count == 0
+                and last_contradicted == 0
+                and last_no_evidence == 0
             ):
                 stop_reason = SubQuestionStopReason.UNRESOLVED_TARGET_NOT_SATISFIED
-            elif contradicted_count == 0 and no_evidence_count > 0:
+            elif last_contradicted == 0 and last_no_evidence > 0:
                 stop_reason = SubQuestionStopReason.UNRESOLVED_NO_EVIDENCE
+            elif (
+                last_contradicted == 0
+                and last_no_evidence == 0
+                and last_supported > 0
+                and last_target.satisfied
+            ):
+                stop_reason = SubQuestionStopReason.RESOLVED
             else:
                 stop_reason = SubQuestionStopReason.MAX_ITERATIONS
 
