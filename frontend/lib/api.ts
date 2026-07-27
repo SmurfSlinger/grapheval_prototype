@@ -252,6 +252,22 @@ export interface TraceTriple {
   evidence?: string | null;
 }
 
+export interface EvidencePathEdge {
+  subject: string;
+  relation: string;
+  object: string;
+}
+
+export interface EvidencePathResult {
+  start_entity?: string | null;
+  terminal_claim?: EvidencePathEdge;
+  evidence_path?: EvidencePathEdge[];
+  path_length?: number;
+  complete?: boolean;
+  ambiguity?: string | null;
+  failure_reason?: string | null;
+}
+
 export interface TraceEvaluatedClaim {
   triple: TraceTriple;
   label: string;
@@ -343,6 +359,11 @@ export interface SubQuestionResult {
   focused_extraction_raw?: KgcFact[];
   focused_extraction_filtered?: KgcFact[];
   focused_extraction_merged?: KgcFact[];
+
+  // Evidence-path resolution against trusted FACTS.
+  evidence_path?: EvidencePathResult | null;
+  evidence_path_complete?: boolean;
+  evidence_path_length?: number;
 }
 
 export interface KgcCandidateUpdate {
@@ -360,6 +381,9 @@ export interface DecomposedBacktrackingTrace {
   provider_class?: string | null;
   model?: string | null;
   example_id?: string | null;
+  execution_id?: string | null;
+  benchmark_id?: string | null;
+  question_id?: string | null;
   context_extraction_format?: string | null;
   context_extraction_trace?: Record<string, unknown> | null;
   stage_providers?: Record<string, string>;
