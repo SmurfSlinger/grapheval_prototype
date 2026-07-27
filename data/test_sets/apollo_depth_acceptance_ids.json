@@ -1,0 +1,16 @@
+{
+  "description": "Fixed Apollo representatives for depth acceptance. IDs and hop depths only — selected before inference.",
+  "suite": "apollo_multihop_50",
+  "questions": [
+    {"id": "apollo_hop_001", "hop_depth": 1},
+    {"id": "apollo_hop_006", "hop_depth": 2},
+    {"id": "apollo_hop_011", "hop_depth": 3},
+    {"id": "apollo_hop_016", "hop_depth": 4},
+    {"id": "apollo_hop_021", "hop_depth": 5},
+    {"id": "apollo_hop_026", "hop_depth": 6},
+    {"id": "apollo_hop_031", "hop_depth": 7},
+    {"id": "apollo_hop_036", "hop_depth": 8},
+    {"id": "apollo_hop_041", "hop_depth": 9},
+    {"id": "apollo_hop_046", "hop_depth": 10}
+  ]
+}

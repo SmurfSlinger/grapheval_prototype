@@ -45,3 +45,7 @@ HOW_IT_WORKS.md
 .runtime/benchmarks/
 
 !results/verify_master_live_*.md
+
+# Local agent/runtime artifacts
+.runtime/
+results/verify-master-live_*.txt

@@ -1,0 +1,11 @@
+{
+  "description": "Fixed NHS WannaCry representatives for cross-domain depth acceptance. IDs and hop depths only — selected before inference.",
+  "suite": "nhs_wannacry_multihop_50",
+  "questions": [
+    {"id": "nhs_wannacry_h01_q01", "hop_depth": 1},
+    {"id": "nhs_wannacry_h03_q01", "hop_depth": 3},
+    {"id": "nhs_wannacry_h05_q01", "hop_depth": 5},
+    {"id": "nhs_wannacry_h07_q01", "hop_depth": 7},
+    {"id": "nhs_wannacry_h10_q01", "hop_depth": 10}
+  ]
+}
