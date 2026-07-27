@@ -115,11 +115,16 @@ _FRAME_PREDICATES: dict[str, str] = {
     "ruled": "led",
     "headquartered": "headquartered",
     "based": "headquartered",
-    "capital": "capital",
+    # "capital" is intentionally not a predicate token: it is a head noun
+    # ("what is the capital of ..."). Treating it as a verb hijacks questions
+    # like "which river runs beside the capital ...".
     "crewed": "crewed",
     "flew": "crewed",
     "president": "president",
     "part": "part_of",
+    "studies": "studies",
+    "study": "studies",
+    "studied": "studies",
 }
 
 _PLACE_HEADS = frozenset({"town", "city", "village", "municipality", "birthplace", "place"})
@@ -135,7 +140,42 @@ _COMPANY_HEADS = frozenset(
 _PERSON_HEADS = frozenset({"person", "man", "woman", "individual", "leader", "commander"})
 _VEHICLE_HEADS = frozenset({"vehicle", "rocket", "booster", "spacecraft"})
 _DATE_HEADS = frozenset({"date", "year", "day", "month", "time"})
+_GEO_FEATURE_HEADS = frozenset(
+    {"river", "bay", "ocean", "sea", "lake", "waterway", "body", "field", "capital"}
+)
 _CREW_HEADS = ("crew member", "crew members", "astronaut", "astronauts", "crew")
+
+# Relative-clause openers that begin nested qualifiers; predicates after these
+# describe nested entities, not the requested answer type.
+_RELATIVE_MARKERS = frozenset({"that", "who", "whom", "whose", "where", "which"})
+# Reduced relative openers ("the country containing X") — not the main predicate.
+_REDUCED_RELATIVE_MARKERS = frozenset(
+    {
+        "containing",
+        "located",
+        "situated",
+        "receiving",
+        "reaching",
+        "reached",
+        "fed",
+        "running",
+        "flowing",
+    }
+)
+_DETERMINERS = frozenset({"the", "a", "an"})
+_HEAD_CONTINUATIONS = frozenset({"member", "members", "case", "stage", "site", "vehicle"})
+
+# Tokens that complete a wh-head noun phrase (stop collecting further tokens).
+_COMPLETE_HEAD_TOKENS = (
+    _PLACE_HEADS
+    | _REGION_HEADS
+    | _COMPANY_HEADS
+    | _PERSON_HEADS
+    | _VEHICLE_HEADS
+    | _DATE_HEADS
+    | _GEO_FEATURE_HEADS
+    | {"astronaut", "astronauts", "crew", "president", "medication", "diagnosis"}
+)
 
 
 @dataclass
@@ -146,6 +186,32 @@ class InterrogativeFrame:
     tail: str = ""
 
 
+def _main_clause_predicate(tokens: list[str]) -> str | None:
+    """First predicate in the main clause; ignore nested relative clauses."""
+    for token in tokens:
+        if token in _RELATIVE_MARKERS or token in _REDUCED_RELATIVE_MARKERS:
+            break
+        if token in _FRAME_PREDICATES:
+            return _FRAME_PREDICATES[token]
+    return None
+
+
+def _head_phrase_complete(head_tokens: list[str], next_token: str | None) -> bool:
+    """True when head_tokens already form the wh-noun phrase."""
+    if not head_tokens:
+        return False
+    joined = " ".join(head_tokens)
+    if any(joined == crew or joined.endswith(f" {crew}") for crew in _CREW_HEADS):
+        return True
+    last = head_tokens[-1]
+    if last not in _COMPLETE_HEAD_TOKENS:
+        return False
+    # Allow short compounds: "crew member", "global body", "launch site".
+    if next_token in _HEAD_CONTINUATIONS:
+        return False
+    return True
+
+
 def parse_interrogative_frame(question: str) -> InterrogativeFrame:
     """Extract the wh-word, its head noun phrase, and the requested predicate.
 
@@ -153,7 +219,8 @@ def parse_interrogative_frame(question: str) -> InterrogativeFrame:
     a predicate verb ("which company BUILT ..."), that verb is the requested
     predicate even if other predicate words appear later in nested clauses.
     When an auxiliary follows ("in which town WAS ... born"), the requested
-    predicate is the final predicate of the clause (passive participle).
+    predicate is the first main-clause participle/verb — never a nested
+    qualifier predicate ("... that launched ...", "... who leads ...").
     """
     q = normalize(question)
     match = _WH_FRAME_PATTERN.match(q)
@@ -170,26 +237,42 @@ def parse_interrogative_frame(question: str) -> InterrogativeFrame:
         for index, token in enumerate(tokens):
             if token in _FRAME_AUXILIARIES:
                 rest_index = index + 1
+                # "what is the capital of ..." — head noun follows the auxiliary.
+                if not head_tokens:
+                    j = rest_index
+                    while j < len(tokens) and tokens[j] in _DETERMINERS:
+                        j += 1
+                    if (
+                        j < len(tokens)
+                        and tokens[j] not in _RELATIVE_MARKERS
+                        and j + 1 < len(tokens)
+                        and tokens[j + 1] == "of"
+                    ):
+                        head_tokens = [tokens[j]]
+                        if tokens[j] == "capital":
+                            predicate = "capital"
+                        rest_index = j + 2
                 break
             if token in _FRAME_PREDICATES:
                 predicate = _FRAME_PREDICATES[token]
                 rest_index = index + 1
                 break
-            if len(head_tokens) >= 4:
-                rest_index = index
-                break
+            next_token = tokens[index + 1] if index + 1 < len(tokens) else None
             head_tokens.append(token)
+            if _head_phrase_complete(head_tokens, next_token):
+                rest_index = index + 1
+                break
+            if len(head_tokens) >= 4:
+                rest_index = index + 1
+                break
         else:
             rest_index = len(tokens)
     head_noun = " ".join(head_tokens)
 
     if predicate is None:
-        # Auxiliary construction (or bare wh): the requested predicate is the
-        # last predicate keyword in the remaining clause.
-        for token in reversed(tokens[rest_index:] if head_tokens else tokens):
-            if token in _FRAME_PREDICATES:
-                predicate = _FRAME_PREDICATES[token]
-                break
+        # Auxiliary / bare-wh construction: first main-clause predicate only.
+        clause = tokens[rest_index:] if head_tokens or rest_index else tokens
+        predicate = _main_clause_predicate(clause)
 
     return InterrogativeFrame(
         wh_word=wh_word,
@@ -208,29 +291,46 @@ def _frame_intent(frame: InterrogativeFrame) -> str | None:
         return None
 
     if wh in {"which", "what"} and head:
+        head_token = head.split()[-1]
         if any(head.startswith(crew) or crew in head for crew in _CREW_HEADS):
             return "crew_members"
         if "president" in head:
             return "president_at_time"
-        if head.split()[-1] in _PLACE_HEADS or head.split()[-1] in _REGION_HEADS:
+        if head_token == "capital" or predicate == "capital":
+            return "capital_city"
+        if head_token in _PLACE_HEADS or head_token in _REGION_HEADS:
             if predicate == "born":
                 return "birthplace"
-            if predicate == "capital":
-                return "capital_city"
             if predicate in {"contains", "located", "part_of"}:
                 return "location_containment"
             if predicate == "launched":
                 return "launch_site"
             if predicate == "headquartered":
                 return "headquarters"
+            # "In which state is the birthplace of ...?" — locative wh with no
+            # explicit verb still requests the containing place.
+            if predicate is None:
+                return "location_containment"
             return None
-        if head.split()[-1] in _COMPANY_HEADS:
+        if head_token in _GEO_FEATURE_HEADS:
+            if predicate == "capital":
+                return "capital_city"
+            if head_token in {"body", "ocean", "sea", "bay"} and predicate in {
+                "contains",
+                "located",
+                "part_of",
+            }:
+                return "location_containment"
+            # River/field and similar open-domain geo asks stay untyped so a
+            # nested "capital"/"containing" qualifier cannot rewrite the claim.
+            return None
+        if head_token in _COMPANY_HEADS:
             if predicate == "built":
                 return "manufacturer"
             if predicate == "led":
                 return "leader"
             return None
-        if head.split()[-1] in _PERSON_HEADS:
+        if head_token in _PERSON_HEADS:
             if predicate == "led":
                 return "leader"
             if predicate == "crewed":
@@ -238,11 +338,11 @@ def _frame_intent(frame: InterrogativeFrame) -> str | None:
             if predicate == "president":
                 return "president_at_time"
             return None
-        if head.split()[-1] in _VEHICLE_HEADS:
+        if head_token in _VEHICLE_HEADS:
             if predicate == "launched":
                 return "launch_vehicle"
             return None
-        if head.split()[-1] in _DATE_HEADS:
+        if head_token in _DATE_HEADS:
             return "occurrence_date"
         return None
 
@@ -538,6 +638,31 @@ def extract_answer_value(answer: str, intent: str | None = None) -> str:
     return text
 
 
+def _values_align(left: str, right: str) -> bool:
+    left_n = normalize(left)
+    right_n = normalize(right)
+    if not left_n or not right_n:
+        return False
+    return left_n == right_n or left_n in right_n or right_n in left_n
+
+
+def _unique_on_target_fact_for_value(
+    value: str,
+    target: QuestionTarget,
+    kgc_facts: list[KgcFact],
+) -> KgcFact | None:
+    """If exactly one on-target trusted FACT ends at the answer value, use it."""
+    matches = [
+        fact
+        for fact in kgc_facts
+        if relation_matches_target(fact.relation, target)
+        and _values_align(fact.object, value)
+    ]
+    if len(matches) == 1:
+        return matches[0]
+    return None
+
+
 def condition_claims_to_question(
     claims: list[Triple],
     question: str,
@@ -548,6 +673,11 @@ def condition_claims_to_question(
     if not target.expected_relations or target.intent == "compound":
         return claims
 
+    value = extract_answer_value(answer, target.intent)
+    trusted_for_answer = (
+        _unique_on_target_fact_for_value(value, target, kgc_facts) if value else None
+    )
+
     # Never rewrite an already-on-target claim into a different relation family.
     # That was the hop-2/3 hijack path: a correct birthplace claim became a
     # crew-relation triple once the intent was wrong.
@@ -555,8 +685,22 @@ def condition_claims_to_question(
         claim for claim in claims if relation_matches_target(claim.relation, target)
     ]
     if on_target and not is_composite_intent(target.intent):
-        value = extract_answer_value(answer, target.intent)
         best = on_target[0]
+        if trusted_for_answer is not None:
+            return [
+                Triple(
+                    subject=trusted_for_answer.subject,
+                    relation=trusted_for_answer.relation,
+                    object=trusted_for_answer.object,
+                    source_sentence=best.source_sentence or value,
+                )
+            ]
+        if value and (
+            _values_align(best.object, value) or _values_align(best.subject, value)
+        ):
+            # Answer already occupies subject or object — do not overwrite the
+            # other slot (e.g. "United States contains Ohio" + answer US).
+            return [best]
         if value:
             return [
                 Triple(
@@ -581,9 +725,18 @@ def condition_claims_to_question(
         if composite:
             return composite
 
-    value = extract_answer_value(answer, target.intent)
     if not value:
         return claims
+
+    if trusted_for_answer is not None:
+        return [
+            Triple(
+                subject=trusted_for_answer.subject,
+                relation=trusted_for_answer.relation,
+                object=trusted_for_answer.object,
+                source_sentence=value,
+            )
+        ]
 
     relation = target.canonical_relation or INTENT_CANONICAL_RELATIONS.get(target.intent)
     if not relation and target.expected_relations:
@@ -929,8 +1082,18 @@ def _crew_is_qualifier_only(q: str) -> bool:
         return False
     if frame.predicate and frame.predicate != "crewed":
         return True
+    head_token = frame.head_noun.split()[-1] if frame.head_noun else ""
+    if head_token and head_token not in _CREW_HEADS and (
+        head_token in _PLACE_HEADS
+        or head_token in _REGION_HEADS
+        or head_token in _GEO_FEATURE_HEADS
+        or head_token in _COMPANY_HEADS
+        or head_token in _VEHICLE_HEADS
+    ):
+        return True
     competing = (
         "born" in q
+        or "birthplace" in q
         or "built" in q
         or "a1c" in q
         or "hba1c" in q
@@ -941,6 +1104,8 @@ def _crew_is_qualifier_only(q: str) -> bool:
         or "contains" in q
         or "located" in q
         or "headquarter" in q
+        or "capital" in q
+        or "river" in q
     )
     return competing
 

@@ -465,6 +465,13 @@ class DecomposedBacktrackingRunner:
                 focused_extraction_raw=list(proactive_trace.raw_focused_facts),
                 focused_extraction_filtered=list(proactive_trace.filtered_focused_facts),
                 focused_extraction_merged=list(proactive_added),
+                evidence_path=last_iter.evidence_path if last_iter else None,
+                evidence_path_complete=(
+                    last_iter.evidence_path_complete if last_iter else False
+                ),
+                evidence_path_length=(
+                    last_iter.evidence_path_length if last_iter else 0
+                ),
             )
             sub_results.append(sub_result)
             log_debug_event(

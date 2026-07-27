@@ -18,6 +18,7 @@ from src.pipeline.kgc_schema_aligner import align_claims_to_kgc_schema
 from src.pipeline.kgc_serializer import serialize_kgc_facts
 from src.pipeline.abstention_detection import is_abstention_answer
 from src.pipeline.relevant_context_fact_extractor import RelevantContextFactExtractor
+from src.pipeline.evidence_path_resolver import resolve_evidence_path
 from src.pipeline.question_target import (
     derive_question_target,
     evaluate_target_satisfaction,
@@ -90,6 +91,7 @@ def determine_stop_reason(
     answer_is_abstention: bool = False,
     focused_enrichment_attempted: bool = False,
     derivation_attempted: bool = False,
+    evidence_path_complete: bool | None = None,
 ) -> tuple[SubQuestionStopReason | None, str | None]:
     if claim_count == 0:
         if is_abstention_answer(current_answer):
@@ -111,7 +113,14 @@ def determine_stop_reason(
         return None, None
 
     if contradicted_count == 0 and no_evidence_count == 0 and claim_count > 0:
-        if target_satisfied:
+        if target_satisfied and evidence_path_complete is False:
+            # Correct terminal text with a disconnected/incomplete path must not
+            # resolve. Keep iterating when budget remains; otherwise leave as
+            # target-unsatisfied so the defect is visible.
+            if iteration + 1 >= max_iterations:
+                return SubQuestionStopReason.UNRESOLVED_TARGET_NOT_SATISFIED, "incomplete_evidence_path"
+            return None, "incomplete_evidence_path"
+        if target_satisfied and evidence_path_complete is not False:
             return SubQuestionStopReason.RESOLVED, None
         if supported_but_irrelevant_count > 0 or supported_count > 0:
             if iteration + 1 >= max_iterations:
@@ -392,6 +401,14 @@ class KgcIterationEngine:
                 evaluated_claims,
                 question_target,
             )
+            terminal_claim = _select_terminal_claim(evaluated_claims, aligned_claims)
+            path_result = resolve_evidence_path(
+                question=question,
+                current_answer=current_answer,
+                answer_claim=terminal_claim,
+                question_target=question_target,
+                trusted_facts=working_state.facts_for_comparison(),
+            )
             feedback = self._feedback_builder.build(evaluated_claims)
             feedback.extend(
                 self._feedback_builder.build_target_adequacy_feedback(
@@ -428,6 +445,7 @@ class KgcIterationEngine:
                 answer_is_abstention=answer_is_abstention,
                 focused_enrichment_attempted=focused_enrichment_attempted,
                 derivation_attempted=derivation_attempted,
+                evidence_path_complete=path_result.complete,
             )
 
             history.append(
@@ -458,6 +476,9 @@ class KgcIterationEngine:
                     focused_extraction_filtered=focused_filtered_facts,
                     derived_facts_added=derived_facts_added,
                     derivation_trace=derivation_trace_dict,
+                    evidence_path=path_result.to_dict(),
+                    evidence_path_complete=path_result.complete,
+                    evidence_path_length=path_result.path_length,
                 )
             )
 
@@ -502,3 +523,33 @@ class KgcIterationEngine:
                 stop_reason = SubQuestionStopReason.MAX_ITERATIONS
 
         return current_answer, history, stop_reason, enrichment_retries
+
+
+def _select_terminal_claim(
+    evaluated_claims: list[KgcEvaluationResult],
+    aligned_claims: list,
+):
+    """Prefer the trusted FACT matched by a supported claim; else the claim itself.
+
+    Comparator support can accept compatible object phrasings that are not
+    character-identical to the stored FACT. The evidence path must walk trusted
+    FACT edges, so the matched KGc fact is the terminal edge when present.
+    """
+    from src.models import Triple
+
+    for evaluation in evaluated_claims:
+        if evaluation.label == KgcClaimLabel.SUPPORTED:
+            matched = evaluation.matched_kgc_fact
+            if matched is not None:
+                return Triple(
+                    subject=matched.subject,
+                    relation=matched.relation,
+                    object=matched.object,
+                    source_sentence=evaluation.triple.source_sentence,
+                )
+            return evaluation.triple
+    if aligned_claims:
+        return aligned_claims[0]
+    if evaluated_claims:
+        return evaluated_claims[0].triple
+    return None

@@ -316,6 +316,8 @@ CAPITAL_RELATIONS = frozenset(
         "capital",
         "capital_of",
         "has_capital",
+        "has_capital_in",
+        "capital_in",
         "capital_city",
     }
 )

@@ -1,5 +1,7 @@
-"""Pipeline stages for hallucination detection and revision."""
+"""Pipeline stages for hallucination detection and revision.
 
-from src.pipeline.runner import PipelineRunner
+Import concrete runners from their modules (e.g. ``src.pipeline.runner``)
+rather than this package root to avoid circular imports with storage.
+"""
 
-__all__ = ["PipelineRunner"]
+__all__: list[str] = []

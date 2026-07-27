@@ -326,6 +326,9 @@ class SubQuestionIteration:
     focused_extraction_filtered: list[KgcFact] = field(default_factory=list)
     derived_facts_added: list[KgcFact] = field(default_factory=list)
     derivation_trace: dict[str, Any] | None = None
+    evidence_path: dict[str, Any] | None = None
+    evidence_path_complete: bool = False
+    evidence_path_length: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         def _triple_dict(t: Triple) -> dict[str, Any]:
@@ -395,6 +398,9 @@ class SubQuestionIteration:
             ],
             "derived_facts_added": [asdict(f) for f in self.derived_facts_added],
             "derivation_trace": self.derivation_trace,
+            "evidence_path": self.evidence_path,
+            "evidence_path_complete": self.evidence_path_complete,
+            "evidence_path_length": self.evidence_path_length,
         }
 
 
@@ -432,6 +438,9 @@ class SubQuestionResult:
     focused_extraction_raw: list[KgcFact] = field(default_factory=list)
     focused_extraction_filtered: list[KgcFact] = field(default_factory=list)
     focused_extraction_merged: list[KgcFact] = field(default_factory=list)
+    evidence_path: dict[str, Any] | None = None
+    evidence_path_complete: bool = False
+    evidence_path_length: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -475,6 +484,9 @@ class SubQuestionResult:
             "focused_extraction_merged": [
                 asdict(f) for f in self.focused_extraction_merged
             ],
+            "evidence_path": self.evidence_path,
+            "evidence_path_complete": self.evidence_path_complete,
+            "evidence_path_length": self.evidence_path_length,
         }
 
 

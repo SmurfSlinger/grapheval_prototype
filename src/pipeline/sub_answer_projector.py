@@ -77,9 +77,18 @@ class SubAnswerProjector:
 
         faithfulness = validate_projection_faithfulness(source, answers)
         if not faithfulness:
-            raise ValueError(
-                "Sub-answer projection failed faithfulness validation: "
-                "projected fragments must be grounded in the source Answer(0)."
+            # Do not abort the run when the LLM sneaks context into projection.
+            # Keep Answer(0) as the projected fragment so backtracking can still
+            # contradict a flawed preset answer (research-critical path).
+            fallback = [
+                SubQuestionInitialAnswer(sub_question_id=sq.id, answer=source)
+                for sq in sub_questions
+            ]
+            return fallback, ProjectionTrace(
+                method="llm_projector_faithfulness_fallback",
+                source=source,
+                faithfulness_passed=False,
+                retry_count=retries,
             )
         return answers, ProjectionTrace(
             method="llm_projector",

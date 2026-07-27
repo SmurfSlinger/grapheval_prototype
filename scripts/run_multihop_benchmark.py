@@ -1333,6 +1333,23 @@ def run_one(
                     for item in histories
                 )
             ),
+            "derived_question_target": (
+                final_sub.question_target if final_sub else None
+            ),
+            "evidence_path": (
+                final_sub.evidence_path if final_sub else None
+            ),
+            "evidence_path_complete": (
+                bool(final_sub.evidence_path_complete) if final_sub else False
+            ),
+            "evidence_path_length": (
+                int(final_sub.evidence_path_length or 0) if final_sub else 0
+            ),
+            "terminal_claim": (
+                (final_sub.evidence_path or {}).get("terminal_claim")
+                if final_sub and isinstance(final_sub.evidence_path, dict)
+                else None
+            ),
         }
     )
     return row

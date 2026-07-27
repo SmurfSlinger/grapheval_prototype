@@ -56,7 +56,7 @@ Intent selection now prefers the interrogative frame:
 
 1. Interrogative phrase (`In which town` / `Where` / `Which company` …)
 2. Head of the wh-noun phrase (town / company / state / crew member …)
-3. Requested predicate of the clause (`born`, `built`, `contains`, `flew` …)
+3. Requested predicate of the *main* clause (`born`, `built`, `contains`, `flew` …), never a nested qualifier predicate (`launched`, `headquartered`, …)
 
 Entity-description qualifiers such as `crew member` no longer override the
 requested answer type. `condition_claims_to_question` also preserves claims that
