@@ -1,0 +1,89 @@
+{
+  "source_analysis": "results/research/grapheval_final_experiment_analysis.json",
+  "fig1_outcomes_by_depth": {
+    "depths": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ],
+    "exact_match": [
+      4,
+      3,
+      3,
+      2,
+      4,
+      4,
+      1,
+      1,
+      3,
+      2
+    ],
+    "contains_expected": [
+      5,
+      5,
+      3,
+      4,
+      4,
+      5,
+      4,
+      4,
+      4,
+      5
+    ],
+    "pipeline_resolved": [
+      4,
+      3,
+      4,
+      2,
+      5,
+      4,
+      2,
+      3,
+      4,
+      2
+    ],
+    "questions_per_depth": 5
+  },
+  "fig2_joint_outcomes": {
+    "textually_correct_and_pipeline_resolved": 28,
+    "textually_correct_but_pipeline_unresolved": 15,
+    "textually_incorrect_but_pipeline_resolved": 5,
+    "textually_incorrect_and_pipeline_unresolved": 2
+  },
+  "fig3_stop_reasons": {
+    "RESOLVED": 33,
+    "STALLED": 7,
+    "UNRESOLVED_TARGET_NOT_SATISFIED": 7,
+    "UNRESOLVED_NO_EVIDENCE": 3
+  },
+  "fig4_revision_outcomes": {
+    "first_pass": {
+      "count": 27,
+      "exact_match": 24,
+      "contains_expected": 25,
+      "pipeline_resolved": 27,
+      "stop_reasons": {
+        "RESOLVED": 27
+      }
+    },
+    "revised": {
+      "count": 23,
+      "exact_match": 3,
+      "contains_expected": 18,
+      "pipeline_resolved": 6,
+      "stop_reasons": {
+        "STALLED": 7,
+        "UNRESOLVED_NO_EVIDENCE": 3,
+        "UNRESOLVED_TARGET_NOT_SATISFIED": 7,
+        "RESOLVED": 6
+      }
+    }
+  }
+}
