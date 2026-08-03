@@ -90,6 +90,16 @@ up to the limit; (15) combine sub-answers; (16) score textually after inference;
   previous one; no problematic run was rerun to obtain a preferred outcome, and
   pre-fix and post-fix rows are never pooled.
 
+## Repeatability extension
+
+On 2026-08-03 (UTC) the identical experiment was executed twice more (Run 2, Run
+3) under the protocol in `research/REPEATABILITY_PROTOCOL.md`: same frozen
+implementation, dataset, model digest, configuration, and infrastructure;
+sequential execution; no selective reruns. The official run above is Run 1 and
+remains the primary experiment; the three runs are repeated measurements of the
+same 50 questions and are never pooled. Result: complete output stability
+(50/50 questions identical on all compared dimensions); only runtime varied.
+
 ## Human participants
 
 None. All data are synthetic benchmark questions (Apollo/NASA public history) or

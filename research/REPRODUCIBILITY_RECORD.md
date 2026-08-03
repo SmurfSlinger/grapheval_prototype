@@ -82,6 +82,49 @@ files and `Pasted text(44).txt` are absent from this environment; official-run
 per-question debug traces were never persisted; GitHub PR metadata is not accessible
 from this environment.
 
+## Repeatability extension (2026-08-03 UTC)
+
+Executed on branch `research/repeatability-study` at HEAD `3f01ea1` (created from
+the report branch; inference-sensitive paths verified identical to `b9608d0` via
+`git diff --exit-code b9608d0 -- src api prompts data/test_sets/apollo_multihop_50.json
+scripts/run_multihop_benchmark.py scripts/recreate-neo4j.sh scripts/devctl.sh` —
+clean before the study). Runs executed sequentially by a bounded wrapper
+(command recorded per run in `.runtime/research/repeatability/*.cmd`); each run
+used the exact original command shape and environment
+(`NEO4J_ENABLED=true NEO4J_REQUIRED=true OLLAMA_NUM_CTX=8192
+OLLAMA_NUM_PREDICT=4096 OLLAMA_TEMPERATURE=0`, flags `--provider ollama --model
+llama3.1:8b --num-ctx 8192 --max-iterations 3 --clear-neo4j
+--timeout-per-question 180 --continue-on-error --cooldown-seconds 2
+--max-consecutive-timeouts 3`). Model digest `46e0c10c039e` (Ollama 0.32.5);
+Neo4j 5.26.0 (same `grapheval-neo4j` container). No infrastructure failures
+occurred; no run or question was repeated.
+
+| Run | Artifact | Started (UTC) | Exit code | SHA256 |
+|---|---|---|---|---|
+| Run 2 | `results/research/repeatability/apollo_repeat_run2_llama31_8b_20260803T012414Z.json` | 2026-08-03T01:24:14Z | 0 | `896a8186ccfe525552a556ff55eac26d10fb10779e326e7b7e2792dfb7ae94ee` |
+| Run 2 summary | `...apollo_repeat_run2_llama31_8b_20260803T012414Z.md` | — | — | `c2f36964e29bcd13b0a446b61d1a7777b3944ad7603bf5c5c7448176828089c2` |
+| Run 3 | `results/research/repeatability/apollo_repeat_run3_llama31_8b_20260803T020637Z.json` | 2026-08-03T02:06:37Z | 0 | `03dbaa696aa8af7cf66fbe608a2c5300e1b06927a5b4cfbb1fc40b4002132c17` |
+| Run 3 summary | `...apollo_repeat_run3_llama31_8b_20260803T020637Z.md` | — | — | `f2487a49ba7cb28767a4dc5a2ae09b8cd5a1838882bca32aa2a12d53e4942552` |
+
+Both runs: `full_real`, `is_partial: false`, 50 selected / 50 attempted / 50
+completed, 0 errors, validated immediately after completion (validation output in
+`.runtime/research/repeatability/wrapper_state.txt`; logs and rc files in
+`.runtime/research/repeatability/`). Run 1 remains the unmodified official file
+(SHA256 re-verified identical before the study).
+
+Analysis commands:
+
+```bash
+.venv/bin/python scripts/analyze_repeatability_experiment.py \
+  results/research/apollo_multihop_llama31_8b_20260727T203028Z.json \
+  results/research/repeatability/apollo_repeat_run2_llama31_8b_20260803T012414Z.json \
+  results/research/repeatability/apollo_repeat_run3_llama31_8b_20260803T020637Z.json
+.venv/bin/python scripts/plot_repeatability_experiment.py
+```
+
+Headline: all 50 questions byte-identical on every compared output dimension in
+all three runs; only runtime varied (means 48.42 / 46.73 / 45.79 s).
+
 ## Run-class separation
 
 - Official run: `apollo_multihop_llama31_8b_20260727T203028Z` (only quantitative sample)
