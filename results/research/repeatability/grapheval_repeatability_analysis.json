@@ -1,0 +1,5032 @@
+{
+  "runs": [
+    {
+      "name": "run1",
+      "path": "results/research/apollo_multihop_llama31_8b_20260727T203028Z.json",
+      "generated_at": "2026-07-27T21:12:37.433000+00:00",
+      "branch": "debug/8b-hop-validation"
+    },
+    {
+      "name": "run2",
+      "path": "results/research/repeatability/apollo_repeat_run2_llama31_8b_20260803T012414Z.json",
+      "generated_at": "2026-08-03T02:06:32.431156+00:00",
+      "branch": "research/repeatability-study"
+    },
+    {
+      "name": "run3",
+      "path": "results/research/repeatability/apollo_repeat_run3_llama31_8b_20260803T020637Z.json",
+      "generated_at": "2026-08-03T02:48:22.898298+00:00",
+      "branch": "research/repeatability-study"
+    }
+  ],
+  "design_note": "Run 1 is the pre-specified official run; Runs 2 and 3 are exact-configuration repetitions. The three runs are repeated measurements of the same 50 questions, not 150 independent questions, and three runs do not support strong statistical inference.",
+  "configuration_compatibility": {
+    "test_set_id": [
+      "apollo_multihop_50",
+      "apollo_multihop_50",
+      "apollo_multihop_50"
+    ],
+    "provider": [
+      "ollama",
+      "ollama",
+      "ollama"
+    ],
+    "model": [
+      "llama3.1:8b",
+      "llama3.1:8b",
+      "llama3.1:8b"
+    ],
+    "configured_num_ctx": [
+      8192,
+      8192,
+      8192
+    ],
+    "timeout_per_question_seconds": [
+      180.0,
+      180.0,
+      180.0
+    ],
+    "neo4j_enabled": [
+      true,
+      true,
+      true
+    ],
+    "clear_neo4j_between_runs": [
+      true,
+      true,
+      true
+    ],
+    "selected_question_count": [
+      50,
+      50,
+      50
+    ],
+    "question_ids_identical": true,
+    "branches_recorded": [
+      "debug/8b-hop-validation",
+      "research/repeatability-study",
+      "research/repeatability-study"
+    ],
+    "note": "Recorded branch names may differ between the official run and the repeatability branch; inference-implementation equality was verified externally via `git diff b9608d0 -- src api prompts ...` (clean)."
+  },
+  "per_run_aggregates": {
+    "run1": {
+      "completed": 50,
+      "errors": 0,
+      "timeouts": 0,
+      "exact_match": 27,
+      "contains_expected": 43,
+      "normalized_match": 43,
+      "pipeline_resolved": 33,
+      "evidence_path_complete": 36,
+      "iterations_total": 83,
+      "iterations_avg": 1.66,
+      "revisions_total": 33,
+      "revisions_avg": 0.66,
+      "runtime_mean_s": 48.418,
+      "runtime_median_s": 44.911,
+      "stop_reasons": {
+        "RESOLVED": 33,
+        "STALLED": 7,
+        "UNRESOLVED_NO_EVIDENCE": 3,
+        "UNRESOLVED_TARGET_NOT_SATISFIED": 7
+      },
+      "final_labels": {
+        "supported": 65,
+        "contradicted": 1,
+        "no_evidence": 12
+      }
+    },
+    "run2": {
+      "completed": 50,
+      "errors": 0,
+      "timeouts": 0,
+      "exact_match": 27,
+      "contains_expected": 43,
+      "normalized_match": 43,
+      "pipeline_resolved": 33,
+      "evidence_path_complete": 36,
+      "iterations_total": 83,
+      "iterations_avg": 1.66,
+      "revisions_total": 33,
+      "revisions_avg": 0.66,
+      "runtime_mean_s": 46.729,
+      "runtime_median_s": 43.816,
+      "stop_reasons": {
+        "RESOLVED": 33,
+        "STALLED": 7,
+        "UNRESOLVED_NO_EVIDENCE": 3,
+        "UNRESOLVED_TARGET_NOT_SATISFIED": 7
+      },
+      "final_labels": {
+        "supported": 65,
+        "contradicted": 1,
+        "no_evidence": 12
+      }
+    },
+    "run3": {
+      "completed": 50,
+      "errors": 0,
+      "timeouts": 0,
+      "exact_match": 27,
+      "contains_expected": 43,
+      "normalized_match": 43,
+      "pipeline_resolved": 33,
+      "evidence_path_complete": 36,
+      "iterations_total": 83,
+      "iterations_avg": 1.66,
+      "revisions_total": 33,
+      "revisions_avg": 0.66,
+      "runtime_mean_s": 45.785,
+      "runtime_median_s": 42.539,
+      "stop_reasons": {
+        "RESOLVED": 33,
+        "STALLED": 7,
+        "UNRESOLVED_NO_EVIDENCE": 3,
+        "UNRESOLVED_TARGET_NOT_SATISFIED": 7
+      },
+      "final_labels": {
+        "supported": 65,
+        "contradicted": 1,
+        "no_evidence": 12
+      }
+    }
+  },
+  "across_run_mean_min_max_range": {
+    "exact_match": {
+      "mean": 27,
+      "min": 27,
+      "max": 27,
+      "range": 0
+    },
+    "contains_expected": {
+      "mean": 43,
+      "min": 43,
+      "max": 43,
+      "range": 0
+    },
+    "normalized_match": {
+      "mean": 43,
+      "min": 43,
+      "max": 43,
+      "range": 0
+    },
+    "pipeline_resolved": {
+      "mean": 33,
+      "min": 33,
+      "max": 33,
+      "range": 0
+    },
+    "evidence_path_complete": {
+      "mean": 36,
+      "min": 36,
+      "max": 36,
+      "range": 0
+    },
+    "iterations_total": {
+      "mean": 83,
+      "min": 83,
+      "max": 83,
+      "range": 0
+    },
+    "revisions_total": {
+      "mean": 33,
+      "min": 33,
+      "max": 33,
+      "range": 0
+    },
+    "runtime_mean_s": {
+      "mean": 46.977,
+      "min": 45.785,
+      "max": 48.418,
+      "range": 2.633
+    },
+    "runtime_median_s": {
+      "mean": 43.755,
+      "min": 42.539,
+      "max": 44.911,
+      "range": 2.372
+    }
+  },
+  "per_question_stability_counts": {
+    "normalized_answer": 50,
+    "exact_match": 50,
+    "contains_expected": 50,
+    "resolved": 50,
+    "stop_reason": 50,
+    "path_complete": 50,
+    "terminal_claim": 50,
+    "label_tuple": 50
+  },
+  "primary_category_counts": {
+    "stable_correct_resolved": 28,
+    "stable_correct_unresolved": 15,
+    "stable_incorrect_resolved": 5,
+    "stable_incorrect_unresolved": 2
+  },
+  "change_flag_counts": {},
+  "pairwise_agreement": {
+    "run1_vs_run2": {
+      "exact_match": 1.0,
+      "contains_expected": 1.0,
+      "resolved": 1.0,
+      "path_complete": 1.0,
+      "stop_reason": 1.0,
+      "normalized_answer": 1.0,
+      "terminal_claim": 1.0,
+      "kappa": {
+        "exact_match": 1.0,
+        "contains_expected": 1.0,
+        "resolved": 1.0,
+        "path_complete": 1.0
+      },
+      "kappa_note": "Raw agreement is primary; kappa on n=50 with imbalanced categories can be distorted and is reported for reference only."
+    },
+    "run1_vs_run3": {
+      "exact_match": 1.0,
+      "contains_expected": 1.0,
+      "resolved": 1.0,
+      "path_complete": 1.0,
+      "stop_reason": 1.0,
+      "normalized_answer": 1.0,
+      "terminal_claim": 1.0,
+      "kappa": {
+        "exact_match": 1.0,
+        "contains_expected": 1.0,
+        "resolved": 1.0,
+        "path_complete": 1.0
+      },
+      "kappa_note": "Raw agreement is primary; kappa on n=50 with imbalanced categories can be distorted and is reported for reference only."
+    },
+    "run2_vs_run3": {
+      "exact_match": 1.0,
+      "contains_expected": 1.0,
+      "resolved": 1.0,
+      "path_complete": 1.0,
+      "stop_reason": 1.0,
+      "normalized_answer": 1.0,
+      "terminal_claim": 1.0,
+      "kappa": {
+        "exact_match": 1.0,
+        "contains_expected": 1.0,
+        "resolved": 1.0,
+        "path_complete": 1.0
+      },
+      "kappa_note": "Raw agreement is primary; kappa on n=50 with imbalanced categories can be distorted and is reported for reference only."
+    }
+  },
+  "depth_variability": {
+    "note": "Each run contains only five questions per designed depth.",
+    "1": {
+      "per_run": [
+        {
+          "exact": 4,
+          "contains": 5,
+          "resolved": 4,
+          "path_complete": 4
+        },
+        {
+          "exact": 4,
+          "contains": 5,
+          "resolved": 4,
+          "path_complete": 4
+        },
+        {
+          "exact": 4,
+          "contains": 5,
+          "resolved": 4,
+          "path_complete": 4
+        }
+      ],
+      "resolved_mean_range": {
+        "mean": 4,
+        "min": 4,
+        "max": 4,
+        "range": 0
+      },
+      "exact_mean_range": {
+        "mean": 4,
+        "min": 4,
+        "max": 4,
+        "range": 0
+      }
+    },
+    "2": {
+      "per_run": [
+        {
+          "exact": 3,
+          "contains": 5,
+          "resolved": 3,
+          "path_complete": 4
+        },
+        {
+          "exact": 3,
+          "contains": 5,
+          "resolved": 3,
+          "path_complete": 4
+        },
+        {
+          "exact": 3,
+          "contains": 5,
+          "resolved": 3,
+          "path_complete": 4
+        }
+      ],
+      "resolved_mean_range": {
+        "mean": 3,
+        "min": 3,
+        "max": 3,
+        "range": 0
+      },
+      "exact_mean_range": {
+        "mean": 3,
+        "min": 3,
+        "max": 3,
+        "range": 0
+      }
+    },
+    "3": {
+      "per_run": [
+        {
+          "exact": 3,
+          "contains": 3,
+          "resolved": 4,
+          "path_complete": 4
+        },
+        {
+          "exact": 3,
+          "contains": 3,
+          "resolved": 4,
+          "path_complete": 4
+        },
+        {
+          "exact": 3,
+          "contains": 3,
+          "resolved": 4,
+          "path_complete": 4
+        }
+      ],
+      "resolved_mean_range": {
+        "mean": 4,
+        "min": 4,
+        "max": 4,
+        "range": 0
+      },
+      "exact_mean_range": {
+        "mean": 3,
+        "min": 3,
+        "max": 3,
+        "range": 0
+      }
+    },
+    "4": {
+      "per_run": [
+        {
+          "exact": 2,
+          "contains": 4,
+          "resolved": 2,
+          "path_complete": 4
+        },
+        {
+          "exact": 2,
+          "contains": 4,
+          "resolved": 2,
+          "path_complete": 4
+        },
+        {
+          "exact": 2,
+          "contains": 4,
+          "resolved": 2,
+          "path_complete": 4
+        }
+      ],
+      "resolved_mean_range": {
+        "mean": 2,
+        "min": 2,
+        "max": 2,
+        "range": 0
+      },
+      "exact_mean_range": {
+        "mean": 2,
+        "min": 2,
+        "max": 2,
+        "range": 0
+      }
+    },
+    "5": {
+      "per_run": [
+        {
+          "exact": 4,
+          "contains": 4,
+          "resolved": 5,
+          "path_complete": 5
+        },
+        {
+          "exact": 4,
+          "contains": 4,
+          "resolved": 5,
+          "path_complete": 5
+        },
+        {
+          "exact": 4,
+          "contains": 4,
+          "resolved": 5,
+          "path_complete": 5
+        }
+      ],
+      "resolved_mean_range": {
+        "mean": 5,
+        "min": 5,
+        "max": 5,
+        "range": 0
+      },
+      "exact_mean_range": {
+        "mean": 4,
+        "min": 4,
+        "max": 4,
+        "range": 0
+      }
+    },
+    "6": {
+      "per_run": [
+        {
+          "exact": 4,
+          "contains": 5,
+          "resolved": 4,
+          "path_complete": 4
+        },
+        {
+          "exact": 4,
+          "contains": 5,
+          "resolved": 4,
+          "path_complete": 4
+        },
+        {
+          "exact": 4,
+          "contains": 5,
+          "resolved": 4,
+          "path_complete": 4
+        }
+      ],
+      "resolved_mean_range": {
+        "mean": 4,
+        "min": 4,
+        "max": 4,
+        "range": 0
+      },
+      "exact_mean_range": {
+        "mean": 4,
+        "min": 4,
+        "max": 4,
+        "range": 0
+      }
+    },
+    "7": {
+      "per_run": [
+        {
+          "exact": 1,
+          "contains": 4,
+          "resolved": 2,
+          "path_complete": 2
+        },
+        {
+          "exact": 1,
+          "contains": 4,
+          "resolved": 2,
+          "path_complete": 2
+        },
+        {
+          "exact": 1,
+          "contains": 4,
+          "resolved": 2,
+          "path_complete": 2
+        }
+      ],
+      "resolved_mean_range": {
+        "mean": 2,
+        "min": 2,
+        "max": 2,
+        "range": 0
+      },
+      "exact_mean_range": {
+        "mean": 1,
+        "min": 1,
+        "max": 1,
+        "range": 0
+      }
+    },
+    "8": {
+      "per_run": [
+        {
+          "exact": 1,
+          "contains": 4,
+          "resolved": 3,
+          "path_complete": 3
+        },
+        {
+          "exact": 1,
+          "contains": 4,
+          "resolved": 3,
+          "path_complete": 3
+        },
+        {
+          "exact": 1,
+          "contains": 4,
+          "resolved": 3,
+          "path_complete": 3
+        }
+      ],
+      "resolved_mean_range": {
+        "mean": 3,
+        "min": 3,
+        "max": 3,
+        "range": 0
+      },
+      "exact_mean_range": {
+        "mean": 1,
+        "min": 1,
+        "max": 1,
+        "range": 0
+      }
+    },
+    "9": {
+      "per_run": [
+        {
+          "exact": 3,
+          "contains": 4,
+          "resolved": 4,
+          "path_complete": 4
+        },
+        {
+          "exact": 3,
+          "contains": 4,
+          "resolved": 4,
+          "path_complete": 4
+        },
+        {
+          "exact": 3,
+          "contains": 4,
+          "resolved": 4,
+          "path_complete": 4
+        }
+      ],
+      "resolved_mean_range": {
+        "mean": 4,
+        "min": 4,
+        "max": 4,
+        "range": 0
+      },
+      "exact_mean_range": {
+        "mean": 3,
+        "min": 3,
+        "max": 3,
+        "range": 0
+      }
+    },
+    "10": {
+      "per_run": [
+        {
+          "exact": 2,
+          "contains": 5,
+          "resolved": 2,
+          "path_complete": 2
+        },
+        {
+          "exact": 2,
+          "contains": 5,
+          "resolved": 2,
+          "path_complete": 2
+        },
+        {
+          "exact": 2,
+          "contains": 5,
+          "resolved": 2,
+          "path_complete": 2
+        }
+      ],
+      "resolved_mean_range": {
+        "mean": 2,
+        "min": 2,
+        "max": 2,
+        "range": 0
+      },
+      "exact_mean_range": {
+        "mean": 2,
+        "min": 2,
+        "max": 2,
+        "range": 0
+      }
+    }
+  },
+  "revision_variability": {
+    "never_revised_any_run": 27,
+    "revised_in_all_three_runs": 23,
+    "revision_behavior_changed_between_runs": 0,
+    "consistently_resolved_without_revision": 27,
+    "resolved_after_revision_in_at_least_one_run": 6,
+    "revised_runs_with_inconsistent_resolution": 0,
+    "limitation": "Result rows do not preserve intermediate answers or claim-label transitions, so whether a specific revision corrected or regressed an answer cannot be inferred from these files alone."
+  },
+  "per_question": [
+    {
+      "id": "apollo_hop_001",
+      "hop_count": 1,
+      "expected_answer": "Neil Armstrong",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_001__20260727T203028Z__656bf325",
+          "final_answer": "Neil Armstrong",
+          "normalized_predicted": "neil armstrong",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_crewed_by",
+            "object": "Neil Armstrong"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_001__20260803T012414Z__9287d5ee",
+          "final_answer": "Neil Armstrong",
+          "normalized_predicted": "neil armstrong",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_crewed_by",
+            "object": "Neil Armstrong"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_001__20260803T020637Z__b388d915",
+          "final_answer": "Neil Armstrong",
+          "normalized_predicted": "neil armstrong",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_crewed_by",
+            "object": "Neil Armstrong"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_002",
+      "hop_count": 1,
+      "expected_answer": "Saturn V",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_002__20260727T203115Z__2ab06570",
+          "final_answer": "Saturn V",
+          "normalized_predicted": "saturn v",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_launched_by",
+            "object": "Saturn V"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_002__20260803T012514Z__2e0a954b",
+          "final_answer": "Saturn V",
+          "normalized_predicted": "saturn v",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_launched_by",
+            "object": "Saturn V"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_002__20260803T020718Z__33c70ef5",
+          "final_answer": "Saturn V",
+          "normalized_predicted": "saturn v",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_launched_by",
+            "object": "Saturn V"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_003",
+      "hop_count": 1,
+      "expected_answer": "Columbia",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_003__20260727T203156Z__19fe82d5",
+          "final_answer": "Columbia",
+          "normalized_predicted": "columbia",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "used_as_command_module",
+            "object": "Columbia"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_003__20260803T012556Z__229a73c1",
+          "final_answer": "Columbia",
+          "normalized_predicted": "columbia",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "used_as_command_module",
+            "object": "Columbia"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_003__20260803T020758Z__95883354",
+          "final_answer": "Columbia",
+          "normalized_predicted": "columbia",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "used_as_command_module",
+            "object": "Columbia"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_004",
+      "hop_count": 1,
+      "expected_answer": "Eagle",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_004__20260727T203235Z__faa06087",
+          "final_answer": "Eagle",
+          "normalized_predicted": "eagle",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "used_as_lunar_module",
+            "object": "Eagle"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_004__20260803T012635Z__618669a6",
+          "final_answer": "Eagle",
+          "normalized_predicted": "eagle",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "used_as_lunar_module",
+            "object": "Eagle"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_004__20260803T020838Z__fade3ec7",
+          "final_answer": "Eagle",
+          "normalized_predicted": "eagle",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "used_as_lunar_module",
+            "object": "Eagle"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_005",
+      "hop_count": 1,
+      "expected_answer": "Apollo Program",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_005__20260727T203315Z__738dc7cf",
+          "final_answer": "The Apollo Program.",
+          "normalized_predicted": "the apollo program",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Apollo Program",
+            "relation": "includes",
+            "object": "The Apollo Program."
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_005__20260803T012715Z__b0bf2e95",
+          "final_answer": "The Apollo Program.",
+          "normalized_predicted": "the apollo program",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Apollo Program",
+            "relation": "includes",
+            "object": "The Apollo Program."
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_005__20260803T020918Z__0aa9ffa1",
+          "final_answer": "The Apollo Program.",
+          "normalized_predicted": "the apollo program",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Apollo Program",
+            "relation": "includes",
+            "object": "The Apollo Program."
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_006",
+      "hop_count": 2,
+      "expected_answer": "Wapakoneta",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_006__20260727T203402Z__696d5203",
+          "final_answer": "Wapakoneta",
+          "normalized_predicted": "wapakoneta",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Neil Armstrong",
+            "relation": "was_born_in",
+            "object": "Wapakoneta"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_006__20260803T012805Z__d4816a56",
+          "final_answer": "Wapakoneta",
+          "normalized_predicted": "wapakoneta",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Neil Armstrong",
+            "relation": "was_born_in",
+            "object": "Wapakoneta"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_006__20260803T021004Z__32ba6a67",
+          "final_answer": "Wapakoneta",
+          "normalized_predicted": "wapakoneta",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Neil Armstrong",
+            "relation": "was_born_in",
+            "object": "Wapakoneta"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_007",
+      "hop_count": 2,
+      "expected_answer": "S-IC",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_007__20260727T203443Z__2506492e",
+          "final_answer": "The S-IC was the first stage of the Saturn V rocket that launched Apollo 11.",
+          "normalized_predicted": "the s ic was the first stage of the saturn v rocket that launched apollo 11",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_NO_EVIDENCE",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_launched_by",
+            "object": "Saturn V"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            1
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_007__20260803T012846Z__f6b8f15d",
+          "final_answer": "The S-IC was the first stage of the Saturn V rocket that launched Apollo 11.",
+          "normalized_predicted": "the s ic was the first stage of the saturn v rocket that launched apollo 11",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_NO_EVIDENCE",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_launched_by",
+            "object": "Saturn V"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            1
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_007__20260803T021046Z__1343b495",
+          "final_answer": "The S-IC was the first stage of the Saturn V rocket that launched Apollo 11.",
+          "normalized_predicted": "the s ic was the first stage of the saturn v rocket that launched apollo 11",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_NO_EVIDENCE",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_launched_by",
+            "object": "Saturn V"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            1
+          ],
+          "iterations": 3,
+          "revisions": 2
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_008",
+      "hop_count": 2,
+      "expected_answer": "National Air and Space Museum",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_008__20260727T203552Z__33d6df1d",
+          "final_answer": "National Air and Space Museum",
+          "normalized_predicted": "national air and space museum",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "is_preserved_at",
+            "object": "National Air and Space Museum"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_008__20260803T012955Z__5cd80330",
+          "final_answer": "National Air and Space Museum",
+          "normalized_predicted": "national air and space museum",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "is_preserved_at",
+            "object": "National Air and Space Museum"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_008__20260803T021153Z__c35d577b",
+          "final_answer": "National Air and Space Museum",
+          "normalized_predicted": "national air and space museum",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "is_preserved_at",
+            "object": "National Air and Space Museum"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_009",
+      "hop_count": 2,
+      "expected_answer": "Moon",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_009__20260727T203635Z__b1fe079e",
+          "final_answer": "Moon",
+          "normalized_predicted": "moon",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Eagle",
+            "relation": "has_descent_stage_located_on",
+            "object": "Moon"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_009__20260803T013040Z__03e8fff1",
+          "final_answer": "Moon",
+          "normalized_predicted": "moon",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Eagle",
+            "relation": "has_descent_stage_located_on",
+            "object": "Moon"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_009__20260803T021236Z__aaeb0f8d",
+          "final_answer": "Moon",
+          "normalized_predicted": "moon",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Eagle",
+            "relation": "has_descent_stage_located_on",
+            "object": "Moon"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_010",
+      "hop_count": 2,
+      "expected_answer": "Gemini Program",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_010__20260727T203719Z__09232455",
+          "final_answer": "The Gemini Program immediately preceded the program containing Apollo 11.",
+          "normalized_predicted": "the gemini program immediately preceded the program containing apollo 11",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Gemini Program",
+            "relation": "was_preceded_by",
+            "object": "Apollo Program"
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_010__20260803T013123Z__c7a1dc9b",
+          "final_answer": "The Gemini Program immediately preceded the program containing Apollo 11.",
+          "normalized_predicted": "the gemini program immediately preceded the program containing apollo 11",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Gemini Program",
+            "relation": "was_preceded_by",
+            "object": "Apollo Program"
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_010__20260803T021320Z__2f6360c7",
+          "final_answer": "The Gemini Program immediately preceded the program containing Apollo 11.",
+          "normalized_predicted": "the gemini program immediately preceded the program containing apollo 11",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Gemini Program",
+            "relation": "was_preceded_by",
+            "object": "Apollo Program"
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_011",
+      "hop_count": 3,
+      "expected_answer": "Ohio",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_011__20260727T203808Z__e725e0ce",
+          "final_answer": "Ohio",
+          "normalized_predicted": "ohio",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Wapakoneta",
+            "relation": "is_located_in",
+            "object": "Ohio"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_011__20260803T013212Z__86d7108e",
+          "final_answer": "Ohio",
+          "normalized_predicted": "ohio",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Wapakoneta",
+            "relation": "is_located_in",
+            "object": "Ohio"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_011__20260803T021407Z__ac92b42a",
+          "final_answer": "Ohio",
+          "normalized_predicted": "ohio",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Wapakoneta",
+            "relation": "is_located_in",
+            "object": "Ohio"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_012",
+      "hop_count": 3,
+      "expected_answer": "Boeing",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_012__20260727T203850Z__27756860",
+          "final_answer": "Boeing",
+          "normalized_predicted": "boeing",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "S-IC",
+            "relation": "was_built_by",
+            "object": "Boeing"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_012__20260803T013254Z__631deadc",
+          "final_answer": "Boeing",
+          "normalized_predicted": "boeing",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "S-IC",
+            "relation": "was_built_by",
+            "object": "Boeing"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_012__20260803T021448Z__6a46200a",
+          "final_answer": "Boeing",
+          "normalized_predicted": "boeing",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "S-IC",
+            "relation": "was_built_by",
+            "object": "Boeing"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_013",
+      "hop_count": 3,
+      "expected_answer": "Washington, D.C.",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_013__20260727T203933Z__febae58c",
+          "final_answer": "Washington, D.C.",
+          "normalized_predicted": "washington d c",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "National Air and Space Museum",
+            "relation": "is_located_in",
+            "object": "Washington, D.C."
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_013__20260803T013337Z__806ac6ef",
+          "final_answer": "Washington, D.C.",
+          "normalized_predicted": "washington d c",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "National Air and Space Museum",
+            "relation": "is_located_in",
+            "object": "Washington, D.C."
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_013__20260803T021532Z__9014f083",
+          "final_answer": "Washington, D.C.",
+          "normalized_predicted": "washington d c",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "National Air and Space Museum",
+            "relation": "is_located_in",
+            "object": "Washington, D.C."
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_014",
+      "hop_count": 3,
+      "expected_answer": "Sea of Tranquility",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_014__20260727T204021Z__ae6eabf6",
+          "final_answer": "The landing region associated with the body holding Eagle's descent stage is part of the Apollo Program.",
+          "normalized_predicted": "the landing region associated with the body holding eagle s descent stage is part of the apollo program",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_part_of",
+            "object": "Apollo Program"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_014__20260803T013426Z__601fe962",
+          "final_answer": "The landing region associated with the body holding Eagle's descent stage is part of the Apollo Program.",
+          "normalized_predicted": "the landing region associated with the body holding eagle s descent stage is part of the apollo program",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_part_of",
+            "object": "Apollo Program"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_014__20260803T021619Z__7cd14f8e",
+          "final_answer": "The landing region associated with the body holding Eagle's descent stage is part of the Apollo Program.",
+          "normalized_predicted": "the landing region associated with the body holding eagle s descent stage is part of the apollo program",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_part_of",
+            "object": "Apollo Program"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_incorrect_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_015",
+      "hop_count": 3,
+      "expected_answer": "Gemini 8",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_015__20260727T204111Z__81a30fde",
+          "final_answer": "Gemini Program",
+          "normalized_predicted": "gemini program",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo Program",
+            "relation": "was_preceded_by",
+            "object": "Gemini Program"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_015__20260803T013518Z__3dc1566a",
+          "final_answer": "Gemini Program",
+          "normalized_predicted": "gemini program",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo Program",
+            "relation": "was_preceded_by",
+            "object": "Gemini Program"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_015__20260803T021710Z__75f17ba2",
+          "final_answer": "Gemini Program",
+          "normalized_predicted": "gemini program",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo Program",
+            "relation": "was_preceded_by",
+            "object": "Gemini Program"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_incorrect_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_016",
+      "hop_count": 4,
+      "expected_answer": "United States",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_016__20260727T204155Z__4769351a",
+          "final_answer": "United States",
+          "normalized_predicted": "united states",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Ohio",
+            "relation": "is_part_of",
+            "object": "United States"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_016__20260803T013601Z__4041543a",
+          "final_answer": "United States",
+          "normalized_predicted": "united states",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Ohio",
+            "relation": "is_part_of",
+            "object": "United States"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_016__20260803T021752Z__93c83047",
+          "final_answer": "United States",
+          "normalized_predicted": "united states",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Ohio",
+            "relation": "is_part_of",
+            "object": "United States"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_017",
+      "hop_count": 4,
+      "expected_answer": "Michoud Assembly Facility",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_017__20260727T204242Z__7e31e57e",
+          "final_answer": "The Michoud Assembly Facility, located in New Orleans, Louisiana.",
+          "normalized_predicted": "the michoud assembly facility located in new orleans louisiana",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Boeing",
+            "relation": "assembled_at",
+            "object": "Michoud Assembly Facility"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_017__20260803T013648Z__d069699e",
+          "final_answer": "The Michoud Assembly Facility, located in New Orleans, Louisiana.",
+          "normalized_predicted": "the michoud assembly facility located in new orleans louisiana",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Boeing",
+            "relation": "assembled_at",
+            "object": "Michoud Assembly Facility"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_017__20260803T021839Z__b4890602",
+          "final_answer": "The Michoud Assembly Facility, located in New Orleans, Louisiana.",
+          "normalized_predicted": "the michoud assembly facility located in new orleans louisiana",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Boeing",
+            "relation": "assembled_at",
+            "object": "Michoud Assembly Facility"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_018",
+      "hop_count": 4,
+      "expected_answer": "Smithsonian Institution",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_018__20260727T204334Z__ac417fae",
+          "final_answer": "The institution hosted by the city containing the museum preserving Apollo 11's command module is the Smithsonian Institution, which is located in Washington, D.C.",
+          "normalized_predicted": "the institution hosted by the city containing the museum preserving apollo 11 s command module is the smithsonian institution which is located in washington d c",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_NO_EVIDENCE",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "used_as_command_module",
+            "object": "Columbia"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            3
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_018__20260803T013739Z__1a464615",
+          "final_answer": "The institution hosted by the city containing the museum preserving Apollo 11's command module is the Smithsonian Institution, which is located in Washington, D.C.",
+          "normalized_predicted": "the institution hosted by the city containing the museum preserving apollo 11 s command module is the smithsonian institution which is located in washington d c",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_NO_EVIDENCE",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "used_as_command_module",
+            "object": "Columbia"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            3
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_018__20260803T021930Z__ddb5e287",
+          "final_answer": "The institution hosted by the city containing the museum preserving Apollo 11's command module is the Smithsonian Institution, which is located in Washington, D.C.",
+          "normalized_predicted": "the institution hosted by the city containing the museum preserving apollo 11 s command module is the smithsonian institution which is located in washington d c",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_NO_EVIDENCE",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "used_as_command_module",
+            "object": "Columbia"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            3
+          ],
+          "iterations": 3,
+          "revisions": 2
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_019",
+      "hop_count": 4,
+      "expected_answer": "Lunar Near Side",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_019__20260727T204449Z__f73dc45d",
+          "final_answer": "The Sea of Tranquility.",
+          "normalized_predicted": "the sea of tranquility",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Sea of Tranquility",
+            "relation": "has_landing_region_as",
+            "object": "The Sea of Tranquility."
+          },
+          "labels_s_c_n": [
+            0,
+            1,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_019__20260803T013854Z__136d20b0",
+          "final_answer": "The Sea of Tranquility.",
+          "normalized_predicted": "the sea of tranquility",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Sea of Tranquility",
+            "relation": "has_landing_region_as",
+            "object": "The Sea of Tranquility."
+          },
+          "labels_s_c_n": [
+            0,
+            1,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_019__20260803T022046Z__0361ccb3",
+          "final_answer": "The Sea of Tranquility.",
+          "normalized_predicted": "the sea of tranquility",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Sea of Tranquility",
+            "relation": "has_landing_region_as",
+            "object": "The Sea of Tranquility."
+          },
+          "labels_s_c_n": [
+            0,
+            1,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_incorrect_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_020",
+      "hop_count": 4,
+      "expected_answer": "Neil Armstrong",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_020__20260727T204543Z__b1e7bf23",
+          "final_answer": "Neil Armstrong",
+          "normalized_predicted": "neil armstrong",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Gemini 8",
+            "relation": "was_commanded_by",
+            "object": "Neil Armstrong"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_020__20260803T013948Z__49a82f9a",
+          "final_answer": "Neil Armstrong",
+          "normalized_predicted": "neil armstrong",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Gemini 8",
+            "relation": "was_commanded_by",
+            "object": "Neil Armstrong"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_020__20260803T022139Z__44f2c395",
+          "final_answer": "Neil Armstrong",
+          "normalized_predicted": "neil armstrong",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Gemini 8",
+            "relation": "was_commanded_by",
+            "object": "Neil Armstrong"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_021",
+      "hop_count": 5,
+      "expected_answer": "Washington, D.C.",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_021__20260727T204626Z__be202ab8",
+          "final_answer": "Washington, D.C.",
+          "normalized_predicted": "washington d c",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "United States",
+            "relation": "has_capital_in",
+            "object": "Washington, D.C."
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_021__20260803T014031Z__3f7922ea",
+          "final_answer": "Washington, D.C.",
+          "normalized_predicted": "washington d c",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "United States",
+            "relation": "has_capital_in",
+            "object": "Washington, D.C."
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_021__20260803T022222Z__47539e92",
+          "final_answer": "Washington, D.C.",
+          "normalized_predicted": "washington d c",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "United States",
+            "relation": "has_capital_in",
+            "object": "Washington, D.C."
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_022",
+      "hop_count": 5,
+      "expected_answer": "New Orleans",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_022__20260727T204712Z__a94e3c5c",
+          "final_answer": "New Orleans",
+          "normalized_predicted": "new orleans",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Michoud Assembly Facility",
+            "relation": "is_located_in",
+            "object": "New Orleans"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_022__20260803T014116Z__67ed0178",
+          "final_answer": "New Orleans",
+          "normalized_predicted": "new orleans",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Michoud Assembly Facility",
+            "relation": "is_located_in",
+            "object": "New Orleans"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_022__20260803T022308Z__4e5c0263",
+          "final_answer": "New Orleans",
+          "normalized_predicted": "new orleans",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Michoud Assembly Facility",
+            "relation": "is_located_in",
+            "object": "New Orleans"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_023",
+      "hop_count": 5,
+      "expected_answer": "United States Congress",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_023__20260727T204756Z__0d44e1d5",
+          "final_answer": "United States Congress",
+          "normalized_predicted": "united states congress",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Smithsonian Institution",
+            "relation": "was_founded_by",
+            "object": "United States Congress"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_023__20260803T014200Z__44673919",
+          "final_answer": "United States Congress",
+          "normalized_predicted": "united states congress",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Smithsonian Institution",
+            "relation": "was_founded_by",
+            "object": "United States Congress"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_023__20260803T022352Z__6297b059",
+          "final_answer": "United States Congress",
+          "normalized_predicted": "united states congress",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Smithsonian Institution",
+            "relation": "was_founded_by",
+            "object": "United States Congress"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_024",
+      "hop_count": 5,
+      "expected_answer": "Earth",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_024__20260727T204840Z__decf848d",
+          "final_answer": "Earth",
+          "normalized_predicted": "earth",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Lunar Near Side",
+            "relation": "is_visible_from",
+            "object": "Earth"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_024__20260803T014244Z__dbf669d8",
+          "final_answer": "Earth",
+          "normalized_predicted": "earth",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Lunar Near Side",
+            "relation": "is_visible_from",
+            "object": "Earth"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_024__20260803T022435Z__e4ad5f9d",
+          "final_answer": "Earth",
+          "normalized_predicted": "earth",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Lunar Near Side",
+            "relation": "is_visible_from",
+            "object": "Earth"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_025",
+      "hop_count": 5,
+      "expected_answer": "Stuck Thruster",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_025__20260727T204922Z__6bb49239",
+          "final_answer": "Gemini 8",
+          "normalized_predicted": "gemini 8",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Neil Armstrong",
+            "relation": "was_commanded_by",
+            "object": "Gemini 8"
+          },
+          "labels_s_c_n": [
+            5,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_025__20260803T014325Z__b9736f13",
+          "final_answer": "Gemini 8",
+          "normalized_predicted": "gemini 8",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Neil Armstrong",
+            "relation": "was_commanded_by",
+            "object": "Gemini 8"
+          },
+          "labels_s_c_n": [
+            5,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_025__20260803T022516Z__60b2fa55",
+          "final_answer": "Gemini 8",
+          "normalized_predicted": "gemini 8",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Neil Armstrong",
+            "relation": "was_commanded_by",
+            "object": "Gemini 8"
+          },
+          "labels_s_c_n": [
+            5,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_incorrect_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_026",
+      "hop_count": 6,
+      "expected_answer": "Potomac River",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_026__20260727T205035Z__7495ea0c",
+          "final_answer": "The Potomac River flows beside Washington, D.C. (the capital of the United States). However, we cannot confirm that Wapakoneta (Neil Armstrong's birthplace) is located in Washington, D.C., as there is no supporting evidence from the KGc facts.",
+          "normalized_predicted": "the potomac river flows beside washington d c the capital of the united states however we cannot confirm that wapakoneta neil armstrong s birthplace is located in washington d c as there is no supporting evidence from the kgc facts",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_NO_EVIDENCE",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Potomac River",
+            "relation": "flows beside",
+            "object": "Washington, D.C."
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_026__20260803T014439Z__200c2985",
+          "final_answer": "The Potomac River flows beside Washington, D.C. (the capital of the United States). However, we cannot confirm that Wapakoneta (Neil Armstrong's birthplace) is located in Washington, D.C., as there is no supporting evidence from the KGc facts.",
+          "normalized_predicted": "the potomac river flows beside washington d c the capital of the united states however we cannot confirm that wapakoneta neil armstrong s birthplace is located in washington d c as there is no supporting evidence from the kgc facts",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_NO_EVIDENCE",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Potomac River",
+            "relation": "flows beside",
+            "object": "Washington, D.C."
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_026__20260803T022630Z__9c248f25",
+          "final_answer": "The Potomac River flows beside Washington, D.C. (the capital of the United States). However, we cannot confirm that Wapakoneta (Neil Armstrong's birthplace) is located in Washington, D.C., as there is no supporting evidence from the KGc facts.",
+          "normalized_predicted": "the potomac river flows beside washington d c the capital of the united states however we cannot confirm that wapakoneta neil armstrong s birthplace is located in washington d c as there is no supporting evidence from the kgc facts",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_NO_EVIDENCE",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Potomac River",
+            "relation": "flows beside",
+            "object": "Washington, D.C."
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 3,
+          "revisions": 2
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_027",
+      "hop_count": 6,
+      "expected_answer": "Louisiana",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_027__20260727T205147Z__7637995e",
+          "final_answer": "Louisiana",
+          "normalized_predicted": "louisiana",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "New Orleans",
+            "relation": "is_located_in",
+            "object": "Louisiana"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_027__20260803T014550Z__62143372",
+          "final_answer": "Louisiana",
+          "normalized_predicted": "louisiana",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "New Orleans",
+            "relation": "is_located_in",
+            "object": "Louisiana"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_027__20260803T022741Z__eea2ff50",
+          "final_answer": "Louisiana",
+          "normalized_predicted": "louisiana",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "New Orleans",
+            "relation": "is_located_in",
+            "object": "Louisiana"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_028",
+      "hop_count": 6,
+      "expected_answer": "United States Capitol",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_028__20260727T205230Z__71b50df7",
+          "final_answer": "United States Capitol",
+          "normalized_predicted": "united states capitol",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "United States Congress",
+            "relation": "convenes_at",
+            "object": "United States Capitol"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_028__20260803T014632Z__870d1c69",
+          "final_answer": "United States Capitol",
+          "normalized_predicted": "united states capitol",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "United States Congress",
+            "relation": "convenes_at",
+            "object": "United States Capitol"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_028__20260803T022822Z__73f27f5a",
+          "final_answer": "United States Capitol",
+          "normalized_predicted": "united states capitol",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "United States Congress",
+            "relation": "convenes_at",
+            "object": "United States Capitol"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_029",
+      "hop_count": 6,
+      "expected_answer": "Lunar Geology",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_029__20260727T205313Z__69b2c879",
+          "final_answer": "Lunar Geology",
+          "normalized_predicted": "lunar geology",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Earth",
+            "relation": "is_studied_by",
+            "object": "Lunar Geology"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_029__20260803T014715Z__ab896f98",
+          "final_answer": "Lunar Geology",
+          "normalized_predicted": "lunar geology",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Earth",
+            "relation": "is_studied_by",
+            "object": "Lunar Geology"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_029__20260803T022906Z__ccc2a74d",
+          "final_answer": "Lunar Geology",
+          "normalized_predicted": "lunar geology",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Earth",
+            "relation": "is_studied_by",
+            "object": "Lunar Geology"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_030",
+      "hop_count": 6,
+      "expected_answer": "Mission Abort",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_030__20260727T205357Z__205b976a",
+          "final_answer": "Mission Abort",
+          "normalized_predicted": "mission abort",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Stuck Thruster event",
+            "relation": "was_resolved_by",
+            "object": "Mission Abort"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_030__20260803T014757Z__219213c9",
+          "final_answer": "Mission Abort",
+          "normalized_predicted": "mission abort",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Stuck Thruster event",
+            "relation": "was_resolved_by",
+            "object": "Mission Abort"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_030__20260803T022948Z__763cdb6d",
+          "final_answer": "Mission Abort",
+          "normalized_predicted": "mission abort",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Stuck Thruster event",
+            "relation": "was_resolved_by",
+            "object": "Mission Abort"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_031",
+      "hop_count": 7,
+      "expected_answer": "Chesapeake Bay",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_031__20260727T205440Z__1adb3037",
+          "final_answer": "Chesapeake Bay",
+          "normalized_predicted": "chesapeake bay",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Potomac River",
+            "relation": "flows_to",
+            "object": "Chesapeake Bay"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_031__20260803T014839Z__c884e184",
+          "final_answer": "Chesapeake Bay",
+          "normalized_predicted": "chesapeake bay",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Potomac River",
+            "relation": "flows_to",
+            "object": "Chesapeake Bay"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_031__20260803T023030Z__a7eb1b81",
+          "final_answer": "Chesapeake Bay",
+          "normalized_predicted": "chesapeake bay",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Potomac River",
+            "relation": "flows_to",
+            "object": "Chesapeake Bay"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_032",
+      "hop_count": 7,
+      "expected_answer": "Gulf Coast",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_032__20260727T205522Z__a93af5fe",
+          "final_answer": "The Gulf Coast region contains the state of Louisiana, which is located in the region. The city where the S-IC (first stage of Saturn V) was built by Boeing at Michoud Assembly Facility is New Orleans, which is located in Louisiana.",
+          "normalized_predicted": "the gulf coast region contains the state of louisiana which is located in the region the city where the s ic first stage of saturn v was built by boeing at michoud assembly facility is new orleans which is located in louisiana",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Gulf Coast region",
+            "relation": "contains",
+            "object": "Louisiana"
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_032__20260803T014921Z__2cc021ad",
+          "final_answer": "The Gulf Coast region contains the state of Louisiana, which is located in the region. The city where the S-IC (first stage of Saturn V) was built by Boeing at Michoud Assembly Facility is New Orleans, which is located in Louisiana.",
+          "normalized_predicted": "the gulf coast region contains the state of louisiana which is located in the region the city where the s ic first stage of saturn v was built by boeing at michoud assembly facility is new orleans which is located in louisiana",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Gulf Coast region",
+            "relation": "contains",
+            "object": "Louisiana"
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_032__20260803T023112Z__44e3f979",
+          "final_answer": "The Gulf Coast region contains the state of Louisiana, which is located in the region. The city where the S-IC (first stage of Saturn V) was built by Boeing at Michoud Assembly Facility is New Orleans, which is located in Louisiana.",
+          "normalized_predicted": "the gulf coast region contains the state of louisiana which is located in the region the city where the s ic first stage of saturn v was built by boeing at michoud assembly facility is new orleans which is located in louisiana",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Gulf Coast region",
+            "relation": "contains",
+            "object": "Louisiana"
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_033",
+      "hop_count": 7,
+      "expected_answer": "Capitol Hill",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_033__20260727T205624Z__80afbfb0",
+          "final_answer": "Capitol Hill. \n\nThe United States Congress convenes at the United States Capitol. The United States Capitol is located on Capitol Hill.",
+          "normalized_predicted": "capitol hill the united states congress convenes at the united states capitol the united states capitol is located on capitol hill",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "United States Capitol",
+            "relation": "is_located_on",
+            "object": "Capitol Hill"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_033__20260803T015024Z__4c5e22ee",
+          "final_answer": "Capitol Hill. \n\nThe United States Congress convenes at the United States Capitol. The United States Capitol is located on Capitol Hill.",
+          "normalized_predicted": "capitol hill the united states congress convenes at the united states capitol the united states capitol is located on capitol hill",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "United States Capitol",
+            "relation": "is_located_on",
+            "object": "Capitol Hill"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_033__20260803T023215Z__e624bbff",
+          "final_answer": "Capitol Hill. \n\nThe United States Congress convenes at the United States Capitol. The United States Capitol is located on Capitol Hill.",
+          "normalized_predicted": "capitol hill the united states congress convenes at the united states capitol the united states capitol is located on capitol hill",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "United States Capitol",
+            "relation": "is_located_on",
+            "object": "Capitol Hill"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_034",
+      "hop_count": 7,
+      "expected_answer": "Apollo Missions",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_034__20260727T205713Z__f743b658",
+          "final_answer": "The Apollo Missions supply samples to the field of Lunar Geology for comparative purposes.",
+          "normalized_predicted": "the apollo missions supply samples to the field of lunar geology for comparative purposes",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Apollo Missions",
+            "relation": "uses samples from",
+            "object": "Lunar Geology"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_034__20260803T015112Z__6d6fbee2",
+          "final_answer": "The Apollo Missions supply samples to the field of Lunar Geology for comparative purposes.",
+          "normalized_predicted": "the apollo missions supply samples to the field of lunar geology for comparative purposes",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Apollo Missions",
+            "relation": "uses samples from",
+            "object": "Lunar Geology"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_034__20260803T023303Z__ee5b0ba8",
+          "final_answer": "The Apollo Missions supply samples to the field of Lunar Geology for comparative purposes.",
+          "normalized_predicted": "the apollo missions supply samples to the field of lunar geology for comparative purposes",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Apollo Missions",
+            "relation": "uses samples from",
+            "object": "Lunar Geology"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_035",
+      "hop_count": 7,
+      "expected_answer": "Emergency Procedure",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_035__20260727T205808Z__985508d1",
+          "final_answer": "Mission Abort",
+          "normalized_predicted": "mission abort",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Stuck Thruster event",
+            "relation": "was_resolved_by",
+            "object": "Mission Abort"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_035__20260803T015207Z__7501a5ce",
+          "final_answer": "Mission Abort",
+          "normalized_predicted": "mission abort",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Stuck Thruster event",
+            "relation": "was_resolved_by",
+            "object": "Mission Abort"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_035__20260803T023358Z__f1e3858b",
+          "final_answer": "Mission Abort",
+          "normalized_predicted": "mission abort",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Stuck Thruster event",
+            "relation": "was_resolved_by",
+            "object": "Mission Abort"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_incorrect_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_036",
+      "hop_count": 8,
+      "expected_answer": "Atlantic Ocean",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_036__20260727T205852Z__c2d8a77c",
+          "final_answer": "Atlantic Ocean",
+          "normalized_predicted": "atlantic ocean",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Chesapeake Bay",
+            "relation": "opens_into",
+            "object": "Atlantic Ocean"
+          },
+          "labels_s_c_n": [
+            3,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_036__20260803T015249Z__e3c39c61",
+          "final_answer": "Atlantic Ocean",
+          "normalized_predicted": "atlantic ocean",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Chesapeake Bay",
+            "relation": "opens_into",
+            "object": "Atlantic Ocean"
+          },
+          "labels_s_c_n": [
+            3,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_036__20260803T023440Z__d3fff44b",
+          "final_answer": "Atlantic Ocean",
+          "normalized_predicted": "atlantic ocean",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Chesapeake Bay",
+            "relation": "opens_into",
+            "object": "Atlantic Ocean"
+          },
+          "labels_s_c_n": [
+            3,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_037",
+      "hop_count": 8,
+      "expected_answer": "Gulf of Mexico",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_037__20260727T210004Z__a2533d6c",
+          "final_answer": "state",
+          "normalized_predicted": "state",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Louisiana",
+            "relation": "is_located_in",
+            "object": "state"
+          },
+          "labels_s_c_n": [
+            3,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_037__20260803T015402Z__0db9d57b",
+          "final_answer": "state",
+          "normalized_predicted": "state",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Louisiana",
+            "relation": "is_located_in",
+            "object": "state"
+          },
+          "labels_s_c_n": [
+            3,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_037__20260803T023554Z__b03ddc22",
+          "final_answer": "state",
+          "normalized_predicted": "state",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Louisiana",
+            "relation": "is_located_in",
+            "object": "state"
+          },
+          "labels_s_c_n": [
+            3,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_incorrect_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_038",
+      "hop_count": 8,
+      "expected_answer": "National Mall",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_038__20260727T210101Z__36d6fa05",
+          "final_answer": "The landmark overlooked by the hill holding the place where Columbia's museum founder convenes is the National Mall.",
+          "normalized_predicted": "the landmark overlooked by the hill holding the place where columbia s museum founder convenes is the national mall",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "National Mall",
+            "relation": "is_overlooked_by",
+            "object": "Capitol Hill"
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_038__20260803T015458Z__aa44618e",
+          "final_answer": "The landmark overlooked by the hill holding the place where Columbia's museum founder convenes is the National Mall.",
+          "normalized_predicted": "the landmark overlooked by the hill holding the place where columbia s museum founder convenes is the national mall",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "National Mall",
+            "relation": "is_overlooked_by",
+            "object": "Capitol Hill"
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_038__20260803T023649Z__a6fb49b6",
+          "final_answer": "The landmark overlooked by the hill holding the place where Columbia's museum founder convenes is the National Mall.",
+          "normalized_predicted": "the landmark overlooked by the hill holding the place where columbia s museum founder convenes is the national mall",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "National Mall",
+            "relation": "is_overlooked_by",
+            "object": "Capitol Hill"
+          },
+          "labels_s_c_n": [
+            0,
+            0,
+            1
+          ],
+          "iterations": 3,
+          "revisions": 2
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_039",
+      "hop_count": 8,
+      "expected_answer": "Apollo 11",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_039__20260727T210204Z__fa455090",
+          "final_answer": "The Apollo Missions include Apollo 11.",
+          "normalized_predicted": "the apollo missions include apollo 11",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Apollo Missions",
+            "relation": "includes",
+            "object": "Apollo 11"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_039__20260803T015601Z__21bf1a4b",
+          "final_answer": "The Apollo Missions include Apollo 11.",
+          "normalized_predicted": "the apollo missions include apollo 11",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Apollo Missions",
+            "relation": "includes",
+            "object": "Apollo 11"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_039__20260803T023752Z__129e482c",
+          "final_answer": "The Apollo Missions include Apollo 11.",
+          "normalized_predicted": "the apollo missions include apollo 11",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Apollo Missions",
+            "relation": "includes",
+            "object": "Apollo 11"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_040",
+      "hop_count": 8,
+      "expected_answer": "Gemini 8 Mission Report",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_040__20260727T210247Z__1d560904",
+          "final_answer": "The Gemini 8 Mission Report documents the procedure used after Gemini 8's stuck-thruster event",
+          "normalized_predicted": "the gemini 8 mission report documents the procedure used after gemini 8 s stuck thruster event",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Emergency Procedure",
+            "relation": "documents",
+            "object": "procedure used after stuck-thruster event"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_040__20260803T015645Z__0de87adb",
+          "final_answer": "The Gemini 8 Mission Report documents the procedure used after Gemini 8's stuck-thruster event",
+          "normalized_predicted": "the gemini 8 mission report documents the procedure used after gemini 8 s stuck thruster event",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Emergency Procedure",
+            "relation": "documents",
+            "object": "procedure used after stuck-thruster event"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_040__20260803T023836Z__199f5dc2",
+          "final_answer": "The Gemini 8 Mission Report documents the procedure used after Gemini 8's stuck-thruster event",
+          "normalized_predicted": "the gemini 8 mission report documents the procedure used after gemini 8 s stuck thruster event",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Emergency Procedure",
+            "relation": "documents",
+            "object": "procedure used after stuck-thruster event"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_041",
+      "hop_count": 9,
+      "expected_answer": "Global Ocean",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_041__20260727T210332Z__4c98c4cc",
+          "final_answer": "Atlantic Ocean",
+          "normalized_predicted": "atlantic ocean",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Chesapeake Bay",
+            "relation": "opens_into",
+            "object": "Atlantic Ocean"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_041__20260803T015729Z__27a7ad16",
+          "final_answer": "Atlantic Ocean",
+          "normalized_predicted": "atlantic ocean",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Chesapeake Bay",
+            "relation": "opens_into",
+            "object": "Atlantic Ocean"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_041__20260803T023920Z__cc7fa269",
+          "final_answer": "Atlantic Ocean",
+          "normalized_predicted": "atlantic ocean",
+          "exact_match": false,
+          "contains_expected": false,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Chesapeake Bay",
+            "relation": "opens_into",
+            "object": "Atlantic Ocean"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_incorrect_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_042",
+      "hop_count": 9,
+      "expected_answer": "Atlantic Ocean",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_042__20260727T210426Z__b849b7cf",
+          "final_answer": "Atlantic Ocean",
+          "normalized_predicted": "atlantic ocean",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Gulf of Mexico",
+            "relation": "is_connected_to",
+            "object": "Atlantic Ocean"
+          },
+          "labels_s_c_n": [
+            5,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_042__20260803T015824Z__4f82cc05",
+          "final_answer": "Atlantic Ocean",
+          "normalized_predicted": "atlantic ocean",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Gulf of Mexico",
+            "relation": "is_connected_to",
+            "object": "Atlantic Ocean"
+          },
+          "labels_s_c_n": [
+            5,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_042__20260803T024015Z__46ee8b2a",
+          "final_answer": "Atlantic Ocean",
+          "normalized_predicted": "atlantic ocean",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Gulf of Mexico",
+            "relation": "is_connected_to",
+            "object": "Atlantic Ocean"
+          },
+          "labels_s_c_n": [
+            5,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_043",
+      "hop_count": 9,
+      "expected_answer": "Smithsonian Castle",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_043__20260727T210528Z__b272613e",
+          "final_answer": "The Smithsonian Castle is contained in the landmark (the National Mall) overlooked by the hill (Capitol Hill) of the legislature (the United States Congress) that founded Columbia's museum institution (the Smithsonian Institution).",
+          "normalized_predicted": "the smithsonian castle is contained in the landmark the national mall overlooked by the hill capitol hill of the legislature the united states congress that founded columbia s museum institution the smithsonian institution",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Smithsonian Castle",
+            "relation": "contains",
+            "object": "National Mall"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_043__20260803T015925Z__bcb91fae",
+          "final_answer": "The Smithsonian Castle is contained in the landmark (the National Mall) overlooked by the hill (Capitol Hill) of the legislature (the United States Congress) that founded Columbia's museum institution (the Smithsonian Institution).",
+          "normalized_predicted": "the smithsonian castle is contained in the landmark the national mall overlooked by the hill capitol hill of the legislature the united states congress that founded columbia s museum institution the smithsonian institution",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Smithsonian Castle",
+            "relation": "contains",
+            "object": "National Mall"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_043__20260803T024116Z__fb17dd9e",
+          "final_answer": "The Smithsonian Castle is contained in the landmark (the National Mall) overlooked by the hill (Capitol Hill) of the legislature (the United States Congress) that founded Columbia's museum institution (the Smithsonian Institution).",
+          "normalized_predicted": "the smithsonian castle is contained in the landmark the national mall overlooked by the hill capitol hill of the legislature the united states congress that founded columbia s museum institution the smithsonian institution",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "STALLED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Smithsonian Castle",
+            "relation": "contains",
+            "object": "National Mall"
+          },
+          "labels_s_c_n": [
+            2,
+            0,
+            1
+          ],
+          "iterations": 2,
+          "revisions": 1
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_044",
+      "hop_count": 9,
+      "expected_answer": "Saturn V",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_044__20260727T210633Z__cd091a18",
+          "final_answer": "Saturn V",
+          "normalized_predicted": "saturn v",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_launched_by",
+            "object": "Saturn V"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_044__20260803T020030Z__db769e84",
+          "final_answer": "Saturn V",
+          "normalized_predicted": "saturn v",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_launched_by",
+            "object": "Saturn V"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_044__20260803T024220Z__8fe1f317",
+          "final_answer": "Saturn V",
+          "normalized_predicted": "saturn v",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Apollo 11",
+            "relation": "was_launched_by",
+            "object": "Saturn V"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_045",
+      "hop_count": 9,
+      "expected_answer": "NASA",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_045__20260727T210715Z__17f9e2b4",
+          "final_answer": "NASA",
+          "normalized_predicted": "nasa",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Gemini 8 Mission Report",
+            "relation": "is_archived_by",
+            "object": "NASA"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_045__20260803T020111Z__e34af32d",
+          "final_answer": "NASA",
+          "normalized_predicted": "nasa",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Gemini 8 Mission Report",
+            "relation": "is_archived_by",
+            "object": "NASA"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_045__20260803T024302Z__8742f306",
+          "final_answer": "NASA",
+          "normalized_predicted": "nasa",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Gemini 8 Mission Report",
+            "relation": "is_archived_by",
+            "object": "NASA"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_046",
+      "hop_count": 10,
+      "expected_answer": "Oceanography",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_046__20260727T210803Z__c3c7849e",
+          "final_answer": "Oceanography",
+          "normalized_predicted": "oceanography",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Global Ocean",
+            "relation": "is_studied_by",
+            "object": "Oceanography"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_046__20260803T020159Z__74fc8fa2",
+          "final_answer": "Oceanography",
+          "normalized_predicted": "oceanography",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Global Ocean",
+            "relation": "is_studied_by",
+            "object": "Oceanography"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_046__20260803T024351Z__0da5a977",
+          "final_answer": "Oceanography",
+          "normalized_predicted": "oceanography",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Global Ocean",
+            "relation": "is_studied_by",
+            "object": "Oceanography"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_047",
+      "hop_count": 10,
+      "expected_answer": "Oceanography",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_047__20260727T210854Z__492133e8",
+          "final_answer": "Oceanography",
+          "normalized_predicted": "oceanography",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Global Ocean",
+            "relation": "is_studied_by",
+            "object": "Oceanography"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_047__20260803T020251Z__7a7590fb",
+          "final_answer": "Oceanography",
+          "normalized_predicted": "oceanography",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Global Ocean",
+            "relation": "is_studied_by",
+            "object": "Oceanography"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_047__20260803T024440Z__ae4f2c49",
+          "final_answer": "Oceanography",
+          "normalized_predicted": "oceanography",
+          "exact_match": true,
+          "contains_expected": true,
+          "resolved": true,
+          "stop_reason": "RESOLVED",
+          "path_complete": true,
+          "terminal_claim": {
+            "subject": "Global Ocean",
+            "relation": "is_studied_by",
+            "object": "Oceanography"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 1,
+          "revisions": 0
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_resolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_048",
+      "hop_count": 10,
+      "expected_answer": "Smithsonian Institution",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_048__20260727T210955Z__a070bb5d",
+          "final_answer": "The Smithsonian Institution administers the Smithsonian Castle, which is located on the National Mall and overlooks Capitol Hill, where the United States Congress convenes. The United States Congress founded the Smithsonian Institution, and it is headquartered in Washington, D.C., where the National Air and Space Museum (which preserves Columbia) is also located.\n\nSo, the answer is: The Smithsonian Institution.",
+          "normalized_predicted": "the smithsonian institution administers the smithsonian castle which is located on the national mall and overlooks capitol hill where the united states congress convenes the united states congress founded the smithsonian institution and it is headquartered in washington d c where the national air and space museum which preserves columbia is also located so the answer is the smithsonian institution",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Smithsonian Castle",
+            "relation": "is_administered_by",
+            "object": "Smithsonian Institution"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_048__20260803T020351Z__4a63c694",
+          "final_answer": "The Smithsonian Institution administers the Smithsonian Castle, which is located on the National Mall and overlooks Capitol Hill, where the United States Congress convenes. The United States Congress founded the Smithsonian Institution, and it is headquartered in Washington, D.C., where the National Air and Space Museum (which preserves Columbia) is also located.\n\nSo, the answer is: The Smithsonian Institution.",
+          "normalized_predicted": "the smithsonian institution administers the smithsonian castle which is located on the national mall and overlooks capitol hill where the united states congress convenes the united states congress founded the smithsonian institution and it is headquartered in washington d c where the national air and space museum which preserves columbia is also located so the answer is the smithsonian institution",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Smithsonian Castle",
+            "relation": "is_administered_by",
+            "object": "Smithsonian Institution"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_048__20260803T024541Z__d3c53475",
+          "final_answer": "The Smithsonian Institution administers the Smithsonian Castle, which is located on the National Mall and overlooks Capitol Hill, where the United States Congress convenes. The United States Congress founded the Smithsonian Institution, and it is headquartered in Washington, D.C., where the National Air and Space Museum (which preserves Columbia) is also located.\n\nSo, the answer is: The Smithsonian Institution.",
+          "normalized_predicted": "the smithsonian institution administers the smithsonian castle which is located on the national mall and overlooks capitol hill where the united states congress convenes the united states congress founded the smithsonian institution and it is headquartered in washington d c where the national air and space museum which preserves columbia is also located so the answer is the smithsonian institution",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Smithsonian Castle",
+            "relation": "is_administered_by",
+            "object": "Smithsonian Institution"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_049",
+      "hop_count": 10,
+      "expected_answer": "S-IC",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_049__20260727T211049Z__53ddd3ba",
+          "final_answer": "The first stage of the Saturn V rocket that launched Apollo 11 is S-IC.",
+          "normalized_predicted": "the first stage of the saturn v rocket that launched apollo 11 is s ic",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Saturn V",
+            "relation": "had_first_stage_as",
+            "object": "S-IC"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_049__20260803T020444Z__bf0c10d8",
+          "final_answer": "The first stage of the Saturn V rocket that launched Apollo 11 is S-IC.",
+          "normalized_predicted": "the first stage of the saturn v rocket that launched apollo 11 is s ic",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Saturn V",
+            "relation": "had_first_stage_as",
+            "object": "S-IC"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_049__20260803T024635Z__bb579063",
+          "final_answer": "The first stage of the Saturn V rocket that launched Apollo 11 is S-IC.",
+          "normalized_predicted": "the first stage of the saturn v rocket that launched apollo 11 is s ic",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "Saturn V",
+            "relation": "had_first_stage_as",
+            "object": "S-IC"
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 3,
+          "revisions": 2
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    },
+    {
+      "id": "apollo_hop_050",
+      "hop_count": 10,
+      "expected_answer": "Washington, D.C.",
+      "per_run": [
+        {
+          "run": "run1",
+          "execution_id": "apollo_hop_050__20260727T211145Z__8a7c71f9",
+          "final_answer": "According to the context, the Gemini 8 Mission Report is archived by NASA (National Aeronautics and Space Administration). The headquarters of NASA is located in Washington, D.C.\n\nTherefore, the city where the organization archiving the report about the procedure that resolved Gemini 8's emergency is headquartered is: Washington, D.C.",
+          "normalized_predicted": "according to the context the gemini 8 mission report is archived by nasa national aeronautics and space administration the headquarters of nasa is located in washington d c therefore the city where the organization archiving the report about the procedure that resolved gemini 8 s emergency is headquartered is washington d c",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "National Air and Space Museum",
+            "relation": "is_located_in",
+            "object": "Washington, D.C."
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run2",
+          "execution_id": "apollo_hop_050__20260803T020540Z__e2b09d07",
+          "final_answer": "According to the context, the Gemini 8 Mission Report is archived by NASA (National Aeronautics and Space Administration). The headquarters of NASA is located in Washington, D.C.\n\nTherefore, the city where the organization archiving the report about the procedure that resolved Gemini 8's emergency is headquartered is: Washington, D.C.",
+          "normalized_predicted": "according to the context the gemini 8 mission report is archived by nasa national aeronautics and space administration the headquarters of nasa is located in washington d c therefore the city where the organization archiving the report about the procedure that resolved gemini 8 s emergency is headquartered is washington d c",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "National Air and Space Museum",
+            "relation": "is_located_in",
+            "object": "Washington, D.C."
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        },
+        {
+          "run": "run3",
+          "execution_id": "apollo_hop_050__20260803T024731Z__9879d756",
+          "final_answer": "According to the context, the Gemini 8 Mission Report is archived by NASA (National Aeronautics and Space Administration). The headquarters of NASA is located in Washington, D.C.\n\nTherefore, the city where the organization archiving the report about the procedure that resolved Gemini 8's emergency is headquartered is: Washington, D.C.",
+          "normalized_predicted": "according to the context the gemini 8 mission report is archived by nasa national aeronautics and space administration the headquarters of nasa is located in washington d c therefore the city where the organization archiving the report about the procedure that resolved gemini 8 s emergency is headquartered is washington d c",
+          "exact_match": false,
+          "contains_expected": true,
+          "resolved": false,
+          "stop_reason": "UNRESOLVED_TARGET_NOT_SATISFIED",
+          "path_complete": false,
+          "terminal_claim": {
+            "subject": "National Air and Space Museum",
+            "relation": "is_located_in",
+            "object": "Washington, D.C."
+          },
+          "labels_s_c_n": [
+            1,
+            0,
+            0
+          ],
+          "iterations": 2,
+          "revisions": 1
+        }
+      ],
+      "stable": {
+        "normalized_answer": true,
+        "exact_match": true,
+        "contains_expected": true,
+        "resolved": true,
+        "stop_reason": true,
+        "path_complete": true,
+        "terminal_claim": true,
+        "label_tuple": true
+      },
+      "primary_category": "stable_correct_unresolved",
+      "change_flags": []
+    }
+  ]
+}
