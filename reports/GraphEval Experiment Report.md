@@ -32,10 +32,18 @@ ever resolved. Trace-level case studies show both successful feedback-driven
 correction (a depth-8 question revised twice into an exactly correct, fully
 path-validated answer) and a pipeline-mediated regression (a WannaCry depth-10
 question whose initially correct bulletin identifier, MS17-010, was lost through
-malformed decomposition, projection, and unsuccessful revision). The main limitations
-are the small per-depth sample (five questions), a single model and domain for the
-quantitative sample, LLM nondeterminism, and the absence of a controlled no-feedback
-baseline, which precludes causal claims about correction efficacy.
+malformed decomposition, projection, and unsuccessful revision). A three-run repeatability
+extension (the official run retained as Run 1 plus two exact-configuration
+repetitions) found byte-identical final answers and identical scoring, resolution,
+stop-reason, terminal-claim, and label outcomes on all 50 questions in all three
+runs, with only wall-clock runtime varying — indicating that under this frozen
+temperature-0 configuration on fixed hardware, single-run results were not
+distorted by run-to-run sampling noise. The main limitations are the small
+per-depth sample (five questions), a single model and domain for the quantitative
+sample, possible output variation under changed environments that the fixed-
+configuration repeatability sample cannot rule out, and the absence of a
+controlled no-feedback baseline, which precludes causal claims about correction
+efficacy.
 
 ## 1. Introduction
 
@@ -317,6 +325,55 @@ Full records in `research/REPRESENTATIVE_TRACE_CASES.md`; summary:
 | 9 | `nhs_wannacry_h10_q01` (10) | lost initially-correct MS17-010; UNRESOLVED/STALLED | mixed pipeline-mediated model regression |
 | 10 | `apollo_hop_046` pre-fix vs post-fix | STALLED "Global Ocean" → RESOLVED "Oceanography" | instrument-development pair (pre-fix: pipeline) |
 
+### 3.9 Repeatability and Nondeterminism
+
+To quantify measurement stability, the identical experiment was executed two more
+times on 2026-08-03 (UTC) as a bounded extension: the official run was retained
+unmodified as Run 1, and Runs 2 and 3 were complete sequential repetitions using
+the same frozen commit, dataset, model digest, Ollama build, Neo4j container, and
+runner flags (verified by configuration cross-checks that hard-fail on any
+mismatch; full protocol in `research/REPEATABILITY_PROTOCOL.md`). No question was
+selectively rerun, and the three runs are treated as repeated measurements of the
+same 50 questions, never as 150 independent questions.
+
+| Metric (n=50 per run) | Run 1 (official) | Run 2 | Run 3 | Range |
+|---|---|---|---|---|
+| Completed / errors / timeouts | 50 / 0 / 0 | 50 / 0 / 0 | 50 / 0 / 0 | 0 |
+| Exact match | 27 | 27 | 27 | 0 |
+| Contains expected | 43 | 43 | 43 | 0 |
+| Pipeline resolved | 33 | 33 | 33 | 0 |
+| Evidence path complete | 36 | 36 | 36 | 0 |
+| Iterations / revisions total | 83 / 33 | 83 / 33 | 83 / 33 | 0 |
+| Final labels S/C/N | 65/1/12 | 65/1/12 | 65/1/12 | 0 |
+| Runtime mean (s) | 48.42 | 46.73 | 45.79 | 2.63 |
+
+Per-question comparison found complete stability on every compared dimension: all
+50 questions produced byte-identical raw final answers and combined answers, and
+identical exact-match, contains-expected, resolution, stop-reason, evidence-path,
+terminal-claim, label-tuple, iteration, and revision outcomes in all three runs
+(50/50 stable on each of the eight dimensions; all pairwise agreements 1.00).
+Every stability category is therefore a stable_* category: 28
+stable-correct-resolved, 15 stable-correct-unresolved, 5
+stable-incorrect-resolved, 2 stable-incorrect-unresolved. Execution IDs and Neo4j
+execution scopes were distinct in every run, confirming three genuinely
+independent executions. The only varying quantity was wall-clock runtime (means
+48.4 / 46.7 / 45.8 s; the largest per-question spread was 18.1 s on the first
+question of each run, plausibly warm-up, though the artifacts do not isolate the
+cause). Metrics with greatest variation: runtime only; all output metrics had
+zero variation. Representative reproduced cases — including the depth-8
+two-revision correction, the degenerate-extraction stall, and the
+resolved-but-wrong "state" answer — are documented in
+`research/REPEATABILITY_CASES.md`. Depth-level counts were likewise identical
+across runs (each run contains only five questions per designed depth).
+
+Implication for interpreting one-run results: under this fixed configuration the
+official run's numbers are highly repeatable, and its failure modes are
+systematic rather than sampling noise. Three runs on one machine cannot certify
+determinism in general — outputs may still change across hardware, drivers,
+Ollama versions, model builds, or concurrent load, and previously documented
+variation between differently configured executions (the 2026-07-27 diagnostics)
+shows outputs do change when conditions change.
+
 ## 4. Discussion
 
 **What worked.** The instrument ran 50/50 questions with zero transport failures and
@@ -371,10 +428,24 @@ pipeline-mediated model regression, not as evidence that an 8B model cannot answ
 ten-hop question: the same model produced the correct bulletin inside the same
 execution.
 
-**Nondeterminism.** Answer wording, decomposition, extracted triples, alignment
-candidates, and revisions can vary between runs; a repeated execution is a new
-sample, not a correction. The problematic WannaCry execution was deliberately not
-rerun; pre-fix and post-fix runs were never pooled.
+**Repeatability, nondeterminism, and measurement stability.** In principle,
+answer wording, decomposition, extracted triples, alignment candidates, and
+revisions can vary between runs; a repeated execution is a new sample, not a
+correction. The three-run extension (§3.9) measured this directly under the
+frozen configuration and found zero output variation: all 50 questions reproduced
+byte-identical answers and identical pipeline outcomes in three independent
+executions six days apart, with only runtime varying. Two readings follow. First,
+the official run's results — including its failure modes — are systematic under
+these conditions, which strengthens the trace-level failure analysis: the
+degenerate extraction of Case 4 and the "state" resolution of Case 7 recur
+identically rather than appearing sporadically. Second, the stability is
+conditional: it was observed at temperature 0 on one machine with one model
+digest and one Ollama build, and it does not extend to changed conditions (the
+differently configured 2026-07-27 diagnostics produced different outputs for the
+same questions, and the WannaCry qualitative case ran under its own
+configuration). The problematic WannaCry execution was deliberately not rerun;
+pre-fix and post-fix runs were never pooled; and the three repeatability runs
+were never pooled into 150 independent questions.
 
 **Contribution.** The evidence supports a technical contribution — a working
 decomposed graph-based backtracking instrument with structured claim-level feedback,
@@ -386,7 +457,8 @@ graph-resolution distinction is measurable and large (86% vs 66%); correction an
 regression during revision are directly observable at claim level; and graph
 feedback exposed information loss (Case 9) that final-answer-only evaluation would
 hide — even in a case where it failed to repair the loss. No claim of broad
-generalizability is made: one model, one quantitative domain, one run.
+generalizability is made: one model, one quantitative domain, one configuration
+(measured in triplicate by §3.9).
 
 ## 5. Conclusion
 
@@ -398,16 +470,22 @@ the honest refusal to resolve unsupported answers, and trace-visible preservatio
 correction, and regression during revision are the experiment's principal findings.
 Ten-hop designed chains were resolvable, and the most informative failure — the
 WannaCry case — demonstrates precisely the kind of information-loss visibility that
-motivates graph-grounded evaluation. The evidence base is deliberately bounded:
-five questions per depth, a single model, a single quantitative domain, and no
-controlled self-correction baseline.
+motivates graph-grounded evaluation. A three-run repeatability
+extension reproduced every output of the official run exactly (only runtime
+varied), so the reported numbers and failure modes are stable properties of this
+configuration rather than single-run sampling noise. The evidence base remains
+deliberately bounded: five questions per depth, a single model, a single
+quantitative domain, no controlled self-correction baseline, and repeatability
+established only for the fixed configuration on one machine.
 
 Immediate future work, kept separate from the completed scope: a controlled
 comparison of initial answers, generic self-correction, and graph-feedback
-correction; repeated trials to characterize nondeterminism; additional models and
-domains; stronger decomposition validation (Case 9's malformed sub-question passed
-validation); improved trace summarization; and preparation of a publication or
-poster from this skeleton.
+correction; repeatability trials across environments, model builds, and non-zero
+temperatures (fixed-configuration repeatability is established by §3.9, but
+cross-environment stability is not); additional models and domains; stronger
+decomposition validation (Case 9's malformed sub-question passed validation);
+improved trace summarization; and preparation of a publication or poster from
+this skeleton.
 
 ## 6. References
 
@@ -428,3 +506,8 @@ poster from this skeleton.
 7. Project analysis artifacts: `results/research/grapheval_final_experiment_analysis.{json,md}`;
    `research/REPRESENTATIVE_TRACE_CASES.md`; `research/EXPERIMENT_PROTOCOL.md`;
    `research/REPRODUCIBILITY_RECORD.md` (this repository, 2026-08-02).
+8. Repeatability extension artifacts:
+   `results/research/repeatability/apollo_repeat_run{2,3}_llama31_8b_<UTCSTAMP>.{json,md}`;
+   `results/research/repeatability/grapheval_repeatability_analysis.{json,md}`;
+   `research/REPEATABILITY_PROTOCOL.md`; `research/REPEATABILITY_CASES.md`
+   (this repository, 2026-08-03).

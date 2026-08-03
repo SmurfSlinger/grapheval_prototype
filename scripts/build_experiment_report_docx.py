@@ -165,6 +165,7 @@ def main() -> None:
         ("3.6 Final claim labels", 2),
         ("3.7 Figures", 2),
         ("3.8 Representative trace cases", 2),
+        ("3.9 Repeatability and Nondeterminism", 2),
         ("4. Discussion", 1),
         ("5. Conclusion", 1),
         ("6. References", 1),
@@ -201,6 +202,22 @@ def main() -> None:
             ]
             for fname, caption in figures:
                 path = FIGDIR / fname
+                if path.exists():
+                    doc.add_picture(str(path), width=Inches(6.0))
+                    cap = doc.add_paragraph(caption)
+                    cap.runs[0].italic = True
+                    cap.runs[0].font.size = Pt(9)
+                    cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        if name == "3.9 Repeatability and Nondeterminism":
+            rep_figdir = REPO / "results/research/repeatability/figures"
+            rep_figures = [
+                ("figR1_aggregate_outcomes_by_run.png",
+                 "Figure 5. Aggregate outcomes for all three repeatability runs (n=50 per run). All output metrics were identical; raw counts shown."),
+                ("figR2_stability_by_dimension.png",
+                 "Figure 6. Per-question stability across the three runs by outcome dimension: all 50 questions were stable on every compared dimension."),
+            ]
+            for fname, caption in rep_figures:
+                path = rep_figdir / fname
                 if path.exists():
                     doc.add_picture(str(path), width=Inches(6.0))
                     cap = doc.add_paragraph(caption)
