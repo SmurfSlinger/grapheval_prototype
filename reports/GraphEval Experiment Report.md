@@ -101,7 +101,219 @@ self-correction.
 
 ## 2. Methodology
 
-### 2.1 Data Collection
+This section describes the GraphEval algorithm as implemented at frozen commit
+`b9608d0`, the Neo4j persistence model, claim evaluation, and the experiment
+procedure. Implementation mappings, Cypher, and worked examples are recorded in
+`research/METHODOLOGY_DOCUMENTATION_AUDIT.md`, `research/NEO4J_DATA_MODEL.md`, and
+`research/ALGORITHM_WORKED_EXAMPLES.md`. Diagram sources live under
+`docs/diagrams/`.
+
+### 2.1 Research motivation and design rationale
+
+Final-answer-only scoring collapses several distinct behaviors into a single string
+match. An answer can contain the expected entity while resting on unverifiable
+statements; it can mix supported and contradicted triples; and revision can remove
+correct information as easily as it removes errors. GraphEval was selected as an
+instrument because a subject–relation–object graph makes those components
+inspectable.
+
+FACTS and CLAIMS are kept separate by design. A FACT is extracted from supplied
+trusted context and treated as trusted evidence for comparison and path checks. A
+CLAIM is extracted from a model answer and is labeled against FACTs; a supported
+CLAIM remains a CLAIM and is never rewritten as a FACT relationship. That
+separation is what makes preservation, contradiction, and regression observable
+during correction and backtracking. Optional question decomposition is part of the
+instrument but was not a separately controlled experimental condition. Because the
+study includes no controlled no-feedback or generic-self-correction baseline, the
+results support feasibility and case-level correction evidence only; they do not
+prove that graph feedback outperforms those alternatives.
+
+### 2.2 Triple representation
+
+Every FACT and CLAIM is a subject–relation–object triple. Examples from preserved
+artifacts:
+
+- FACT: `Global Ocean — is_studied_by → Oceanography`
+  (Apollo post-fix trace `apollo_hop_046__20260727T202312Z__50843932`)
+- FACT: `Microsoft Security Bulletin MS17-010 — supplied_correction_to_vulnerability → how SMBv1 handled crafted requests`
+  (WannaCry `…4adc0f88`)
+- CLAIM (SUPPORTED): same MS17-010 triple as above, extracted from an answer
+- CLAIM (CONTRADICTED): MS17-010 with an over-expanded object describing remote
+  code execution (same WannaCry execution)
+- CLAIM (NO_EVIDENCE): `WannaCry ransomware campaign — affected_by_final_fix → patching`
+
+Extraction output is validated as structured triples. Malformed triples are
+rejected or recorded as anomalies (for example empty objects via
+`structured_triple_anomaly` / `empty_object` events). Schema alignment
+(`align_claims_to_kgc_schema`) may rewrite claim fields toward canonical KGc
+vocabulary under deterministic bounds; it does not invent trusted FACTs.
+
+### 2.3 Neo4j data model and persistence
+
+Neo4j stores execution-scoped Entity nodes linked by FACT and CLAIM relationships.
+Verified schema (exact labels and primary properties):
+
+![Figure M1. Neo4j logical schema (exact labels and relationship types).](../docs/diagrams/rendered/neo4j_logical_schema.svg)
+
+*Figure M1. Neo4j logical schema. Exact node label `:Entity`, relationship types
+`:FACT` and `:CLAIM`, and primary properties from `src/storage/neo4j_store.py` and
+`scripts/recreate-neo4j.sh`. Caption note: exact schema view (optional working-FACT
+fields omitted).*
+
+Each run receives a unique `execution_id`. FACTs are written with `MERGE`; CLAIMs
+are written with `CREATE` after each sub-question finishes, once per iteration in
+that sub-question’s history, so earlier-iteration CLAIMs **coexist** with later
+ones rather than being replaced. Labels are computed in Python
+(`GraphComparator`) and stored on CLAIM edges when persistence is enabled. Neo4j
+does not assign labels, does not decide stop reasons, does not run the evidence-path
+verdict used by the runner, and never promotes CLAIMs to FACTs.
+
+[NEO4J SCREENSHOT TO BE CAPTURED BY AUTHOR — Screenshot Guide Query 1: all FACT relationships]
+
+[NEO4J SCREENSHOT TO BE CAPTURED BY AUTHOR — Screenshot Guide Query 2: all CLAIM relationships]
+
+[NEO4J SCREENSHOT TO BE CAPTURED BY AUTHOR — Screenshot Guide Query 3: combined FACT and CLAIM view]
+
+Full Cypher and property tables: `research/NEO4J_DATA_MODEL.md` and
+`research/NEO4J_SCREENSHOT_GUIDE.md`.
+
+### 2.4 GraphEval algorithm
+
+In ordinary language, GraphEval does the following for one question. It loads the
+question and trusted context. It may split the question into sub-questions (LLM,
+then Python validation). It extracts FACT triples from context (LLM), validates
+them (Python), writes them to Neo4j, and may read them back into the working graph.
+It generates an answer and projects it onto each sub-question (LLM). For each
+sub-question it repeatedly: extracts CLAIMs (LLM), aligns them (Python), compares
+them to FACTs and assigns labels (Python), checks target satisfaction and a trusted
+evidence path (Python), builds feedback (Python), and either stops or revises the
+answer (LLM) up to the iteration limit. After each sub-question it appends CLAIM
+edges for every iteration in history. It then combines sub-answers and, outside the
+inference loop, scores the final text against the expected answer.
+
+![Figure M2. GraphEval algorithm overview with LLM, Python, Neo4j, and scoring lanes.](../docs/diagrams/rendered/grapheval_algorithm_overview.svg)
+
+*Figure M2. GraphEval algorithm overview. Simplified conceptual view of
+`DecomposedBacktrackingRunner` / `KgcIterationEngine`. Tan = LLM; blue =
+deterministic Python; green = Neo4j read/write; gray = post-inference scoring.*
+
+Numbered stages (implementation references in parentheses):
+
+1. Begin `ExecutionScope` → unique `execution_id`
+   (`src/pipeline/execution_context.py`).
+2. Optional `clear_execution` for that id only (`Neo4jStore.clear_execution`).
+3. Optional question split (LLM) + validation (Python).
+4. Context FACT extraction (LLM) + structured validation (Python).
+5. Neo4j WRITE FACTs (`store_kgc_facts` / MERGE).
+6. Optional Neo4j READ FACTs into working KGc.
+7. Initial answer and sub-answer projection (LLM).
+8. Claim extract (LLM) → schema align (Python) → `GraphComparator.compare_claims`
+   (Python).
+9. Optional focused/derived FACT enrichment (LLM extract + Python gates; later
+   working FACT writes).
+10. Target satisfaction + evidence-path resolution (Python).
+11. Feedback (Python) → revise (LLM) or stop (`determine_stop_reason`).
+12. Neo4j WRITE CLAIMs for each history iteration (`CREATE` append).
+13. Combine sub-answers; optional working FACT persistence.
+14. Post-inference textual scoring against expected answers (benchmark runner /
+    analyzers only).
+
+Inputs at inference time are the question and trusted context (plus model/provider
+settings). Expected answers and expected paths are **not** inputs to inference
+(`tests/test_expected_answer_leakage.py`).
+
+### 2.5 Claim evaluation
+
+`GraphComparator.compare_claims` labels each CLAIM:
+
+| Label | Implemented decision (summary) | Real example |
+|---|---|---|
+| SUPPORTED | Exact (S,R,O) match to a FACT, or target-frame match (compatible subject/relation family/object) | `Global Ocean — is_studied_by → Oceanography` — reason: `Claim matches KGc fact in question-scoped evaluation frame.` |
+| CONTRADICTED | Same subject+relation (legacy) or same target-frame family with conflicting object; also polarity/engine helpers | WannaCry: MS17-010 object over-expansion vs FACT `how SMBv1 handled crafted requests` |
+| NO_EVIDENCE | No matching or conflicting FACT under the active rules | WannaCry: `… → patching` — reason: `KGc has no matching fact for this claim.` |
+
+When a `QuestionTarget` supplies `expected_relations`, comparison uses the
+target-frame path (relation families and object compatibility). Otherwise the
+legacy exact/(S,R) indexes apply. Details and full triples:
+`research/ALGORITHM_WORKED_EXAMPLES.md`.
+
+![Figure M3. FACT versus CLAIM contradiction.](../docs/diagrams/rendered/fact_claim_contradiction_example.svg)
+
+*Figure M3. FACT / CLAIM contradiction. Exact triples and reason text from WannaCry
+execution `…4adc0f88`; layout simplified. The trusted FACT is retained; the CLAIM
+is labeled CONTRADICTED and remains a CLAIM.*
+
+[NEO4J SCREENSHOT TO BE CAPTURED BY AUTHOR — Screenshot Guide Query 6: contradiction example]
+
+### 2.6 Feedback and revision loop
+
+`BacktrackingFeedbackBuilder.build` creates a feedback item for each evaluated
+claim. SUPPORTED claims are instructed to be preserved; CONTRADICTED claims are
+instructed to be corrected using the conflicting FACT object; NO_EVIDENCE claims
+are instructed to be omitted or marked for later retrieval. The reviser LLM
+receives that structured feedback and produces Answer(n+1). Iteration state that
+matters for stopping includes the answer text, the evaluation signature, label
+counts, target satisfaction, evidence-path completeness, and whether new working
+FACTs were added.
+
+Stop outcomes are decided by `determine_stop_reason` in
+`src/pipeline/kgc_iteration.py`. Broadly: RESOLVED requires no CONTRADICTED/NO_EVIDENCE
+labels, a satisfied target, and an evidence path that is not incomplete; STALLED
+covers unchanged answers/claims under remaining defects; UNRESOLVED_NO_EVIDENCE and
+UNRESOLVED_TARGET_NOT_SATISFIED name the dominant defect; MAX_ITERATIONS applies when
+the budget (official experiment: 3 per sub-question) is exhausted without a cleaner
+stop. After the loop, CLAIM edges for **all** iterations in the sub-question history
+are appended to Neo4j.
+
+### 2.7 Target and evidence-path validation
+
+Textual correctness (exact / contains expected) is computed **after** inference and
+is not the same as pipeline resolution. Pipeline resolution requires the
+deterministic stop verdict RESOLVED. That verdict depends on claim labels plus:
+
+- **Semantic target:** `derive_question_target` / `evaluate_target_satisfaction` —
+  whether supported claims address the sub-question’s intended relation/subject
+  frame.
+- **Trusted path:** `resolve_evidence_path` walks trusted FACT edges from a start
+  entity to a terminal claim (preferring a matched FACT for a SUPPORTED claim).
+  Failure reasons observed in results include `missing_intermediate_edge` and
+  `terminal_claim_not_a_trusted_fact`.
+- **Terminal claim:** the structured edge used as the path endpoint (see official
+  `apollo_hop_036` terminal claim `Chesapeake Bay — opens_into → Atlantic Ocean`).
+
+### 2.8 Complete worked execution
+
+**Fully preserved sequence (qualitative WannaCry).** Execution
+`nhs_wannacry_h10_q01__20260727T214622Z__4adc0f88`, artifact
+`.runtime/debug/20260727T214622Z_nhs_wannacry_h10_q01_attempt_70a052a7.jsonl`.
+Trusted FACTs include the MS17-010 correction FACT above. Q1 early claims labeled
+the bulletin SUPPORTED; after revision the final Q1 claim was NO_EVIDENCE
+(`… → patching`) and the sub-question stopped UNRESOLVED_NO_EVIDENCE. Q2 retained
+some SUPPORTED MS17-010 claims while over-expanded objects were CONTRADICTED;
+sub-question stopped STALLED. This case is **not** part of the Apollo n=50 rates.
+
+![Figure M4. KG iteration walkthrough for the WannaCry qualitative execution.](../docs/diagrams/rendered/grapheval_kg_iteration_walkthrough.svg)
+
+*Figure M4. Knowledge-graph iteration walkthrough. Simplified conceptual view of
+persistence behavior (FACT MERGE; CLAIM CREATE append) on the WannaCry execution
+above. Official `apollo_hop_036` intermediate states were not preserved.*
+
+[NEO4J SCREENSHOT TO BE CAPTURED BY AUTHOR — Screenshot Guide Query 4: iteration or sub-question filter]
+
+[NEO4J SCREENSHOT TO BE CAPTURED BY AUTHOR — Screenshot Guide Query 5: trusted evidence path (FACT chain)]
+
+**Official multi-iteration correction without intermediate trace.**
+`apollo_hop_036` (`apollo_hop_036__20260727T205852Z__c2d8a77c`): final answer
+`Atlantic Ocean`, exact match, RESOLVED after 3 iterations / 2 revisions, final
+labels 3 SUPPORTED / 0 / 0, complete 7-edge trusted path. Initial answers, intermediate
+labels, and feedback strings were **not preserved** (`debug_log_path: null`); they
+are not reconstructed here.
+
+**Clean SUPPORTED (post-fix Apollo trace).**
+`apollo_hop_046__20260727T202312Z__50843932`: claim
+`Global Ocean — is_studied_by → Oceanography` SUPPORTED; RESOLVED in one iteration.
+
+### 2.9 Experiment procedure and scoring
 
 **Primary quantitative dataset.** The Apollo 50-question multihop benchmark
 (`data/test_sets/apollo_multihop_50.json`) contains 50 questions over a fixed
@@ -110,89 +322,48 @@ connected component, rooted at `Apollo 11`, with exactly five questions at each
 designed depth 1–10 (validator-confirmed inside the result file). Designed hop depth
 means root-to-answer graph-path depth in this fixed graph; it does not force a
 number of visible reasoning statements, does not equal the number of LLM calls, and
-is separate from question decomposition. Each question carries trusted context (the
-text from which FACTs are extracted) and an expected answer and expected path used
-only for post-inference scoring; a dedicated test
-(`tests/test_expected_answer_leakage.py`) enforces that expected answers are never
-supplied to inference.
+is separate from question decomposition. Each question carries trusted context and
+an expected answer and expected path used only for post-inference scoring.
 
-**Qualitative case data.** One preserved execution of a WannaCry-domain depth-10
-question (`nhs_wannacry_h10_q01`, benchmark `nhs_wannacry_multihop_50`, grounded in
-NAO, DHSC, CISA, and Microsoft sources) is analyzed as a separate qualitative case;
-it is never pooled with the Apollo sample. Representative cases were selected from
-existing artifacts to cover first-pass success, successful revision, honest
-rejection, conservative stalls, regression, and high-depth success and failure; no
-new model outputs were generated and no unfavorable rows were rerun.
+**Qualitative case data.** The WannaCry execution above is analyzed separately and
+never pooled with the Apollo sample. Representative cases were selected from
+existing artifacts; no new model outputs were generated for this methodology
+revision and no unfavorable rows were rerun.
 
 No human participants were involved.
 
-### 2.2 Experiment Setup
-
-All values below were verified from the result JSON, the preserved runner log/rc
-files, and preserved shell history (exact command in
-`research/EXPERIMENT_EVIDENCE_INVENTORY.md`).
+**Experiment setup** (verified from result JSON, runner logs, and
+`research/EXPERIMENT_EVIDENCE_INVENTORY.md`):
 
 | Item | Value |
 |---|---|
 | Frozen commit | `b9608d0f59b5dffd30d2f51aa50cc4be745dcc93` (branch `debug/8b-hop-validation`) |
-| Model / provider | `llama3.1:8b` via Ollama (all seven LLM stages) |
+| Model / provider | `llama3.1:8b` via Ollama (LLM stages) |
 | Context window | `num_ctx` 8192; max observed prompt ≈ 1670 tokens (limit never approached) |
 | Sampling | temperature 0; `num_predict` 4096 |
 | Iteration limit | 3 per sub-question |
 | Timeout | 180 s per question |
-| Graph store | Neo4j 5.26.0 (Docker), required, cleared between questions, execution-scoped; claim evaluation via Neo4j readback in all 50 rows |
+| Graph store | Neo4j 5.26.0 (Docker), required, execution-scoped; claim evaluation via Neo4j readback in all 50 rows; clearing configured between questions via `--clear-neo4j` / per-execution clear |
 | Runner | `scripts/run_multihop_benchmark.py` (`--continue-on-error`, cooldown 2 s) |
 | Outputs | `results/research/apollo_multihop_llama31_8b_20260727T203028Z.{json,md}` |
 | Host | local WSL2/Ubuntu workstation running Ollama; detailed hardware was not recorded in run artifacts and is not claimed |
 
-**Component responsibilities.** The LLM performs answer generation, question
-decomposition, context FACT extraction, sub-answer projection, CLAIM extraction, and
-answer revision. Deterministic Python performs decomposition validation,
-structured-triple validation, schema-alignment safety checks, claim comparison and
-label assignment, target derivation and validation, trusted evidence-path
-resolution, stop-condition logic, benchmark scoring, and trace/metric construction.
-Neo4j persists FACTs and CLAIMs scoped by execution ID and supports graph queries
-and traceability; it does not generate answers, never receives the expected answer,
-and never promotes CLAIMs to FACTs.
-
 **Instrument validation before the experiment.** The offline test suite passed at
 the frozen commit (PR #5 reported 406 passed / 16 skipped, with focused reliability
 tests 26 passed and related pipeline tests 93 passed / 1 skipped; re-verified in
-this analysis pass with `430 passed, 16 skipped` — the additional 24 tests come from
+the analysis pass with `430 passed, 16 skipped` — the additional 24 tests come from
 an untracked behavior-suite test file added after the freeze). Live Apollo
 depth-1/2/3/10 acceptance runs succeeded after the reliability correction
 (`.runtime/benchmarks/apollo_depth_acceptance*`), and Neo4j execution isolation and
 FACT/CLAIM separation are covered by dedicated tests.
 
-### 2.3 Procedure
-
-For each benchmark question the pipeline executes:
-
-1. load the question and trusted context;
-2. optionally decompose the question into sub-questions (LLM, then deterministic validation);
-3. extract FACT triples from context, validate them (rejecting anomalies such as empty objects), write them to Neo4j, and read back the working graph;
-4. generate the initial answer (LLM);
-5. project the compound answer onto each sub-question (LLM);
-6. extract CLAIM triples from each sub-answer (LLM);
-7. apply safe schema alignment of claim fields to canonical graph vocabulary (deterministically bounded);
-8. compare CLAIMs to FACTs;
-9. assign SUPPORTED / CONTRADICTED / NO_EVIDENCE labels;
-10. build structured feedback from the labels;
-11. revise the answer (LLM);
-12. validate the derived question target;
-13. validate the trusted evidence path from the question's start entity to the terminal claim;
-14. stop (RESOLVED, STALLED, or UNRESOLVED_*) or iterate up to the limit;
-15. combine sub-answers into the final answer;
-16. score the final answer textually against the expected answer (post-inference only);
-17. save the per-question row, metrics, and (when enabled) a JSONL debug trace.
-
-**Analysis.** Quantitative results were produced by
-`scripts/analyze_final_experiment.py`, which recomputes every aggregate from the 50
-raw rows and hard-fails if any value disagrees with the runner's own summary block
-(all values agreed). Figures were generated from the analysis JSON by
-`scripts/plot_final_experiment.py`. Qualitative analysis inspected preserved JSONL
-debug traces event-by-event; the full case records are in
-`research/REPRESENTATIVE_TRACE_CASES.md`.
+**Scoring and analysis.** After inference, the benchmark runner records exact match,
+contains-expected, pipeline resolution, path completeness, stop reason, and label
+counts. Quantitative aggregates were recomputed by
+`scripts/analyze_final_experiment.py` (hard-fail on disagreement with the runner
+summary; all values agreed). Figures:
+`scripts/plot_final_experiment.py`. Qualitative analysis used preserved JSONL
+traces (`research/REPRESENTATIVE_TRACE_CASES.md`).
 
 ## 3. Results
 
