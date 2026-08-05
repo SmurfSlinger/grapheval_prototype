@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="520" role="img" aria-labelledby="title desc">
+  <title id="title">Knowledge-graph iteration walkthrough</title>
+  <desc id="desc">Simplified sequence for WannaCry execution 4adc0f88 showing FACT merge, appended CLAIM states, comparison, and stop outcomes.</desc>
+  <defs>
+    <style>
+      .t { font-family: Georgia, serif; font-size: 12px; fill: #222; }
+      .h { font-family: Georgia, serif; font-size: 17px; font-weight: 700; fill: #111; }
+      .c { font-family: Georgia, serif; font-size: 11px; fill: #333; }
+      .s { fill: #fff; stroke: #444; stroke-width: 1.2; }
+      .fact { fill: #D9F0D9; stroke: #3B7A3B; }
+      .claim { fill: #F5E6C8; stroke: #8A6D3B; }
+      .bad { fill: #F5D0D0; stroke: #8A3B3B; }
+      .py { fill: #D9E8F5; stroke: #3B6A8A; }
+      .arrow { stroke: #444; fill: none; stroke-width: 1.4; marker-end: url(#m); }
+    </style>
+    <marker id="m" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#444"/></marker>
+  </defs>
+  <rect width="980" height="520" fill="#FAFAF8"/>
+  <text x="20" y="28" class="h">Figure: KG changes across one real execution (WannaCry qualitative)</text>
+  <text x="20" y="48" class="c">Execution nhs_wannacry_h10_q01__20260727T214622Z__4adc0f88. Simplified conceptual view; CLAIM CREATE appends. Official apollo_hop_036 intermediates were not preserved.</text>
+
+  <rect x="20" y="70" width="220" height="160" class="s"/>
+  <text x="30" y="92" class="t">1. Trusted FACT graph</text>
+  <rect x="30" y="110" width="200" height="100" class="fact"/>
+  <text x="38" y="135" class="t">MS17-010</text>
+  <text x="38" y="155" class="t">supplied_correction&</text>
+  <text x="38" y="175" class="t">’ how SMBv1 handled</text>
+  <text x="38" y="195" class="t">crafted requests</text>
+
+  <path class="arrow" d="M240,150 H270"/>
+
+  <rect x="270" y="70" width="220" height="160" class="s"/>
+  <text x="280" y="92" class="t">2. Early CLAIM (SUPPORTED)</text>
+  <rect x="280" y="110" width="200" height="100" class="claim"/>
+  <text x="288" y="145" class="t">MS17-010 ’ how SMBv1&</text>
+  <text x="288" y="170" class="t">label SUPPORTED</text>
+  <text x="288" y="190" class="t">CREATE edge</text>
+
+  <path class="arrow" d="M490,150 H520"/>
+
+  <rect x="520" y="70" width="220" height="160" class="s"/>
+  <text x="530" y="92" class="t">3. Later CLAIM appended</text>
+  <rect x="530" y="110" width="200" height="55" class="bad"/>
+  <text x="538" y="135" class="t">& ’ patching</text>
+  <text x="538" y="155" class="t">NO_EVIDENCE</text>
+  <text x="530" y="185" class="c">Earlier CLAIM edges remain</text>
+  <text x="530" y="202" class="c">if written for prior iters</text>
+
+  <path class="arrow" d="M740,150 H770"/>
+
+  <rect x="770" y="70" width="190" height="160" class="s"/>
+  <text x="780" y="92" class="t">4. Python compare</text>
+  <rect x="780" y="110" width="170" height="100" class="py"/>
+  <text x="788" y="145" class="t">Labels in Python</text>
+  <text x="788" y="165" class="t">Feedback built</text>
+  <text x="788" y="185" class="t">LLM may revise</text>
+
+  <rect x="20" y="270" width="460" height="150" class="s"/>
+  <text x="30" y="292" class="t">5. Q2 final CLAIMs (same execution; appended)</text>
+  <rect x="30" y="310" width="210" height="90" class="claim"/>
+  <text x="38" y="340" class="t">MS17-010 ’ how SMBv1&</text>
+  <text x="38" y="365" class="t">SUPPORTED</text>
+  <rect x="255" y="310" width="210" height="90" class="bad"/>
+  <text x="263" y="340" class="t">MS17-010 ’ over-expanded</text>
+  <text x="263" y="360" class="t">object</text>
+  <text x="263" y="380" class="t">CONTRADICTED</text>
+
+  <rect x="500" y="270" width="460" height="150" class="s"/>
+  <text x="510" y="292" class="t">6. Stops / validation (Python)</text>
+  <text x="510" y="325" class="t">Q1 ’ UNRESOLVED_NO_EVIDENCE</text>
+  <text x="510" y="350" class="t">Q2 ’ STALLED (mixed SUPPORTED + CONTRADICTED)</text>
+  <text x="510" y="375" class="t">Target/path checks in Python over FACT list</text>
+  <text x="510" y="400" class="t">No CLAIM promoted to FACT</text>
+
+  <text x="20" y="455" class="c">Caption: Persistence matches neo4j_store: FACT MERGE; CLAIM CREATE per iteration after each sub-question history flush.</text>
+  <text x="20" y="475" class="c">This is not an Apollo official-sample diagram. For apollo_hop_036, only final path/labels exist; intermediate graph states were not preserved.</text>
+  <text x="20" y="495" class="c">Prose equivalent: trusted FACT written; early MS17-010 CLAIM supported; later patching CLAIM no-evidence while prior claims can coexist; Q2 shows contradicted over-expansion.</text>
+</svg>

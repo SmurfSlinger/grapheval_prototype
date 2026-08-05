@@ -1,0 +1,31 @@
+%% Title: Knowledge-graph iteration walkthrough (WannaCry qualitative execution)
+%% View type: Simplified conceptual view of persistence behavior for one real execution.
+%% Execution: nhs_wannacry_h10_q01__20260727T214622Z__4adc0f88
+%% Artifact: .runtime/debug/20260727T214622Z_nhs_wannacry_h10_q01_attempt_70a052a7.jsonl
+%% Exact schema: research/NEO4J_DATA_MODEL.md
+%% Important: CLAIM writes use CREATE (append). Earlier-iteration CLAIMs remain.
+%% Official Apollo hop_036 intermediate states were NOT preserved; this diagram uses WannaCry.
+%% Alt text: Sequence of trusted FACT graph, initial SUPPORTED MS17-010 claims, later
+%% NO_EVIDENCE and CONTRADICTED claims coexisting by iteration, feedback, and path/target checks.
+flowchart LR
+  subgraph S1["State 1 — trusted FACTs MERGEd"]
+    F1["FACT: MS17-010 — supplied_correction_to_vulnerability → how SMBv1 handled crafted requests"]
+  end
+  subgraph S2["State 2 — Q1 early CLAIMs CREATEd"]
+    C1["CLAIM iter early: MS17-010 … → how SMBv1… SUPPORTED"]
+  end
+  subgraph S3["State 3 — Q1 final CLAIM CREATEd append"]
+    C2["CLAIM iter final: WannaCry… → patching NO_EVIDENCE"]
+    NOTE1["Prior SUPPORTED CLAIM edges still present if written for earlier iters"]
+  end
+  subgraph S4["State 4 — Python comparison + feedback"]
+    CMP["Labels computed in Python; feedback tells LLM to preserve SUPPORTED, correct CONTRADICTED, omit NO_EVIDENCE claims"]
+  end
+  subgraph S5["State 5 — Q2 over-expanded CLAIMs"]
+    C3["CLAIM: MS17-010 → over-expanded object CONTRADICTED"]
+    C4["CLAIM: MS17-010 → how SMBv1… SUPPORTED"]
+  end
+  subgraph S6["State 6 — stop + path/target"]
+    STOP["Q1 UNRESOLVED_NO_EVIDENCE; Q2 STALLED; no CLAIM→FACT promotion"]
+  end
+  S1 --> S2 --> S3 --> S4 --> S5 --> S6

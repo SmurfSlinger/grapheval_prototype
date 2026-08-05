@@ -1,0 +1,14 @@
+%% Title: Neo4j logical schema (GraphEval)
+%% View type: Exact node labels, relationship types, and primary properties from neo4j_store.py
+%% and recreate-neo4j.sh. Not every optional working-FACT property is drawn.
+%% Alt text: Entity nodes keyed by execution_id and name; FACT relationships MERGED with
+%% provenance; CLAIM relationships CREATED with label, iteration, and conflict fields.
+flowchart TB
+  E1["Entity<br/>execution_id<br/>name"]
+  E2["Entity<br/>execution_id<br/>name"]
+  E1 -->|FACT<br/>execution_id, relation<br/>provenance, extraction_stage<br/>evidence, created_order<br/>example_id, question_id| E2
+  E1 -->|CLAIM<br/>execution_id, relation<br/>label, reason, evidence<br/>iteration, sub_question_id<br/>answer_stage, source<br/>conflicting_object, conflicting_fact| E2
+  CX["Constraint/index:<br/>Entity uniqueness or index on execution_id,name<br/>Indexes on FACT.execution_id and CLAIM.execution_id"]
+  NOTE["Scoping: all reads/writes filter by execution_id<br/>CLAIM writes append; FACT writes merge"]
+  CX --- E1
+  NOTE --- E2

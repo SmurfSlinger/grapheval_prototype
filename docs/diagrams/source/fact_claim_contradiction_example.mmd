@@ -1,0 +1,25 @@
+%% Title: FACT vs CLAIM contradiction example
+%% View type: Exact triples and reason text from a preserved trace; layout is simplified.
+%% Primary example: WannaCry Q2 over-expanded object (execution …4adc0f88)
+%% Alternate Apollo-complex example documented in ALGORITHM_WORKED_EXAMPLES.md
+%% Alt text: Trusted FACT object 'how SMBv1 handled crafted requests' conflicts with
+%% CLAIM object describing remote code execution; CLAIM labeled CONTRADICTED; FACT retained;
+%% feedback instructs correction using the conflicting FACT.
+flowchart TB
+  FACT["Trusted FACT<br/>Microsoft Security Bulletin MS17-010<br/>— supplied_correction_to_vulnerability →<br/>how SMBv1 handled crafted requests"]
+  CLAIM["CLAIM from answer<br/>Microsoft Security Bulletin MS17-010<br/>— supplied_correction_to_vulnerability →<br/>allowing remote code execution when specially crafted SMBv1 messages were sent"]
+  COND["Python GraphComparator<br/>same subject + same relation + different object<br/>→ CONTRADICTED"]
+  LABEL["CLAIM.label = CONTRADICTED<br/>reason: Claim object '…remote code execution…' conflicts with KGc fact 'how SMBv1 handled crafted requests' for relation 'supplied_correction_to_vulnerability'."]
+  KEEP["FACT edge retained unchanged<br/>CLAIM remains a CLAIM"]
+  FB["Feedback to LLM: preserve SUPPORTED claims;<br/>correct this CONTRADICTED claim using the conflicting FACT"]
+
+  FACT --> COND
+  CLAIM --> COND
+  COND --> LABEL --> KEEP --> FB
+
+  classDef fact fill:#D9F0D9,stroke:#3B7A3B
+  classDef claim fill:#F5D0D0,stroke:#8A3B3B
+  classDef py fill:#D9E8F5,stroke:#3B6A8A
+  class FACT fact
+  class CLAIM claim
+  class COND,LABEL,KEEP,FB py

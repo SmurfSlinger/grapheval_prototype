@@ -1,0 +1,66 @@
+%% Title: GraphEval algorithm overview
+%% View type: Simplified conceptual view of the live DecomposedBacktrackingRunner path.
+%% Exact Cypher and property lists: see research/NEO4J_DATA_MODEL.md and neo4j_logical_schema.
+%% Alt text: Flow from question load through LLM extraction, Neo4j FACT write/read,
+%% Python claim comparison, feedback, optional LLM revision, CLAIM append writes,
+%% combine answers, then post-inference scoring outside the runner.
+flowchart TB
+  subgraph POST["Post-inference scoring (Python; expected answers only here)"]
+    SCORE[exact / contains / path metrics on result row]
+  end
+
+  subgraph LLM["LLM stages"]
+    SPLIT[Optional question split]
+    FEXT[Context FACT extraction]
+    ANS[Initial / projected answer]
+    CEXT[CLAIM extraction]
+    REV[Answer revision]
+  end
+
+  subgraph PY["Deterministic Python"]
+    VAL[Triple / decomposition validation]
+    ALIGN[Schema alignment]
+    CMP[GraphComparator labels]
+    FB[Feedback builder]
+    TGT[Target satisfaction]
+    PATH[Evidence-path resolution]
+    STOP[Stop-reason decision]
+    COMB[Combine sub-answers]
+  end
+
+  subgraph NJ["Neo4j persistence"]
+    WFACT[WRITE MERGE :FACT]
+    RFACT[READ FACTs optional]
+    WCLAIM[WRITE CREATE :CLAIM per iteration]
+    WWORK[WRITE MERGE working :FACT]
+  end
+
+  Q[Load question + trusted context] --> SPLIT
+  SPLIT --> VAL
+  VAL --> FEXT
+  FEXT --> VAL
+  VAL --> WFACT
+  WFACT --> RFACT
+  RFACT --> ANS
+  ANS --> CEXT
+  CEXT --> ALIGN
+  ALIGN --> CMP
+  CMP --> TGT
+  TGT --> PATH
+  PATH --> STOP
+  STOP -->|revise| FB
+  FB --> REV
+  REV --> CEXT
+  STOP -->|sub-question done| WCLAIM
+  WCLAIM --> COMB
+  COMB --> WWORK
+  WWORK --> SCORE
+
+  classDef llm fill:#F5E6C8,stroke:#8A6D3B,color:#222
+  classDef py fill:#D9E8F5,stroke:#3B6A8A,color:#222
+  classDef nj fill:#D9F0D9,stroke:#3B7A3B,color:#222
+  classDef post fill:#EDEDED,stroke:#666,color:#222
+  class SPLIT,FEXT,ANS,CEXT,REV llm
+  class VAL,ALIGN,CMP,FB,TGT,PATH,STOP,COMB py
+  class WFACT,RFACT,WCLAIM,WWORK nj
+  class SCORE post

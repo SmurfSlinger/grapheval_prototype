@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="480" role="img" aria-labelledby="title desc">
+  <title id="title">Neo4j logical schema</title>
+  <desc id="desc">Exact Entity node label and FACT and CLAIM relationship types with primary properties and execution scoping.</desc>
+  <defs>
+    <style>
+      .t { font-family: Georgia, serif; font-size: 13px; fill: #222; }
+      .h { font-family: Georgia, serif; font-size: 17px; font-weight: 700; fill: #111; }
+      .c { font-family: Georgia, serif; font-size: 11px; fill: #333; }
+      .node { fill: #FFF8E7; stroke: #8A6D3B; stroke-width: 1.6; }
+      .fact { stroke: #3B7A3B; stroke-width: 2.2; fill: none; }
+      .claim { stroke: #8A3B3B; stroke-width: 2.2; fill: none; stroke-dasharray: 6 3; }
+      .card { fill: #fff; stroke: #666; stroke-width: 1; }
+    </style>
+  </defs>
+  <rect width="880" height="480" fill="#FAFAF8"/>
+  <text x="20" y="28" class="h">Figure: Neo4j logical schema (verified)</text>
+  <text x="20" y="48" class="c">Exact labels/types from src/storage/neo4j_store.py and scripts/recreate-neo4j.sh. Not every optional working-FACT property is shown.</text>
+
+  <ellipse cx="180" cy="180" rx="90" ry="55" class="node"/>
+  <text x="130" y="175" class="t">:Entity</text>
+  <text x="118" y="195" class="c">execution_id, name</text>
+
+  <ellipse cx="700" cy="180" rx="90" ry="55" class="node"/>
+  <text x="650" y="175" class="t">:Entity</text>
+  <text x="638" y="195" class="c">execution_id, name</text>
+
+  <path class="fact" d="M270,160 C420,90 460,90 610,160"/>
+  <text x="380" y="100" class="t">:FACT (MERGE)</text>
+  <path class="claim" d="M270,200 C420,270 460,270 610,200"/>
+  <text x="375" y="275" class="t">:CLAIM (CREATE append)</text>
+
+  <rect x="40" y="310" width="380" height="120" class="card"/>
+  <text x="55" y="335" class="t">FACT primary properties</text>
+  <text x="55" y="358" class="c">execution_id, relation, provenance, extraction_stage,</text>
+  <text x="55" y="376" class="c">evidence, source, created_order, example_id,</text>
+  <text x="55" y="394" class="c">benchmark_id, question_id (+ working fields when used)</text>
+  <text x="55" y="415" class="c">provenance trusted_context for context facts</text>
+
+  <rect x="460" y="310" width="380" height="120" class="card"/>
+  <text x="475" y="335" class="t">CLAIM primary properties</text>
+  <text x="475" y="358" class="c">execution_id, relation, label, reason, evidence,</text>
+  <text x="475" y="376" class="c">iteration, sub_question_id, answer_stage, source,</text>
+  <text x="475" y="394" class="c">conflicting_object, conflicting_fact,</text>
+  <text x="475" y="415" class="c">example_id, benchmark_id, question_id</text>
+
+  <text x="20" y="455" class="c">Constraint/index: Entity (execution_id, name); indexes on FACT.execution_id and CLAIM.execution_id. Labels computed in Python, stored on CLAIM.</text>
+</svg>
