@@ -4,8 +4,8 @@ Twenty-four fixed scenarios covering decomposition, direction, alignment,
 evaluation labels, target integrity, answer preservation, CLAIM/FACT
 separation, execution isolation, and scoring-metadata hygiene. No scenario
 depends on favorable live-model output; scripted mock providers and direct
-fixtures are used throughout. The scenario-to-test coverage matrix lives in
-docs/DECOMPOSED_BACKTRACKING_BEHAVIOR_MATRIX.md.
+fixtures are used throughout. This suite covers the major decomposed-backtracking
+behaviors used by the research prototype.
 """
 
 from __future__ import annotations

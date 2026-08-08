@@ -2,8 +2,8 @@
 # Run the Apollo multi-hop real baseline benchmark on the user's local machine.
 #
 # Prerequisites (must be present before running this script):
-#   1. Neo4j running locally  (see docs/LOCAL_NEO4J_RUN.md)
-#   2. Ollama running locally (see docs/LOCAL_NEO4J_RUN.md)
+#   1. Neo4j running locally  (see README.md)
+#   2. Ollama running locally (see README.md)
 #   3. Python dependencies installed (.venv or system)
 #
 # Usage:

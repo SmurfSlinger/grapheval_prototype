@@ -15,7 +15,7 @@ This audit records what the **current codebase and preserved artifacts** actuall
 | Untracked work preserved | NITFS dataset/scripts, `.agent_scratch/`, behavior-suite test, prior docs — **not** reset or discarded |
 | Report files | `reports/GraphEval Experiment Report.md`, `.docx` |
 | Existing `docs/` | Milestone/design/audit Markdown notes; **no** Sphinx site yet |
-| Existing diagrams | Simplified Mermaid flowcharts in `README.md` and `docs/kgc_backtracking_milestone_report.md` (conceptual; not exact Neo4j schema) |
+| Existing diagrams | Simplified Mermaid flowcharts and earlier development diagrams (conceptual; not exact Neo4j schema) |
 | Package layout | `src/` pipeline + models + storage; `api/`; `prompts/`; `scripts/`; `frontend/`; `tests/`; `research/`; `results/research/` |
 | Live execution entry (benchmark) | `scripts/run_multihop_benchmark.py` → `DecomposedBacktrackingRunner.run_example` |
 | Live execution entry (API/CLI) | `api/server.py` / `src/main.py` → same runner family |
