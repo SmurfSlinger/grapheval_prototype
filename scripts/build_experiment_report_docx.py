@@ -71,12 +71,68 @@ def clean(par: str) -> str:
     return text
 
 
+def is_image(par: str) -> bool:
+    return par.lstrip().startswith("![") and "](" in par
+
+
+def parse_image(par: str) -> tuple[str, Path] | None:
+    """Return (alt_text, absolute_path) for a markdown image, or None."""
+    import re
+
+    m = re.match(r"!\[([^\]]*)\]\(([^)]+)\)", par.strip())
+    if not m:
+        return None
+    alt, rel = m.group(1), m.group(2)
+    path = (MD.parent / rel).resolve() if not Path(rel).is_absolute() else Path(rel)
+    # MD lives in reports/; relative paths use ../research/... etc.
+    if not path.exists():
+        path = (REPO / rel.lstrip("./")).resolve()
+    return alt, path
+
+
 def is_table(par: str) -> bool:
     return par.lstrip().startswith("|")
 
 
 def add_md_paragraphs(doc, pars: list[str]):
     for par in pars:
+        if is_image(par):
+            parsed = parse_image(par)
+            if parsed is None:
+                continue
+            alt, path = parsed
+            if path.suffix.lower() == ".svg":
+                # python-docx embeds raster images; prefer sibling PNG when present.
+                png = path.with_suffix(".png")
+                if png.exists():
+                    path = png
+                else:
+                    note = doc.add_paragraph(
+                        f"[SVG figure omitted from DOCX embed; see {path.relative_to(REPO)}]"
+                    )
+                    note.runs[0].italic = True
+                    note.runs[0].font.size = Pt(9)
+                    continue
+            if not path.exists():
+                note = doc.add_paragraph(
+                    f"[Figure file not yet present: {path.name}. "
+                    f"See research/neo4j_figures/FIGURE_CAPTIONS.md for capture instructions.]"
+                )
+                note.runs[0].italic = True
+                note.runs[0].font.size = Pt(9)
+                continue
+            width = Inches(6.5) if "iteration_sequence" in path.name else Inches(6.0)
+            doc.add_picture(str(path), width=width)
+            continue
+        if par.startswith("*Figure ") or (
+            par.startswith("*") and "Figure M" in par and par.endswith("*")
+        ):
+            cap = doc.add_paragraph(clean(par.strip("*")))
+            if cap.runs:
+                cap.runs[0].italic = True
+                cap.runs[0].font.size = Pt(9)
+            cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            continue
         if is_table(par):
             lines = [ln for ln in par.splitlines() if ln.strip().startswith("|")]
             grid = [

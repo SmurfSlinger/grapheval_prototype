@@ -24,7 +24,7 @@
   <rect x="30" y="110" width="200" height="100" class="fact"/>
   <text x="38" y="135" class="t">MS17-010</text>
   <text x="38" y="155" class="t">supplied_correction&</text>
-  <text x="38" y="175" class="t">’ how SMBv1 handled</text>
+  <text x="38" y="175" class="t">ï¿½ how SMBv1 handled</text>
   <text x="38" y="195" class="t">crafted requests</text>
 
   <path class="arrow" d="M240,150 H270"/>
@@ -32,7 +32,7 @@
   <rect x="270" y="70" width="220" height="160" class="s"/>
   <text x="280" y="92" class="t">2. Early CLAIM (SUPPORTED)</text>
   <rect x="280" y="110" width="200" height="100" class="claim"/>
-  <text x="288" y="145" class="t">MS17-010 ’ how SMBv1&</text>
+  <text x="288" y="145" class="t">MS17-010 ï¿½ how SMBv1&</text>
   <text x="288" y="170" class="t">label SUPPORTED</text>
   <text x="288" y="190" class="t">CREATE edge</text>
 
@@ -41,7 +41,7 @@
   <rect x="520" y="70" width="220" height="160" class="s"/>
   <text x="530" y="92" class="t">3. Later CLAIM appended</text>
   <rect x="530" y="110" width="200" height="55" class="bad"/>
-  <text x="538" y="135" class="t">& ’ patching</text>
+  <text x="538" y="135" class="t">& ï¿½ patching</text>
   <text x="538" y="155" class="t">NO_EVIDENCE</text>
   <text x="530" y="185" class="c">Earlier CLAIM edges remain</text>
   <text x="530" y="202" class="c">if written for prior iters</text>
@@ -58,17 +58,17 @@
   <rect x="20" y="270" width="460" height="150" class="s"/>
   <text x="30" y="292" class="t">5. Q2 final CLAIMs (same execution; appended)</text>
   <rect x="30" y="310" width="210" height="90" class="claim"/>
-  <text x="38" y="340" class="t">MS17-010 ’ how SMBv1&</text>
+  <text x="38" y="340" class="t">MS17-010 ï¿½ how SMBv1&</text>
   <text x="38" y="365" class="t">SUPPORTED</text>
   <rect x="255" y="310" width="210" height="90" class="bad"/>
-  <text x="263" y="340" class="t">MS17-010 ’ over-expanded</text>
+  <text x="263" y="340" class="t">MS17-010 ï¿½ over-expanded</text>
   <text x="263" y="360" class="t">object</text>
   <text x="263" y="380" class="t">CONTRADICTED</text>
 
   <rect x="500" y="270" width="460" height="150" class="s"/>
   <text x="510" y="292" class="t">6. Stops / validation (Python)</text>
-  <text x="510" y="325" class="t">Q1 ’ UNRESOLVED_NO_EVIDENCE</text>
-  <text x="510" y="350" class="t">Q2 ’ STALLED (mixed SUPPORTED + CONTRADICTED)</text>
+  <text x="510" y="325" class="t">Q1 ï¿½ UNRESOLVED_NO_EVIDENCE</text>
+  <text x="510" y="350" class="t">Q2 ï¿½ STALLED (mixed SUPPORTED + CONTRADICTED)</text>
   <text x="510" y="375" class="t">Target/path checks in Python over FACT list</text>
   <text x="510" y="400" class="t">No CLAIM promoted to FACT</text>
 

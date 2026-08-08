@@ -1,0 +1,9 @@
+// Multi-panel figure rendered via matplotlib; DOT records stages only.
+// execution_id=apollo_hop_036__20260727T205852Z__c2d8a77c
+digraph apollo_iteration_sequence {
+  // Panel 1 Trusted FACTs: 7 path FACTs
+  // Panel 2 Iter 0 CLAIMs: 5
+  // Panel 3 Feedback: focus ('Washington, D.C.', 'has_capital_in', 'United States') label=NO_EVIDENCE
+  // Panel 4 Iter 1 CLAIMs: 3
+  // Panel 5 Iter 2 final: 3
+}

@@ -1,0 +1,751 @@
+{
+  "generated_at_utc": "2026-08-07T04:48:17.819110+00:00",
+  "question_id": "apollo_hop_036",
+  "execution_id": "apollo_hop_036__20260727T205852Z__c2d8a77c",
+  "figures": [
+    {
+      "filename": "apollo_trusted_fact_graph.png",
+      "svg": "apollo_trusted_fact_graph.svg",
+      "dot": "apollo_trusted_fact_graph.dot",
+      "execution_id": "apollo_hop_036__20260727T205852Z__c2d8a77c",
+      "question_id": "apollo_hop_036",
+      "iteration": null,
+      "sub_question_id": null,
+      "query": "MATCH (s:Entity)-[f:FACT]->(o:Entity)\nWHERE f.execution_id = $execution_id\n  AND s.name IN $path_names AND o.name IN $path_names\nRETURN elementId(f) AS rel_id, s.name AS subject, f.relation AS relation, o.name AS object\nORDER BY f.created_order",
+      "returned_relationship_ids": [
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6426",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6427",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6428",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6429",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6430",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6431",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6432"
+      ],
+      "triples": [
+        {
+          "kind": "FACT",
+          "subject": "Neil Armstrong",
+          "relation": "was_born_in",
+          "object": "Wapakoneta",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6426"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Wapakoneta",
+          "relation": "is_located_in",
+          "object": "Ohio",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6427"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Ohio",
+          "relation": "is_part_of",
+          "object": "United States",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6428"
+        },
+        {
+          "kind": "FACT",
+          "subject": "United States",
+          "relation": "has_capital_in",
+          "object": "Washington, D.C.",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6429"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Washington, D.C.",
+          "relation": "is_located_on",
+          "object": "Potomac River",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6430"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Potomac River",
+          "relation": "flows_to",
+          "object": "Chesapeake Bay",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6431"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Chesapeake Bay",
+          "relation": "opens_into",
+          "object": "Atlantic Ocean",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6432"
+        }
+      ],
+      "generated_timestamp": "2026-08-07T04:48:17.819110+00:00"
+    },
+    {
+      "filename": "apollo_initial_claim_state.png",
+      "svg": "apollo_initial_claim_state.svg",
+      "dot": "apollo_initial_claim_state.dot",
+      "execution_id": "apollo_hop_036__20260727T205852Z__c2d8a77c",
+      "question_id": "apollo_hop_036",
+      "iteration": 0,
+      "sub_question_id": 1,
+      "query": "MATCH (s:Entity)-[r]->(o:Entity)\nWHERE r.execution_id = $execution_id\n  AND (\n    (r:FACT AND s.name IN $path_names AND o.name IN $path_names)\n    OR (r:CLAIM AND r.iteration = 0 AND r.sub_question_id = 1)\n  )\nRETURN type(r) AS rel_type, elementId(r) AS rel_id, s.name AS subject,\n       r.relation AS relation, o.name AS object,\n       r.label AS label, r.iteration AS iteration, r.sub_question_id AS sub_question_id",
+      "returned_relationship_ids": [
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6426",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6427",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6428",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6429",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6430",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6431",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6432",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6475",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6472",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6474",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6471",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6473"
+      ],
+      "triples": [
+        {
+          "kind": "FACT",
+          "subject": "Neil Armstrong",
+          "relation": "was_born_in",
+          "object": "Wapakoneta",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6426"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Wapakoneta",
+          "relation": "is_located_in",
+          "object": "Ohio",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6427"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Ohio",
+          "relation": "is_part_of",
+          "object": "United States",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6428"
+        },
+        {
+          "kind": "FACT",
+          "subject": "United States",
+          "relation": "has_capital_in",
+          "object": "Washington, D.C.",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6429"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Washington, D.C.",
+          "relation": "is_located_on",
+          "object": "Potomac River",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6430"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Potomac River",
+          "relation": "flows_to",
+          "object": "Chesapeake Bay",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6431"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Chesapeake Bay",
+          "relation": "opens_into",
+          "object": "Atlantic Ocean",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6432"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Chesapeake Bay",
+          "relation": "opens_into",
+          "object": "Atlantic Ocean",
+          "label": "SUPPORTED",
+          "iteration": 0,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6475"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Ohio",
+          "relation": "is_part_of",
+          "object": "United States",
+          "label": "SUPPORTED",
+          "iteration": 0,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6472"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Potomac River",
+          "relation": "flows_to",
+          "object": "Chesapeake Bay",
+          "label": "SUPPORTED",
+          "iteration": 0,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6474"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Wapakoneta",
+          "relation": "is_located_in",
+          "object": "Ohio",
+          "label": "SUPPORTED",
+          "iteration": 0,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6471"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Washington, D.C.",
+          "relation": "has_capital_in",
+          "object": "United States",
+          "label": "NO_EVIDENCE",
+          "iteration": 0,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6473"
+        }
+      ],
+      "generated_timestamp": "2026-08-07T04:48:17.819110+00:00"
+    },
+    {
+      "filename": "apollo_feedback_problem.png",
+      "svg": "apollo_feedback_problem.svg",
+      "dot": "apollo_feedback_problem.dot",
+      "execution_id": "apollo_hop_036__20260727T205852Z__c2d8a77c",
+      "question_id": "apollo_hop_036",
+      "iteration": 0,
+      "sub_question_id": 1,
+      "query": "MATCH (s:Entity)-[r]->(o:Entity)\nWHERE r.execution_id = $execution_id\n  AND (\n    (r:CLAIM AND r.iteration = 0 AND s.name = 'Washington, D.C.'\n     AND r.relation = 'has_capital_in' AND o.name = 'United States')\n    OR (r:FACT AND (\n         (s.name = 'United States' AND r.relation = 'has_capital_in' AND o.name = 'Washington, D.C.')\n      OR (s.name IN ['Ohio','United States','Washington, D.C.','Potomac River']\n          AND o.name IN ['Ohio','United States','Washington, D.C.','Potomac River'])\n    ))\n  )\nRETURN type(r) AS rel_type, elementId(r) AS rel_id, s.name AS subject,\n       r.relation AS relation, o.name AS object, r.label AS label, r.iteration AS iteration",
+      "returned_relationship_ids": [
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6429",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6428",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6430",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6473"
+      ],
+      "triples": [
+        {
+          "kind": "FACT",
+          "subject": "United States",
+          "relation": "has_capital_in",
+          "object": "Washington, D.C.",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6429"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Ohio",
+          "relation": "is_part_of",
+          "object": "United States",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6428"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Washington, D.C.",
+          "relation": "is_located_on",
+          "object": "Potomac River",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6430"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Washington, D.C.",
+          "relation": "has_capital_in",
+          "object": "United States",
+          "label": "NO_EVIDENCE",
+          "iteration": 0,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6473"
+        }
+      ],
+      "generated_timestamp": "2026-08-07T04:48:17.819110+00:00"
+    },
+    {
+      "filename": "apollo_revised_claim_state.png",
+      "svg": "apollo_revised_claim_state.svg",
+      "dot": "apollo_revised_claim_state.dot",
+      "execution_id": "apollo_hop_036__20260727T205852Z__c2d8a77c",
+      "question_id": "apollo_hop_036",
+      "iteration": 1,
+      "sub_question_id": 1,
+      "query": "MATCH (s:Entity)-[c:CLAIM]->(o:Entity)\nWHERE c.execution_id = $execution_id AND c.iteration = 1 AND c.sub_question_id = 1\nOPTIONAL MATCH (fs:Entity)-[f:FACT]->(fo:Entity)\nWHERE f.execution_id = $execution_id\n  AND (fs.name = s.name OR fo.name = o.name OR fs.name = o.name OR fo.name = s.name)\n  AND fs.name IN $path_names AND fo.name IN $path_names\nRETURN elementId(c) AS claim_id, s.name AS subject, c.relation AS relation, o.name AS object,\n       c.label AS label, c.iteration AS iteration,\n       elementId(f) AS fact_id, fs.name AS fact_s, f.relation AS fact_r, fo.name AS fact_o",
+      "returned_relationship_ids": [
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6429",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6430",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6431",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6432",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6476",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6477",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6478"
+      ],
+      "triples": [
+        {
+          "kind": "FACT",
+          "subject": "United States",
+          "relation": "has_capital_in",
+          "object": "Washington, D.C.",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6429"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Washington, D.C.",
+          "relation": "is_located_on",
+          "object": "Potomac River",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6430"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Potomac River",
+          "relation": "flows_to",
+          "object": "Chesapeake Bay",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6431"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Chesapeake Bay",
+          "relation": "opens_into",
+          "object": "Atlantic Ocean",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6432"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Atlantic Ocean",
+          "relation": "opens_into",
+          "object": "Chesapeake Bay",
+          "label": "NO_EVIDENCE",
+          "iteration": 1,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6476"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Potomac River",
+          "relation": "flows_to",
+          "object": "Chesapeake Bay",
+          "label": "SUPPORTED",
+          "iteration": 1,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6477"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Washington, D.C.",
+          "relation": "is_located_on",
+          "object": "Potomac River",
+          "label": "SUPPORTED",
+          "iteration": 1,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6478"
+        }
+      ],
+      "generated_timestamp": "2026-08-07T04:48:17.819110+00:00"
+    },
+    {
+      "filename": "apollo_final_supported_state.png",
+      "svg": "apollo_final_supported_state.svg",
+      "dot": "apollo_final_supported_state.dot",
+      "execution_id": "apollo_hop_036__20260727T205852Z__c2d8a77c",
+      "question_id": "apollo_hop_036",
+      "iteration": 2,
+      "sub_question_id": 1,
+      "query": "MATCH (s:Entity)-[r]->(o:Entity)\nWHERE r.execution_id = $execution_id\n  AND (\n    (r:FACT AND s.name IN $path_names AND o.name IN $path_names)\n    OR (r:CLAIM AND r.iteration = 2 AND r.sub_question_id = 1)\n  )\nRETURN type(r) AS rel_type, elementId(r) AS rel_id, s.name AS subject,\n       r.relation AS relation, o.name AS object, r.label AS label, r.iteration AS iteration",
+      "returned_relationship_ids": [
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6426",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6427",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6428",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6429",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6430",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6431",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6432",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6479",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6480",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6481"
+      ],
+      "triples": [
+        {
+          "kind": "FACT",
+          "subject": "Neil Armstrong",
+          "relation": "was_born_in",
+          "object": "Wapakoneta",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6426"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Wapakoneta",
+          "relation": "is_located_in",
+          "object": "Ohio",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6427"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Ohio",
+          "relation": "is_part_of",
+          "object": "United States",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6428"
+        },
+        {
+          "kind": "FACT",
+          "subject": "United States",
+          "relation": "has_capital_in",
+          "object": "Washington, D.C.",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6429"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Washington, D.C.",
+          "relation": "is_located_on",
+          "object": "Potomac River",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6430"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Potomac River",
+          "relation": "flows_to",
+          "object": "Chesapeake Bay",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6431"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Chesapeake Bay",
+          "relation": "opens_into",
+          "object": "Atlantic Ocean",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6432"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Chesapeake Bay",
+          "relation": "opens_into",
+          "object": "Atlantic Ocean",
+          "label": "SUPPORTED",
+          "iteration": 2,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6479"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Potomac River",
+          "relation": "flows_to",
+          "object": "Chesapeake Bay",
+          "label": "SUPPORTED",
+          "iteration": 2,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6480"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Washington, D.C.",
+          "relation": "is_located_on",
+          "object": "Potomac River",
+          "label": "SUPPORTED",
+          "iteration": 2,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6481"
+        }
+      ],
+      "generated_timestamp": "2026-08-07T04:48:17.819110+00:00"
+    },
+    {
+      "filename": "apollo_iteration_sequence.png",
+      "svg": "apollo_iteration_sequence.svg",
+      "dot": "apollo_iteration_sequence.dot",
+      "execution_id": "apollo_hop_036__20260727T205852Z__c2d8a77c",
+      "question_id": "apollo_hop_036",
+      "iteration": "0-2",
+      "sub_question_id": 1,
+      "query": "MATCH (s:Entity)-[r]->(o:Entity)\nWHERE r.execution_id = $execution_id\n  AND (\n    (r:FACT AND s.name IN $path_names AND o.name IN $path_names)\n    OR (r:CLAIM AND r.sub_question_id = 1)\n  )\nRETURN type(r) AS rel_type, elementId(r) AS rel_id, s.name AS subject,\n       r.relation AS relation, o.name AS object, r.label AS label,\n       r.iteration AS iteration, r.sub_question_id AS sub_question_id\nORDER BY type(r), r.iteration, s.name",
+      "returned_relationship_ids": [
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6426",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6427",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6428",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6429",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6430",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6431",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6432",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6475",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6472",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6474",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6471",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6473",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6476",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6477",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6478",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6479",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6480",
+        "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6481"
+      ],
+      "triples": [
+        {
+          "kind": "FACT",
+          "subject": "Neil Armstrong",
+          "relation": "was_born_in",
+          "object": "Wapakoneta",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6426"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Wapakoneta",
+          "relation": "is_located_in",
+          "object": "Ohio",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6427"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Ohio",
+          "relation": "is_part_of",
+          "object": "United States",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6428"
+        },
+        {
+          "kind": "FACT",
+          "subject": "United States",
+          "relation": "has_capital_in",
+          "object": "Washington, D.C.",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6429"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Washington, D.C.",
+          "relation": "is_located_on",
+          "object": "Potomac River",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6430"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Potomac River",
+          "relation": "flows_to",
+          "object": "Chesapeake Bay",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6431"
+        },
+        {
+          "kind": "FACT",
+          "subject": "Chesapeake Bay",
+          "relation": "opens_into",
+          "object": "Atlantic Ocean",
+          "label": null,
+          "iteration": null,
+          "sub_question_id": null,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6432"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Chesapeake Bay",
+          "relation": "opens_into",
+          "object": "Atlantic Ocean",
+          "label": "SUPPORTED",
+          "iteration": 0,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6475"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Ohio",
+          "relation": "is_part_of",
+          "object": "United States",
+          "label": "SUPPORTED",
+          "iteration": 0,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6472"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Potomac River",
+          "relation": "flows_to",
+          "object": "Chesapeake Bay",
+          "label": "SUPPORTED",
+          "iteration": 0,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6474"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Wapakoneta",
+          "relation": "is_located_in",
+          "object": "Ohio",
+          "label": "SUPPORTED",
+          "iteration": 0,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6471"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Washington, D.C.",
+          "relation": "has_capital_in",
+          "object": "United States",
+          "label": "NO_EVIDENCE",
+          "iteration": 0,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6473"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Atlantic Ocean",
+          "relation": "opens_into",
+          "object": "Chesapeake Bay",
+          "label": "NO_EVIDENCE",
+          "iteration": 1,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6476"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Potomac River",
+          "relation": "flows_to",
+          "object": "Chesapeake Bay",
+          "label": "SUPPORTED",
+          "iteration": 1,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6477"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Washington, D.C.",
+          "relation": "is_located_on",
+          "object": "Potomac River",
+          "label": "SUPPORTED",
+          "iteration": 1,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6478"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Chesapeake Bay",
+          "relation": "opens_into",
+          "object": "Atlantic Ocean",
+          "label": "SUPPORTED",
+          "iteration": 2,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6479"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Potomac River",
+          "relation": "flows_to",
+          "object": "Chesapeake Bay",
+          "label": "SUPPORTED",
+          "iteration": 2,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6480"
+        },
+        {
+          "kind": "CLAIM",
+          "subject": "Washington, D.C.",
+          "relation": "is_located_on",
+          "object": "Potomac River",
+          "label": "SUPPORTED",
+          "iteration": 2,
+          "sub_question_id": 1,
+          "rel_id": "5:c465d26d-268b-420d-a2ae-5fa68bb98b7b:6481"
+        }
+      ],
+      "generated_timestamp": "2026-08-07T04:48:17.819110+00:00"
+    },
+    {
+      "filename": "neo4j_browser_apollo_execution.png",
+      "svg": null,
+      "dot": null,
+      "execution_id": "apollo_hop_036__20260727T205852Z__c2d8a77c",
+      "question_id": "apollo_hop_036",
+      "iteration": null,
+      "sub_question_id": null,
+      "query": ":param execution_id => 'apollo_hop_036__20260727T205852Z__c2d8a77c'\nMATCH (s:Entity)-[r]->(o:Entity)\nWHERE r.execution_id = $execution_id\n  AND (\n    (r:FACT AND s.name IN ['Neil Armstrong','Wapakoneta','Ohio','United States',\n      'Washington, D.C.','Potomac River','Chesapeake Bay','Atlantic Ocean']\n      AND o.name IN ['Neil Armstrong','Wapakoneta','Ohio','United States',\n      'Washington, D.C.','Potomac River','Chesapeake Bay','Atlantic Ocean'])\n    OR r:CLAIM\n  )\nRETURN s, r, o",
+      "returned_relationship_ids": null,
+      "triples": null,
+      "generated_timestamp": null,
+      "status": "pending_manual_capture",
+      "capture_instructions": "research/neo4j_figures/MANUAL_BROWSER_SCREENSHOT.md",
+      "note": "Literal Neo4j Browser screenshot only; not a Graphviz rendering."
+    }
+  ]
+}

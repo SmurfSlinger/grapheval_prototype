@@ -1,0 +1,12 @@
+digraph G {
+  rankdir=LR;
+  node [shape=box, style=rounded];
+  "Ohio";
+  "United States";
+  "Washington, D.C.";
+  "Potomac River";
+  "United States" -> "Washington, D.C." [label="has_capital_in", color="green", style="solid"];
+  "Ohio" -> "United States" [label="is_part_of", color="green", style="solid"];
+  "Washington, D.C." -> "Potomac River" [label="is_located_on", color="green", style="solid"];
+  "Washington, D.C." -> "United States" [label="has_capital_in [NO_EVIDENCE iter=0]", color="orange", style="dashed"];
+}

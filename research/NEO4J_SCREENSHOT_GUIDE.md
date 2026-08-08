@@ -1,23 +1,20 @@
 # Neo4j Screenshot Guide
 
-**Audience:** Kyler, capturing legitimate Neo4j Browser screenshots for the Experiment Report.  
+**Audience:** Kyler, capturing the one remaining literal Neo4j Browser screenshot.  
 **Schema source:** `src/storage/neo4j_store.py`, `research/NEO4J_DATA_MODEL.md`  
-**Selected execution (qualitative, fully traced):**  
-`nhs_wannacry_h10_q01__20260727T214622Z__4adc0f88`
+**Primary visual execution (official Apollo, July 27):**  
+`apollo_hop_036__20260727T205852Z__c2d8a77c`
 
-> Important: Official Apollo 50-question runs did not leave durable Neo4j state in the
-> research artifacts (graphs were execution-scoped and cleared between questions).
-> To capture these screenshots you must either (a) re-load triples into Neo4j from the
-> preserved debug JSONL / result row using a **documentation-only** import that does
-> not change inference code, or (b) re-run that single WannaCry question on frozen
-> commit `b9608d0` with Neo4j enabled and note the new `execution_id` if it differs.
-> If you re-run, substitute the live `execution_id` into every query below and record
-> it next to the screenshot. Do not treat a re-run as part of the Apollo n=50 sample.
+> Live Neo4j already contains this execution (and August repeats). Do **not** clear
+> Neo4j and do **not** re-run Apollo solely for screenshots. Controlled-layout
+> Graphviz figures for hop_036 are already under `research/neo4j_figures/rendered/`.
+> The only remaining manual capture is the literal Browser PNG described in
+> `research/neo4j_figures/MANUAL_BROWSER_SCREENSHOT.md`.
 
 Set the parameter once in Neo4j Browser:
 
 ```cypher
-:param execution_id => 'nhs_wannacry_h10_q01__20260727T214622Z__4adc0f88'
+:param execution_id => 'apollo_hop_036__20260727T205852Z__c2d8a77c'
 ```
 
 Optional styling (Neo4j Browser; ignore if unsupported):
@@ -37,6 +34,41 @@ relationship.CLAIM {
   color: #8A3B3B;
   shaft-width: 2px;
 }
+```
+
+---
+
+## Primary Query — Apollo hop_036 FACT + CLAIM subset (Figure M5)
+
+**Supports:** Report Figure M5 (literal Browser proof only).
+
+```cypher
+:param execution_id => 'apollo_hop_036__20260727T205852Z__c2d8a77c'
+MATCH (s:Entity)-[r]->(o:Entity)
+WHERE r.execution_id = $execution_id
+  AND (
+    (r:FACT AND s.name IN ['Neil Armstrong','Wapakoneta','Ohio','United States',
+      'Washington, D.C.','Potomac River','Chesapeake Bay','Atlantic Ocean']
+      AND o.name IN ['Neil Armstrong','Wapakoneta','Ohio','United States',
+      'Washington, D.C.','Potomac River','Chesapeake Bay','Atlantic Ocean'])
+    OR r:CLAIM
+  )
+RETURN s, r, o
+```
+
+**Save as:** `research/neo4j_figures/rendered/neo4j_browser_apollo_execution.png`  
+**Do not** include the connect/password form in the screenshot.
+
+---
+
+## Optional legacy queries (WannaCry qualitative trace)
+
+The queries below use the separately traced WannaCry execution if you still want
+Browser views of that qualitative case. They are **not** the primary report
+Neo4j figures.
+
+```cypher
+:param execution_id => 'nhs_wannacry_h10_q01__20260727T214622Z__4adc0f88'
 ```
 
 ---

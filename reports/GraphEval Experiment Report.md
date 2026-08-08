@@ -150,15 +150,10 @@ vocabulary under deterministic bounds; it does not invent trusted FACTs.
 
 ### 2.3 Neo4j data model and persistence
 
-Neo4j stores execution-scoped Entity nodes linked by FACT and CLAIM relationships.
-Verified schema (exact labels and primary properties):
-
-![Figure M1. Neo4j logical schema (exact labels and relationship types).](../docs/diagrams/rendered/neo4j_logical_schema.svg)
-
-*Figure M1. Neo4j logical schema. Exact node label `:Entity`, relationship types
-`:FACT` and `:CLAIM`, and primary properties from `src/storage/neo4j_store.py` and
-`scripts/recreate-neo4j.sh`. Caption note: exact schema view (optional working-FACT
-fields omitted).*
+Neo4j stores execution-scoped `:Entity` nodes linked by `:FACT` and `:CLAIM`
+relationships (exact labels and properties: `src/storage/neo4j_store.py`,
+`research/NEO4J_DATA_MODEL.md`; conceptual schema diagram:
+`docs/diagrams/rendered/neo4j_logical_schema.svg`).
 
 Each run receives a unique `execution_id`. FACTs are written with `MERGE`; CLAIMs
 are written with `CREATE` after each sub-question finishes, once per iteration in
@@ -168,14 +163,14 @@ ones rather than being replaced. Labels are computed in Python
 does not assign labels, does not decide stop reasons, does not run the evidence-path
 verdict used by the runner, and never promotes CLAIMs to FACTs.
 
-[NEO4J SCREENSHOT TO BE CAPTURED BY AUTHOR — Screenshot Guide Query 1: all FACT relationships]
-
-[NEO4J SCREENSHOT TO BE CAPTURED BY AUTHOR — Screenshot Guide Query 2: all CLAIM relationships]
-
-[NEO4J SCREENSHOT TO BE CAPTURED BY AUTHOR — Screenshot Guide Query 3: combined FACT and CLAIM view]
-
-Full Cypher and property tables: `research/NEO4J_DATA_MODEL.md` and
-`research/NEO4J_SCREENSHOT_GUIDE.md`.
+For the professor-facing Neo4j visuals in Figures M2–M5, all graph drawings except
+Figure M5 are **controlled-layout renderings** of relationships queried from the
+live execution-scoped Neo4j graph for the July 27 official Apollo question
+`apollo_hop_036` (execution
+`apollo_hop_036__20260727T205852Z__c2d8a77c`). They are **not** Neo4j Browser
+screenshots. Full audit, Cypher, and captions:
+`research/neo4j_figures/APOLLO_036_NEO4J_AUDIT.md`,
+`research/neo4j_figures/FIGURE_CAPTIONS.md`.
 
 ### 2.4 GraphEval algorithm
 
@@ -191,11 +186,18 @@ answer (LLM) up to the iteration limit. After each sub-question it appends CLAIM
 edges for every iteration in history. It then combines sub-answers and, outside the
 inference loop, scores the final text against the expected answer.
 
-![Figure M2. GraphEval algorithm overview with LLM, Python, Neo4j, and scoring lanes.](../docs/diagrams/rendered/grapheval_algorithm_overview.svg)
+![Figure M1. GraphEval algorithm overview (conceptual).](../docs/diagrams/rendered/grapheval_algorithm_overview.svg)
 
-*Figure M2. GraphEval algorithm overview. Simplified conceptual view of
-`DecomposedBacktrackingRunner` / `KgcIterationEngine`. Tan = LLM; blue =
+*Figure M1. Conceptual GraphEval algorithm diagram (not Neo4j data). Simplified
+view of `DecomposedBacktrackingRunner` / `KgcIterationEngine`. Tan = LLM; blue =
 deterministic Python; green = Neo4j read/write; gray = post-inference scoring.*
+
+![Figure M2. Trusted FACT path for Apollo hop_036 (Neo4j-backed rendering).](../research/neo4j_figures/rendered/apollo_trusted_fact_graph.png)
+
+*Figure M2. Controlled-layout rendering of trusted FACT relationships queried
+directly from the execution-scoped Neo4j graph for
+`apollo_hop_036__20260727T205852Z__c2d8a77c` (path entities from Neil Armstrong to
+Atlantic Ocean). Green solid edges are FACTs only. Not a Neo4j Browser screenshot.*
 
 Numbered stages (implementation references in parentheses):
 
@@ -228,22 +230,23 @@ settings). Expected answers and expected paths are **not** inputs to inference
 
 | Label | Implemented decision (summary) | Real example |
 |---|---|---|
-| SUPPORTED | Exact (S,R,O) match to a FACT, or target-frame match (compatible subject/relation family/object) | `Global Ocean — is_studied_by → Oceanography` — reason: `Claim matches KGc fact in question-scoped evaluation frame.` |
-| CONTRADICTED | Same subject+relation (legacy) or same target-frame family with conflicting object; also polarity/engine helpers | WannaCry: MS17-010 object over-expansion vs FACT `how SMBv1 handled crafted requests` |
-| NO_EVIDENCE | No matching or conflicting FACT under the active rules | WannaCry: `… → patching` — reason: `KGc has no matching fact for this claim.` |
+| SUPPORTED | Exact (S,R,O) match to a FACT, or target-frame match (compatible subject/relation family/object) | Apollo hop_036 final: `Chesapeake Bay — opens_into → Atlantic Ocean` |
+| CONTRADICTED | Same subject+relation (legacy) or same target-frame family with conflicting object; also polarity/engine helpers | WannaCry qualitative: MS17-010 object over-expansion vs FACT `how SMBv1 handled crafted requests` |
+| NO_EVIDENCE | No matching or conflicting FACT under the active rules | Apollo hop_036 iter 0: `Washington, D.C. — has_capital_in → United States` (reversed vs FACT) |
 
 When a `QuestionTarget` supplies `expected_relations`, comparison uses the
 target-frame path (relation families and object compatibility). Otherwise the
 legacy exact/(S,R) indexes apply. Details and full triples:
 `research/ALGORITHM_WORKED_EXAMPLES.md`.
 
-![Figure M3. FACT versus CLAIM contradiction.](../docs/diagrams/rendered/fact_claim_contradiction_example.svg)
+![Figure M3. FACT versus CLAIM comparison for Apollo hop_036.](../research/neo4j_figures/rendered/apollo_feedback_problem.png)
 
-*Figure M3. FACT / CLAIM contradiction. Exact triples and reason text from WannaCry
-execution `…4adc0f88`; layout simplified. The trusted FACT is retained; the CLAIM
-is labeled CONTRADICTED and remains a CLAIM.*
-
-[NEO4J SCREENSHOT TO BE CAPTURED BY AUTHOR — Screenshot Guide Query 6: contradiction example]
+*Figure M3. Controlled-layout rendering of relationships queried directly from the
+execution-scoped Neo4j graph for
+`apollo_hop_036__20260727T205852Z__c2d8a77c`. Green FACT
+`United States — has_capital_in → Washington, D.C.` versus orange dashed CLAIM
+`Washington, D.C. — has_capital_in → United States` labeled NO_EVIDENCE. This is
+not a Neo4j Browser screenshot.*
 
 ### 2.6 Feedback and revision loop
 
@@ -283,31 +286,55 @@ deterministic stop verdict RESOLVED. That verdict depends on claim labels plus:
 
 ### 2.8 Complete worked execution
 
-**Fully preserved sequence (qualitative WannaCry).** Execution
-`nhs_wannacry_h10_q01__20260727T214622Z__4adc0f88`, artifact
+**Primary Neo4j visual case (official Apollo hop_036).** Execution
+`apollo_hop_036__20260727T205852Z__c2d8a77c` (July 27 official run; August
+repeat executions for the same question exist in Neo4j but were not used for
+figures). Result JSON: final answer `Atlantic Ocean`, exact match, RESOLVED after
+3 iterations / 2 revisions, final labels 3 SUPPORTED / 0 / 0, complete 7-edge
+trusted path ending at `Chesapeake Bay — opens_into → Atlantic Ocean`.
+
+Official-run debug answer text and feedback strings were **not** persisted
+(`debug_log_path: null`). However, Neo4j **did** retain coexisting CLAIM edges for
+iterations 0, 1, and 2 (CREATE append). Live audit (46 FACT, 11 CLAIM; two
+NO_EVIDENCE claims at iterations 0 and 1):
+`research/neo4j_figures/APOLLO_036_NEO4J_AUDIT.md`. Stored CLAIM state supports a
+genuine revision reading: reversed capital claim (NO_EVIDENCE) → later
+`is_located_on` / path claims → final SUPPORTED terminal at Atlantic Ocean.
+Panels below are labeled from stored CLAIM/FACT properties only; intermediate
+answer text is not reconstructed.
+
+![Figure M4. Apollo hop_036 iteration sequence (Neo4j-backed rendering).](../research/neo4j_figures/rendered/apollo_iteration_sequence.png)
+
+*Figure M4. Controlled-layout multi-panel rendering of FACT and CLAIM
+relationships queried directly from
+`apollo_hop_036__20260727T205852Z__c2d8a77c`. Trusted FACTs → iteration-0 CLAIMs
+→ focused NO_EVIDENCE feedback → iteration-1 CLAIMs → iteration-2 final SUPPORTED
+state. Not a Neo4j Browser screenshot.*
+
+**Literal Neo4j Browser proof (implementation evidence only).** Figure M5 is the
+one literal Neo4j Browser screenshot. It does not explain the algorithm; it only
+shows that FACT/CLAIM relationships for this execution exist in the running
+database. Capture instructions and Cypher:
+`research/neo4j_figures/FIGURE_CAPTIONS.md` (section `neo4j_browser_apollo_execution`)
+and `research/NEO4J_SCREENSHOT_GUIDE.md`.
+
+![Figure M5. Neo4j Browser proof for Apollo hop_036 (literal Browser screenshot).](../research/neo4j_figures/rendered/neo4j_browser_apollo_execution.png)
+
+*Figure M5. Literal Neo4j Browser screenshot for execution
+`apollo_hop_036__20260727T205852Z__c2d8a77c` (FACT + CLAIM subset). If this file
+is not yet present, capture it once using the Cypher in
+`research/neo4j_figures/FIGURE_CAPTIONS.md` — do not substitute a Graphviz
+rendering.*
+
+**Qualitative WannaCry trace (answer-text sequence, not the primary Neo4j visual).**
+Execution `nhs_wannacry_h10_q01__20260727T214622Z__4adc0f88`, artifact
 `.runtime/debug/20260727T214622Z_nhs_wannacry_h10_q01_attempt_70a052a7.jsonl`.
-Trusted FACTs include the MS17-010 correction FACT above. Q1 early claims labeled
-the bulletin SUPPORTED; after revision the final Q1 claim was NO_EVIDENCE
+Trusted FACTs include the MS17-010 correction FACT. Q1 early claims labeled the
+bulletin SUPPORTED; after revision the final Q1 claim was NO_EVIDENCE
 (`… → patching`) and the sub-question stopped UNRESOLVED_NO_EVIDENCE. Q2 retained
 some SUPPORTED MS17-010 claims while over-expanded objects were CONTRADICTED;
-sub-question stopped STALLED. This case is **not** part of the Apollo n=50 rates.
-
-![Figure M4. KG iteration walkthrough for the WannaCry qualitative execution.](../docs/diagrams/rendered/grapheval_kg_iteration_walkthrough.svg)
-
-*Figure M4. Knowledge-graph iteration walkthrough. Simplified conceptual view of
-persistence behavior (FACT MERGE; CLAIM CREATE append) on the WannaCry execution
-above. Official `apollo_hop_036` intermediate states were not preserved.*
-
-[NEO4J SCREENSHOT TO BE CAPTURED BY AUTHOR — Screenshot Guide Query 4: iteration or sub-question filter]
-
-[NEO4J SCREENSHOT TO BE CAPTURED BY AUTHOR — Screenshot Guide Query 5: trusted evidence path (FACT chain)]
-
-**Official multi-iteration correction without intermediate trace.**
-`apollo_hop_036` (`apollo_hop_036__20260727T205852Z__c2d8a77c`): final answer
-`Atlantic Ocean`, exact match, RESOLVED after 3 iterations / 2 revisions, final
-labels 3 SUPPORTED / 0 / 0, complete 7-edge trusted path. Initial answers, intermediate
-labels, and feedback strings were **not preserved** (`debug_log_path: null`); they
-are not reconstructed here.
+sub-question stopped STALLED. This case is **not** part of the Apollo n=50 rates
+and is not used as the primary Neo4j figure sequence.
 
 **Clean SUPPORTED (post-fix Apollo trace).**
 `apollo_hop_046__20260727T202312Z__50843932`: claim
@@ -451,9 +478,12 @@ table's information is that 24 of 27 first-pass resolutions were also exactly
 correct. Of the 23 questions that entered revision, 6 eventually resolved, 17 ended
 unresolved, and 5 still did not contain the expected answer. The official-run rows
 do not store initial answers or per-iteration labels (`debug_log_path` is null), so
-full initial-to-final transition matrices are computable only for the separately
-traced qualitative cases; this is a documented instrument limitation, not an
-analysis choice.
+full initial-to-final answer-text transition matrices are not recoverable from the
+official result JSON. For `apollo_hop_036`, earlier-iteration CLAIM edges do coexist
+in Neo4j and were used for Figures M3–M4; answer text and feedback strings remain
+unreconstructed. Broader per-question CLAIM transition matrices across all 50
+questions were not exported from Neo4j for this report. This is a documented
+instrument / export limitation, not an analysis choice.
 
 ### 3.6 Final claim labels
 
@@ -465,10 +495,12 @@ analysis choice.
 
 At the final iteration the Apollo run was dominated by SUPPORTED claims;
 CONTRADICTED was rare (one claim in one question). NO_EVIDENCE, present in 10
-questions, is the label most associated with non-resolution. Label transitions
-across iterations are not recoverable for the official run (see 3.5); the WannaCry
-trace below provides a fully observed example (initial SUPPORTED MS17-010 claims,
-final 2 SUPPORTED / 4 CONTRADICTED / 1 NO_EVIDENCE).
+questions, is the label most associated with non-resolution. Official result JSON
+does not retain per-iteration labels for all 50 questions (see 3.5). For the
+selected Neo4j visual case `apollo_hop_036__20260727T205852Z__c2d8a77c`, CLAIM
+edges for iterations 0–2 coexist in Neo4j (Figures M3–M4). The WannaCry debug
+trace separately provides a fully observed answer-text example (initial SUPPORTED
+MS17-010 claims, final 2 SUPPORTED / 4 CONTRADICTED / 1 NO_EVIDENCE).
 
 ### 3.7 Figures
 
@@ -556,9 +588,12 @@ every unresolved verdict in the examined cases was honest.
 
 **What revision corrected and preserved.** Case 3 (`apollo_hop_036`) is the clearest
 correction: two feedback-driven revisions converted an unresolved depth-8 answer
-into an exactly correct, fully path-validated one. In the WannaCry trace, the two
-SUPPORTED MS17-010 claims persisted across Q2 iterations — supported information was
-preserved even while the surrounding answer degraded.
+into an exactly correct, fully path-validated one. Stored Neo4j CLAIM edges for
+`apollo_hop_036__20260727T205852Z__c2d8a77c` show an early NO_EVIDENCE reversed
+capital claim and a later SUPPORTED terminal `Chesapeake Bay — opens_into → Atlantic Ocean`
+(Figures M3–M4). In the WannaCry trace, the two SUPPORTED MS17-010 claims
+persisted across Q2 iterations — supported information was preserved even while
+the surrounding answer degraded.
 
 **Where revision regressed.** Only 6 of 23 revised questions resolved, and revised
 questions ended with far lower exact-match (3/23) than first-pass questions (24/27).

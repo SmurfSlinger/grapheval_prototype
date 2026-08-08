@@ -58,7 +58,7 @@
   <path class="arrow" d="M465,530 H515"/>
   <path class="arrow" d="M715,530 H760,330"/>
 
-  <text x="24" y="580" class="c">Caption: Live path for scripts/run_multihop_benchmark.py ’ DecomposedBacktrackingRunner.</text>
+  <text x="24" y="580" class="c">Caption: Live path for scripts/run_multihop_benchmark.py ï¿½ DecomposedBacktrackingRunner.</text>
   <text x="24" y="598" class="c">CLAIM writes append per iteration; labels are computed in Python then stored. Expected answers used only in post-inference scoring.</text>
   <text x="24" y="616" class="c">Legend: tan = LLM; blue = Python; green = Neo4j; gray = post-inference scoring.</text>
 </svg>

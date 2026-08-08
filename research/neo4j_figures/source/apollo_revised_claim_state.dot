@@ -1,0 +1,16 @@
+digraph G {
+  rankdir=LR;
+  node [shape=box, style=rounded];
+  "United States";
+  "Washington, D.C.";
+  "Potomac River";
+  "Chesapeake Bay";
+  "Atlantic Ocean";
+  "United States" -> "Washington, D.C." [label="has_capital_in", color="green", style="solid"];
+  "Washington, D.C." -> "Potomac River" [label="is_located_on", color="green", style="solid"];
+  "Potomac River" -> "Chesapeake Bay" [label="flows_to", color="green", style="solid"];
+  "Chesapeake Bay" -> "Atlantic Ocean" [label="opens_into", color="green", style="solid"];
+  "Atlantic Ocean" -> "Chesapeake Bay" [label="opens_into [NO_EVIDENCE iter=1]", color="orange", style="dashed"];
+  "Potomac River" -> "Chesapeake Bay" [label="flows_to [SUPPORTED iter=1]", color="blue", style="solid"];
+  "Washington, D.C." -> "Potomac River" [label="is_located_on [SUPPORTED iter=1]", color="blue", style="solid"];
+}

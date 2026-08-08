@@ -20,13 +20,13 @@
   <rect x="40" y="70" width="380" height="130" class="fact"/>
   <text x="55" y="95" class="t">Trusted FACT (retained)</text>
   <text x="55" y="120" class="t">Microsoft Security Bulletin MS17-010</text>
-  <text x="55" y="142" class="t"> supplied_correction_to_vulnerability ’</text>
+  <text x="55" y="142" class="t"> supplied_correction_to_vulnerability ï¿½</text>
   <text x="55" y="164" class="t">how SMBv1 handled crafted requests</text>
 
   <rect x="480" y="70" width="380" height="130" class="claim"/>
   <text x="495" y="95" class="t">CLAIM (from model answer)</text>
   <text x="495" y="120" class="t">Microsoft Security Bulletin MS17-010</text>
-  <text x="495" y="142" class="t"> supplied_correction_to_vulnerability ’</text>
+  <text x="495" y="142" class="t"> supplied_correction_to_vulnerability ï¿½</text>
   <text x="495" y="164" class="t">&allowing remote code execution&</text>
 
   <path class="arrow" d="M230,200 V230"/>
@@ -34,7 +34,7 @@
 
   <rect x="150" y="230" width="600" height="90" class="py"/>
   <text x="170" y="260" class="t">Comparison condition (Python GraphComparator, legacy path):</text>
-  <text x="170" y="285" class="t">same normalized subject + same relation + different object ’ CONTRADICTED</text>
+  <text x="170" y="285" class="t">same normalized subject + same relation + different object ï¿½ CONTRADICTED</text>
   <text x="170" y="305" class="t">Neo4j does not compute this label; it may store it on a CREATE :CLAIM edge.</text>
 
   <path class="arrow" d="M450,320 V350"/>
