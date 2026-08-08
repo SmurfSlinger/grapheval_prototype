@@ -4,6 +4,7 @@ Subject and relation may be canonicalized when unambiguous. The claim object is
 never replaced with a trusted KGc object — that would hide contradictions.
 
 Safety invariants:
+
 - Never change both subject and relation based only on an object match.
 - A relation+object match may canonicalize the subject only when relation
   semantics and direction are already compatible.

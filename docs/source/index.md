@@ -1,47 +1,20 @@
 # GraphEval Prototype Documentation
 
-```{toctree}
-:maxdepth: 2
-:caption: Architecture
+This site documents the GraphEval Python codebase.
 
-project_overview
-research_problem
-algorithm_overview
-triple_and_graph_model
-neo4j_persistence
-execution_lifecycle
-claim_evaluation
-feedback_and_revision
-target_and_path_validation
-module_map
-```
+Start with **Codebase overview** for the main execution path and package structure. The **Python code reference** is generated directly from the source code with Sphinx autodoc.
 
 ```{toctree}
 :maxdepth: 2
-:caption: Reference
+:caption: Overview
 
-api_reference
-benchmark_and_analysis
-trace_format
-reproducibility
-limitations
+codebase_overview
 ```
 
-## What this site is
+```{toctree}
+:maxdepth: 3
+:caption: Python code reference
 
-Handwritten pages explain how the research instrument works and map concepts to
-modules. Autodoc pages list selected Python APIs; they do not replace the
-architecture chapters.
-
-Frozen inference commit for the official experiment:
-`b9608d0f59b5dffd30d2f51aa50cc4be745dcc93`.
-
-## Build
-
-From the repository root (after `pip install -r docs/requirements-docs.txt`):
-
-```bash
-sphinx-build -b html docs/source docs/build/html
+reference/src/modules
+reference/api/modules
 ```
-
-Generated HTML under `docs/build/` is not committed.
