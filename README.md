@@ -84,3 +84,20 @@ cp .env.example .env
 ./scripts/devctl.sh smoke
 ./scripts/devctl.sh logs
 ./scripts/devctl.sh stop
+
+
+## Building the Sphinx Documentation
+
+The documentation under `docs/source/` is a Sphinx site written with MyST Markdown and the Furo theme.
+
+From the repository root:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+
+pip install -r docs/requirements-docs.txt
+
+sphinx-build -b html docs/source docs/build/html
+
+python3 -m http.server 9000 -d docs/build/html
